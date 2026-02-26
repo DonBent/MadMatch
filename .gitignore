@@ -57,6 +57,8 @@ out/
 # Gatsby
 .cache/
 public/
+# But allow React app's public folder
+!frontend/public/
 
 # Vite
 *.local
