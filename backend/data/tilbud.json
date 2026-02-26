@@ -1,0 +1,152 @@
+[
+  {
+    "id": 1,
+    "navn": "Hakket Oksekød 8-12%",
+    "butik": "Rema 1000",
+    "kategori": "Kød",
+    "normalpris": 59.95,
+    "tilbudspris": 39.95,
+    "rabat": 33,
+    "billedeUrl": "/images/oksekoed.jpg"
+  },
+  {
+    "id": 2,
+    "navn": "Letmælk 1,5%",
+    "butik": "Netto",
+    "kategori": "Mejeri",
+    "normalpris": 8.95,
+    "tilbudspris": 5.95,
+    "rabat": 33,
+    "billedeUrl": "/images/maelk.jpg"
+  },
+  {
+    "id": 3,
+    "navn": "Bananer",
+    "butik": "Føtex",
+    "kategori": "Frugt",
+    "normalpris": 15.00,
+    "tilbudspris": 10.00,
+    "rabat": 33,
+    "billedeUrl": "/images/bananer.jpg"
+  },
+  {
+    "id": 4,
+    "navn": "Coca Cola 1,5L",
+    "butik": "Rema 1000",
+    "kategori": "Drikkevarer",
+    "normalpris": 20.00,
+    "tilbudspris": 12.00,
+    "rabat": 40,
+    "billedeUrl": "/images/cola.jpg"
+  },
+  {
+    "id": 5,
+    "navn": "Laks Filet",
+    "butik": "Netto",
+    "kategori": "Fisk",
+    "normalpris": 79.95,
+    "tilbudspris": 49.95,
+    "rabat": 38,
+    "billedeUrl": "/images/laks.jpg"
+  },
+  {
+    "id": 6,
+    "navn": "Fuldkornsbrød",
+    "butik": "Føtex",
+    "kategori": "Brød",
+    "normalpris": 25.00,
+    "tilbudspris": 18.00,
+    "rabat": 28,
+    "billedeUrl": "/images/broed.jpg"
+  },
+  {
+    "id": 7,
+    "navn": "Smør 250g",
+    "butik": "Rema 1000",
+    "kategori": "Mejeri",
+    "normalpris": 18.95,
+    "tilbudspris": 12.95,
+    "rabat": 32,
+    "billedeUrl": "/images/smoer.jpg"
+  },
+  {
+    "id": 8,
+    "navn": "Tomater",
+    "butik": "Netto",
+    "kategori": "Grøntsager",
+    "normalpris": 12.00,
+    "tilbudspris": 8.00,
+    "rabat": 33,
+    "billedeUrl": "/images/tomater.jpg"
+  },
+  {
+    "id": 9,
+    "navn": "Kyllingebryst",
+    "butik": "Føtex",
+    "kategori": "Kød",
+    "normalpris": 69.95,
+    "tilbudspris": 49.95,
+    "rabat": 29,
+    "billedeUrl": "/images/kylling.jpg"
+  },
+  {
+    "id": 10,
+    "navn": "Æg 10 stk",
+    "butik": "Rema 1000",
+    "kategori": "Mejeri",
+    "normalpris": 25.95,
+    "tilbudspris": 19.95,
+    "rabat": 23,
+    "billedeUrl": "/images/aeg.jpg"
+  },
+  {
+    "id": 11,
+    "navn": "Appelsinjuice 1L",
+    "butik": "Netto",
+    "kategori": "Drikkevarer",
+    "normalpris": 15.95,
+    "tilbudspris": 10.95,
+    "rabat": 31,
+    "billedeUrl": "/images/juice.jpg"
+  },
+  {
+    "id": 12,
+    "navn": "Agurk",
+    "butik": "Føtex",
+    "kategori": "Grøntsager",
+    "normalpris": 8.00,
+    "tilbudspris": 5.00,
+    "rabat": 38,
+    "billedeUrl": "/images/agurk.jpg"
+  },
+  {
+    "id": 13,
+    "navn": "Spaghetti 500g",
+    "butik": "Rema 1000",
+    "kategori": "Tørvarer",
+    "normalpris": 12.95,
+    "tilbudspris": 8.95,
+    "rabat": 31,
+    "billedeUrl": "/images/pasta.jpg"
+  },
+  {
+    "id": 14,
+    "navn": "Yoghurt Naturel",
+    "butik": "Netto",
+    "kategori": "Mejeri",
+    "normalpris": 10.95,
+    "tilbudspris": 7.95,
+    "rabat": 27,
+    "billedeUrl": "/images/yoghurt.jpg"
+  },
+  {
+    "id": 15,
+    "navn": "Chips 200g",
+    "butik": "Føtex",
+    "kategori": "Snacks",
+    "normalpris": 22.00,
+    "tilbudspris": 15.00,
+    "rabat": 32,
+    "billedeUrl": "/images/chips.jpg"
+  }
+]

@@ -1,0 +1,97 @@
+.tilbud-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tilbud-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.tilbud-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.butik-badge {
+  background: #4CAF50;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.rabat-badge {
+  background: #f44336;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.tilbud-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tilbud-navn {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.tilbud-kategori {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.tilbud-priser {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.normalpris {
+  font-size: 0.9rem;
+  color: #999;
+  text-decoration: line-through;
+}
+
+.tilbudspris {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #f44336;
+}
+
+.tilbud-besparelse {
+  font-size: 0.85rem;
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .tilbud-card {
+    padding: 12px;
+  }
+  
+  .tilbud-navn {
+    font-size: 1rem;
+  }
+  
+  .tilbudspris {
+    font-size: 1.2rem;
+  }
+}
