@@ -20,7 +20,7 @@ const FilterBar = ({
           onChange={(e) => onButikChange(e.target.value)}
         >
           <option value="">Alle butikker</option>
-          {butikker.map(butik => (
+          {butikker?.map(butik => (
             <option key={butik} value={butik}>{butik}</option>
           ))}
         </select>
@@ -34,7 +34,7 @@ const FilterBar = ({
           onChange={(e) => onKategoriChange(e.target.value)}
         >
           <option value="">Alle kategorier</option>
-          {kategorier.map(kategori => (
+          {kategorier?.map(kategori => (
             <option key={kategori} value={kategori}>{kategori}</option>
           ))}
         </select>

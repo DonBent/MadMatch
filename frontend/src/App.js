@@ -103,17 +103,17 @@ function App() {
         />
 
         <div className="tilbud-count">
-          Viser {tilbud.length} tilbud
+          Viser {tilbud?.length || 0} tilbud
         </div>
 
-        {tilbud.length === 0 ? (
+        {(tilbud?.length || 0) === 0 ? (
           <div className="no-results">
             <p>Ingen tilbud matcher dine filtre.</p>
             <button onClick={handleReset}>Nulstil filtre</button>
           </div>
         ) : (
           <div className="tilbud-grid">
-            {tilbud.map(item => (
+            {tilbud?.map(item => (
               <TilbudCard key={item.id} tilbud={item} />
             ))}
           </div>

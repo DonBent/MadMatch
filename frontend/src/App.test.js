@@ -22,6 +22,6 @@ jest.mock('./services/tilbudService', () => ({
 
 test('renders MadMatch header', async () => {
   render(<App />);
-  const headerElement = await screen.findByText(/MadMatch/i);
+  const headerElement = await screen.findByRole('heading', { name: /MadMatch/i });
   expect(headerElement).toBeInTheDocument();
 });
