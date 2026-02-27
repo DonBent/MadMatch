@@ -1,10 +1,20 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
+require('dotenv').config();
+
+const { TilbudDataService } = require('./services/tilbudDataService');
 
 const app = express();
 const PORT = process.env.PORT || 4001;
+
+// Initialize Tilbud Data Service
+const tilbudService = new TilbudDataService({
+  sallingApiKey: process.env.SALLING_API_KEY,
+  sallingBaseUrl: process.env.SALLING_API_BASE_URL,
+  sallingZipCode: process.env.SALLING_ZIP_CODE || '8000',
+  enableRealData: process.env.ENABLE_REAL_DATA !== 'false',
+  enableMockFallback: process.env.ENABLE_MOCK_FALLBACK !== 'false'
+});
 
 // Middleware
 app.use(cors());
@@ -17,40 +27,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Load tilbud data
-const getTilbudData = () => {
-  try {
-    const dataPath = path.join(__dirname, 'data', 'tilbud.json');
-    const rawData = fs.readFileSync(dataPath, 'utf8');
-    return JSON.parse(rawData);
-  } catch (error) {
-    console.error('Error loading tilbud data:', error);
-    return [];
-  }
-};
-
 // GET /api/tilbud - Hent alle tilbud med filtrering
-app.get('/api/tilbud', (req, res) => {
+app.get('/api/tilbud', async (req, res) => {
   try {
-    let tilbud = getTilbudData();
+    const allTilbud = await tilbudService.getTilbud();
     
-    // Filtrer på butik
+    // Filtrer på butik og kategori
     const { butik, kategori } = req.query;
+    const filtered = tilbudService.applyFilters(allTilbud, { butik, kategori });
     
-    if (butik) {
-      tilbud = tilbud.filter(t => t.butik.toLowerCase() === butik.toLowerCase());
-    }
-    
-    if (kategori) {
-      tilbud = tilbud.filter(t => t.kategori.toLowerCase() === kategori.toLowerCase());
-    }
-    
-    console.log(`[INFO] Returning ${tilbud.length} tilbud (butik: ${butik || 'all'}, kategori: ${kategori || 'all'})`);
+    console.log(`[INFO] Returning ${filtered.length} tilbud (butik: ${butik || 'all'}, kategori: ${kategori || 'all'})`);
     
     res.json({
       success: true,
-      count: tilbud.length,
-      data: tilbud
+      count: filtered.length,
+      data: filtered
     });
   } catch (error) {
     console.error('[ERROR] Failed to fetch tilbud:', error);
@@ -62,11 +53,10 @@ app.get('/api/tilbud', (req, res) => {
 });
 
 // GET /api/tilbud/:id - Hent enkelt tilbud
-app.get('/api/tilbud/:id', (req, res) => {
+app.get('/api/tilbud/:id', async (req, res) => {
   try {
-    const tilbud = getTilbudData();
     const id = parseInt(req.params.id);
-    const item = tilbud.find(t => t.id === id);
+    const item = await tilbudService.getTilbudById(id);
     
     if (!item) {
       return res.status(404).json({
@@ -89,10 +79,9 @@ app.get('/api/tilbud/:id', (req, res) => {
 });
 
 // GET /api/butikker - Hent liste af butikker
-app.get('/api/butikker', (req, res) => {
+app.get('/api/butikker', async (req, res) => {
   try {
-    const tilbud = getTilbudData();
-    const butikker = [...new Set(tilbud.map(t => t.butik))].sort();
+    const butikker = await tilbudService.getButikker();
     
     res.json({
       success: true,
@@ -108,10 +97,9 @@ app.get('/api/butikker', (req, res) => {
 });
 
 // GET /api/kategorier - Hent liste af kategorier
-app.get('/api/kategorier', (req, res) => {
+app.get('/api/kategorier', async (req, res) => {
   try {
-    const tilbud = getTilbudData();
-    const kategorier = [...new Set(tilbud.map(t => t.kategori))].sort();
+    const kategorier = await tilbudService.getKategorier();
     
     res.json({
       success: true,
