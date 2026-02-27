@@ -3,11 +3,17 @@ const {
   SallingGroupAdapter,
   MockDataAdapter,
   inferCategory,
-  normalizeBrand
+  normalizeBrand,
+  cache
 } = require('./tilbudDataService');
 const nock = require('nock');
 
 describe('TilbudDataService', () => {
+  
+  // Clear cache before each test to prevent contamination
+  beforeEach(() => {
+    cache.flushAll();
+  });
   
   describe('Helper Functions', () => {
     describe('inferCategory', () => {

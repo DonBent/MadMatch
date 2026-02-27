@@ -240,6 +240,28 @@ class MockDataAdapter {
         _source: 'mock-data'
       },
       {
+        id: 16,
+        navn: 'Frisk Laks 400g',
+        butik: 'Rema 1000',
+        kategori: 'Fisk',
+        normalpris: 69.95,
+        tilbudspris: 49.95,
+        rabat: 29,
+        billedeUrl: '/images/laks.jpg',
+        _source: 'mock-data'
+      },
+      {
+        id: 19,
+        navn: 'Bananer 1kg',
+        butik: 'Rema 1000',
+        kategori: 'Frugt',
+        normalpris: 15.00,
+        tilbudspris: 10.00,
+        rabat: 33,
+        billedeUrl: '/images/bananer.jpg',
+        _source: 'mock-data'
+      },
+      {
         id: 101,
         navn: 'Økologisk Mælk 1L',
         butik: 'Aldi',
@@ -270,6 +292,61 @@ class MockDataAdapter {
         tilbudspris: 11.95,
         rabat: 25,
         billedeUrl: '/images/boller.jpg',
+        _source: 'mock-data'
+      },
+      {
+        id: 104,
+        navn: 'Kyllingebryst 500g',
+        butik: 'Aldi',
+        kategori: 'Kød',
+        normalpris: 45.00,
+        tilbudspris: 29.95,
+        rabat: 33,
+        billedeUrl: '/images/kylling.jpg',
+        _source: 'mock-data'
+      },
+      {
+        id: 105,
+        navn: 'Gulerødder 1kg',
+        butik: 'Aldi',
+        kategori: 'Grøntsager',
+        normalpris: 12.95,
+        tilbudspris: 7.95,
+        rabat: 39,
+        billedeUrl: '/images/guleroedder.jpg',
+        _source: 'mock-data'
+      },
+      {
+        id: 106,
+        navn: 'Kartofler 2kg',
+        butik: 'Aldi',
+        kategori: 'Grøntsager',
+        normalpris: 18.95,
+        tilbudspris: 12.95,
+        rabat: 32,
+        billedeUrl: '/images/kartofler.jpg',
+        _source: 'mock-data'
+      },
+      {
+        id: 107,
+        navn: 'Havregryn 750g',
+        butik: 'Aldi',
+        kategori: 'Tørvarer',
+        normalpris: 14.95,
+        tilbudspris: 9.95,
+        rabat: 33,
+        billedeUrl: '/images/havregryn.jpg',
+        _source: 'mock-data'
+      },
+      {
+        id: 108,
+        navn: 'Appelsinjuice 1L',
+        butik: 'Aldi',
+        kategori: 'Drikkevarer',
+        normalpris: 16.95,
+        tilbudspris: 11.95,
+        rabat: 29,
+        billedeUrl: '/images/juice.jpg',
         _source: 'mock-data'
       }
     ];
@@ -426,10 +503,19 @@ class TilbudDataService {
 
   /**
    * Clear cache (useful for testing or manual refresh)
+   * Preserves fallback cache to maintain resilience
    */
   clearCache() {
-    cache.flushAll();
-    console.log('[INFO] Cache cleared');
+    // Get all cache keys
+    const keys = cache.keys();
+    
+    // Filter out fallback keys
+    const regularKeys = keys.filter(key => !key.startsWith('tilbud_last_success'));
+    
+    // Delete only regular cache keys
+    regularKeys.forEach(key => cache.del(key));
+    
+    console.log('[INFO] Cache cleared (fallback preserved)');
   }
 
   /**
@@ -446,5 +532,6 @@ module.exports = {
   SallingGroupAdapter,
   MockDataAdapter,
   inferCategory,
-  normalizeBrand
+  normalizeBrand,
+  cache
 };

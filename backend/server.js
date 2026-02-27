@@ -127,19 +127,21 @@ app.use((req, res) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`╔════════════════════════════════════════╗`);
-  console.log(`║  MadMatch Backend Server               ║`);
-  console.log(`║  Port: ${PORT}                            ║`);
-  console.log(`║  Environment: ${process.env.NODE_ENV || 'development'}            ║`);
-  console.log(`╚════════════════════════════════════════╝`);
-  console.log(`\nAPI Endpoints:`);
-  console.log(`  GET  /api/tilbud`);
-  console.log(`  GET  /api/tilbud/:id`);
-  console.log(`  GET  /api/butikker`);
-  console.log(`  GET  /api/kategorier`);
-  console.log(`  GET  /health\n`);
-});
+// Start server (only when not in test environment)
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`╔════════════════════════════════════════╗`);
+    console.log(`║  MadMatch Backend Server               ║`);
+    console.log(`║  Port: ${PORT}                            ║`);
+    console.log(`║  Environment: ${process.env.NODE_ENV || 'development'}            ║`);
+    console.log(`╚════════════════════════════════════════╝`);
+    console.log(`\nAPI Endpoints:`);
+    console.log(`  GET  /api/tilbud`);
+    console.log(`  GET  /api/tilbud/:id`);
+    console.log(`  GET  /api/butikker`);
+    console.log(`  GET  /api/kategorier`);
+    console.log(`  GET  /health\n`);
+  });
+}
 
 module.exports = app;
