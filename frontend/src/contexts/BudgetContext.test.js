@@ -87,7 +87,7 @@ describe('BudgetContext', () => {
     );
 
     expect(screen.getByTestId('budget')).toHaveTextContent('0');
-    expect(screen.getByTestId('enabled')).toHaveTextContent('false');
+    expect(screen.getByTestId('enabled')).toHaveTextContent('true');
   });
 
   test('sets budget amount', () => {
@@ -136,13 +136,13 @@ describe('BudgetContext', () => {
       </BudgetProvider>
     );
 
-    expect(screen.getByTestId('enabled')).toHaveTextContent('false');
-
-    fireEvent.click(screen.getByText('Toggle Budget'));
     expect(screen.getByTestId('enabled')).toHaveTextContent('true');
 
     fireEvent.click(screen.getByText('Toggle Budget'));
     expect(screen.getByTestId('enabled')).toHaveTextContent('false');
+
+    fireEvent.click(screen.getByText('Toggle Budget'));
+    expect(screen.getByTestId('enabled')).toHaveTextContent('true');
   });
 
   test('resets budget to defaults', () => {
@@ -152,13 +152,13 @@ describe('BudgetContext', () => {
       </BudgetProvider>
     );
 
-    // Set budget and enable it
+    // Set budget and disable it
     const input = screen.getByTestId('budget-input');
     fireEvent.change(input, { target: { value: '300' } });
-    fireEvent.click(screen.getByText('Toggle Budget'));
+    fireEvent.click(screen.getByText('Toggle Budget')); // Disable (starts as true)
 
     expect(screen.getByTestId('budget')).toHaveTextContent('300');
-    expect(screen.getByTestId('enabled')).toHaveTextContent('true');
+    expect(screen.getByTestId('enabled')).toHaveTextContent('false');
 
     // Reset
     fireEvent.click(screen.getByText('Reset Budget'));
@@ -277,7 +277,7 @@ describe('BudgetContext', () => {
 
     const input = screen.getByTestId('budget-input');
     fireEvent.change(input, { target: { value: '250' } });
-    fireEvent.click(screen.getByText('Toggle Budget'));
+    // Budget enabled defaults to true, so it should already be enabled
 
     await waitFor(() => {
       const stored = localStorage.getItem('madmatch_budget');
@@ -322,7 +322,7 @@ describe('BudgetContext', () => {
     );
 
     expect(screen.getByTestId('budget')).toHaveTextContent('0');
-    expect(screen.getByTestId('enabled')).toHaveTextContent('false');
+    expect(screen.getByTestId('enabled')).toHaveTextContent('true');
     expect(consoleError).toHaveBeenCalled();
 
     consoleError.mockRestore();
@@ -344,7 +344,7 @@ describe('BudgetContext', () => {
     );
 
     expect(screen.getByTestId('budget')).toHaveTextContent('0');
-    expect(screen.getByTestId('enabled')).toHaveTextContent('false');
+    expect(screen.getByTestId('enabled')).toHaveTextContent('true');
   });
 
   test('handles missing fields in localStorage gracefully', () => {
@@ -362,7 +362,7 @@ describe('BudgetContext', () => {
     );
 
     expect(screen.getByTestId('budget')).toHaveTextContent('0');
-    expect(screen.getByTestId('enabled')).toHaveTextContent('false');
+    expect(screen.getByTestId('enabled')).toHaveTextContent('true');
   });
 
   test('updates localStorage when budget amount changes', async () => {
@@ -397,20 +397,22 @@ describe('BudgetContext', () => {
       </BudgetProvider>
     );
 
-    fireEvent.click(screen.getByText('Toggle Budget'));
-
-    await waitFor(() => {
-      const stored = localStorage.getItem('madmatch_budget');
-      const data = JSON.parse(stored);
-      expect(data.enabled).toBe(true);
-    });
-
+    // Default is true, toggle to false
     fireEvent.click(screen.getByText('Toggle Budget'));
 
     await waitFor(() => {
       const stored = localStorage.getItem('madmatch_budget');
       const data = JSON.parse(stored);
       expect(data.enabled).toBe(false);
+    });
+
+    // Toggle back to true
+    fireEvent.click(screen.getByText('Toggle Budget'));
+
+    await waitFor(() => {
+      const stored = localStorage.getItem('madmatch_budget');
+      const data = JSON.parse(stored);
+      expect(data.enabled).toBe(true);
     });
   });
 

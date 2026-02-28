@@ -27,7 +27,7 @@ const getInitialBudgetState = () => {
         console.log('[BudgetContext] Loaded initial budget from storage:', data);
         return {
           budget: data.budget || 0,
-          enabled: data.enabled || false
+          enabled: data.enabled !== undefined ? data.enabled : true
         };
       } else {
         console.warn('[BudgetContext] Invalid budget data structure in storage');
@@ -38,7 +38,7 @@ const getInitialBudgetState = () => {
   } catch (error) {
     console.error('[BudgetContext] Failed to load budget from storage:', error);
   }
-  return { budget: 0, enabled: false };
+  return { budget: 0, enabled: true };
 };
 
 export const BudgetProvider = ({ children }) => {
