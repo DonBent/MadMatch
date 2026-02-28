@@ -1,0 +1,66 @@
+{
+  "1": {
+    "ecoScore": "B",
+    "carbonFootprint": 5.2,
+    "organic": false,
+    "fairTrade": false,
+    "local": false,
+    "packagingRecyclable": true
+  },
+  "2": {
+    "ecoScore": "A",
+    "carbonFootprint": 0.8,
+    "organic": true,
+    "fairTrade": false,
+    "local": true,
+    "packagingRecyclable": true
+  },
+  "3": {
+    "ecoScore": "C",
+    "carbonFootprint": 3.5,
+    "organic": false,
+    "fairTrade": false,
+    "local": false,
+    "packagingRecyclable": false
+  },
+  "4": {
+    "ecoScore": "B",
+    "carbonFootprint": 2.1,
+    "organic": true,
+    "fairTrade": true,
+    "local": false,
+    "packagingRecyclable": true
+  },
+  "5": {
+    "ecoScore": "A",
+    "carbonFootprint": 0.5,
+    "organic": true,
+    "fairTrade": false,
+    "local": true,
+    "packagingRecyclable": true
+  },
+  "10": {
+    "ecoScore": "D",
+    "carbonFootprint": 8.5,
+    "organic": false,
+    "fairTrade": false,
+    "local": false,
+    "packagingRecyclable": false
+  },
+  "15": {
+    "ecoScore": "B",
+    "carbonFootprint": 3.2,
+    "organic": false,
+    "fairTrade": false,
+    "local": true,
+    "packagingRecyclable": true
+  },
+  "20": {
+    "ecoScore": "A",
+    "carbonFootprint": 0.6,
+    "organic": true,
+    "fairTrade": true,
+    "local": false,
+    "packagingRecyclable": true
+  }
+}
