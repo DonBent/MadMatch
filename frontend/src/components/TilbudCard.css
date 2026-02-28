@@ -1,3 +1,9 @@
+.tilbud-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
 .tilbud-card {
   background: white;
   border-radius: 8px;
@@ -7,9 +13,10 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  cursor: pointer;
 }
 
-.tilbud-card:hover {
+.tilbud-card-link:hover .tilbud-card {
   transform: translateY(-4px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
