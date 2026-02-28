@@ -133,12 +133,13 @@ describe('FavoritesContext', () => {
       const stored = JSON.parse(localStorage.getItem('madmatch_favorites'));
       expect(stored).toEqual({
         favorites: [1, 2],
-        version: 1
+        version: 2  // Updated to v2
       });
     });
   });
 
   test('loads favorites from localStorage on mount', () => {
+    // Set v1 data - should be migrated to v2 automatically
     localStorage.setItem('madmatch_favorites', JSON.stringify({
       favorites: [5, 10],
       version: 1
@@ -150,6 +151,7 @@ describe('FavoritesContext', () => {
       </FavoritesProvider>
     );
 
+    // Should load the migrated data
     expect(screen.getByTestId('favorites-count')).toHaveTextContent('2');
     expect(screen.getByTestId('favorites-list')).toHaveTextContent('5,10');
   });
@@ -175,5 +177,66 @@ describe('FavoritesContext', () => {
     }).toThrow('useFavorites must be used within a FavoritesProvider');
 
     consoleSpy.mockRestore();
+  });
+
+  describe('Schema Validation', () => {
+    test('handles corrupted favorites data gracefully', () => {
+      localStorage.setItem('madmatch_favorites', 'corrupted json {{{');
+
+      render(
+        <FavoritesProvider>
+          <TestComponent />
+        </FavoritesProvider>
+      );
+
+      expect(screen.getByTestId('favorites-count')).toHaveTextContent('0');
+    });
+
+    test('validates and filters invalid favorite IDs', () => {
+      localStorage.setItem('madmatch_favorites', JSON.stringify({
+        favorites: [1, null, 'valid', {}, [], 2],
+        version: 2
+      }));
+
+      render(
+        <FavoritesProvider>
+          <TestComponent />
+        </FavoritesProvider>
+      );
+
+      expect(screen.getByTestId('favorites-count')).toHaveTextContent('3');
+      expect(screen.getByTestId('favorites-list')).toHaveTextContent('1,valid,2');
+    });
+
+    test('handles non-array favorites', () => {
+      localStorage.setItem('madmatch_favorites', JSON.stringify({
+        favorites: 'not an array',
+        version: 2
+      }));
+
+      render(
+        <FavoritesProvider>
+          <TestComponent />
+        </FavoritesProvider>
+      );
+
+      expect(screen.getByTestId('favorites-count')).toHaveTextContent('0');
+    });
+
+    test('clears favorites on schema version mismatch', () => {
+      localStorage.setItem('madmatch_favorites', JSON.stringify({
+        favorites: [1, 2, 3],
+        version: 999
+      }));
+
+      render(
+        <FavoritesProvider>
+          <TestComponent />
+        </FavoritesProvider>
+      );
+
+      // Unknown version should clear data
+      expect(screen.getByTestId('favorites-count')).toHaveTextContent('0');
+    });
   });
 });

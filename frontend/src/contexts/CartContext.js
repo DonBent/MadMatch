@@ -4,7 +4,7 @@ import * as storage from '../utils/storage';
 const CartContext = createContext();
 
 const STORAGE_KEY = 'madmatch_cart';
-const STORAGE_VERSION = 1;
+const { STORAGE_VERSION } = storage;
 
 export const useCart = () => {
   const context = useContext(CartContext);
@@ -23,11 +23,54 @@ const getInitialCart = () => {
     const stored = storage.getItem(STORAGE_KEY);
     if (stored) {
       const data = JSON.parse(stored);
-      if (data.version === STORAGE_VERSION && Array.isArray(data.cart)) {
-        console.log('[CartContext] Loaded initial cart from storage:', data.cart.length, 'items');
-        return data.cart;
+      
+      // Validate version and data structure
+      if (data.version === STORAGE_VERSION) {
+        if (Array.isArray(data.cart)) {
+          // Validate each cart item
+          const validCart = data.cart.filter(item => {
+            // Must be an object
+            if (!item || typeof item !== 'object') {
+              console.warn('[CartContext] Invalid cart item removed (not object):', item);
+              return false;
+            }
+            
+            // Must have productId
+            if (!item.productId) {
+              console.warn('[CartContext] Invalid cart item removed (no productId):', item);
+              return false;
+            }
+            
+            // Must have valid quantity > 0
+            const quantity = Number(item.quantity);
+            if (!quantity || quantity <= 0 || !Number.isFinite(quantity)) {
+              console.warn('[CartContext] Invalid cart item removed (invalid quantity):', item);
+              return false;
+            }
+            
+            // Validate product snapshot if present
+            if (item.productSnapshot) {
+              if (!item.productSnapshot.id || !item.productSnapshot.titel) {
+                console.warn('[CartContext] Cart item has invalid product snapshot, removing snapshot:', item);
+                delete item.productSnapshot;
+              }
+            }
+            
+            return true;
+          });
+          
+          if (validCart.length !== data.cart.length) {
+            console.warn('[CartContext] Some cart items were invalid and removed');
+          }
+          
+          console.log('[CartContext] Loaded initial cart from storage:', validCart.length, 'items');
+          return validCart;
+        } else {
+          console.warn('[CartContext] Cart is not an array, starting with empty cart');
+        }
       } else {
-        console.warn('[CartContext] Invalid cart data structure in storage');
+        console.warn('[CartContext] Schema version mismatch, clearing cart');
+        storage.removeItem(STORAGE_KEY);
       }
     } else {
       console.log('[CartContext] No cart data in storage, starting with empty cart');

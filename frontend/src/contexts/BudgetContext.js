@@ -4,7 +4,7 @@ import * as storage from '../utils/storage';
 const BudgetContext = createContext();
 
 const STORAGE_KEY = 'madmatch_budget';
-const STORAGE_VERSION = 1;
+const { STORAGE_VERSION } = storage;
 
 export const useBudget = () => {
   const context = useContext(BudgetContext);
@@ -23,14 +23,32 @@ const getInitialBudgetState = () => {
     const stored = storage.getItem(STORAGE_KEY);
     if (stored) {
       const data = JSON.parse(stored);
+      
+      // Validate version and data structure
       if (data.version === STORAGE_VERSION) {
-        console.log('[BudgetContext] Loaded initial budget from storage:', data);
+        // Validate budget amount (must be number >= 0)
+        const budgetNum = Number(data.budget);
+        const validBudget = Number.isFinite(budgetNum) && budgetNum >= 0 ? budgetNum : 0;
+        
+        if (validBudget !== budgetNum) {
+          console.warn('[BudgetContext] Invalid budget amount, defaulting to 0:', data.budget);
+        }
+        
+        // Validate enabled flag (must be boolean)
+        const validEnabled = typeof data.enabled === 'boolean' ? data.enabled : true;
+        
+        if (validEnabled !== data.enabled) {
+          console.warn('[BudgetContext] Invalid enabled flag, defaulting to true:', data.enabled);
+        }
+        
+        console.log('[BudgetContext] Loaded initial budget from storage:', { budget: validBudget, enabled: validEnabled });
         return {
-          budget: data.budget || 0,
-          enabled: data.enabled !== undefined ? data.enabled : true
+          budget: validBudget,
+          enabled: validEnabled
         };
       } else {
-        console.warn('[BudgetContext] Invalid budget data structure in storage');
+        console.warn('[BudgetContext] Schema version mismatch, using defaults');
+        storage.removeItem(STORAGE_KEY);
       }
     } else {
       console.log('[BudgetContext] No budget data in storage, starting with defaults');
