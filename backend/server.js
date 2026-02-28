@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const { TilbudDataService } = require('./services/tilbudDataService');
+const { NutritionService } = require('./services/nutritionService');
 
 const app = express();
 const PORT = process.env.PORT || 4001;
@@ -14,6 +15,12 @@ const tilbudService = new TilbudDataService({
   sallingZipCode: process.env.SALLING_ZIP_CODE || '8000',
   enableRealData: process.env.ENABLE_REAL_DATA !== 'false',
   enableMockFallback: process.env.ENABLE_MOCK_FALLBACK !== 'false'
+});
+
+// Initialize Nutrition Service
+const nutritionService = new NutritionService();
+nutritionService.initialize().catch(err => {
+  console.error('[ERROR] Failed to initialize NutritionService:', err);
 });
 
 // Middleware
@@ -114,6 +121,48 @@ app.get('/api/kategorier', async (req, res) => {
   }
 });
 
+// GET /api/produkt/:id/nutrition - Hent næringsindhold fra Open Food Facts
+app.get('/api/produkt/:id/nutrition', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    
+    // First, get the product to extract its name
+    const product = await tilbudService.getTilbudById(id);
+    
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        error: 'Produkt ikke fundet'
+      });
+    }
+    
+    // Fetch nutrition data using product name
+    const nutritionData = await nutritionService.getNutritionData(
+      product.navn,
+      id.toString()
+    );
+    
+    if (!nutritionData) {
+      return res.json({
+        success: true,
+        data: null,
+        message: 'Næringsdata ikke tilgængelig for dette produkt'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: nutritionData
+    });
+  } catch (error) {
+    console.error('[ERROR] Failed to fetch nutrition data:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -138,6 +187,7 @@ if (process.env.NODE_ENV !== 'test') {
     console.log(`\nAPI Endpoints:`);
     console.log(`  GET  /api/tilbud`);
     console.log(`  GET  /api/tilbud/:id`);
+    console.log(`  GET  /api/produkt/:id/nutrition`);
     console.log(`  GET  /api/butikker`);
     console.log(`  GET  /api/kategorier`);
     console.log(`  GET  /health\n`);
