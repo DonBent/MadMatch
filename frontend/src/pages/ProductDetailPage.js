@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import './ProductDetailPage.css';
 import { tilbudService } from '../services/tilbudService';
 import NutritionCard from '../components/NutritionCard';
+import RecipeSuggestions from '../components/RecipeSuggestions';
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -12,6 +13,8 @@ const ProductDetailPage = () => {
   const [error, setError] = useState(null);
   const [nutrition, setNutrition] = useState(null);
   const [nutritionLoading, setNutritionLoading] = useState(false);
+  const [recipes, setRecipes] = useState([]);
+  const [recipesLoading, setRecipesLoading] = useState(false);
 
   useEffect(() => {
     loadProduct();
@@ -20,6 +23,7 @@ const ProductDetailPage = () => {
   useEffect(() => {
     if (product) {
       loadNutrition();
+      loadRecipes();
     }
   }, [product]);
 
@@ -53,6 +57,25 @@ const ProductDetailPage = () => {
       // Silently fail - nutrition data is optional
     } finally {
       setNutritionLoading(false);
+    }
+  };
+
+  const loadRecipes = async () => {
+    try {
+      setRecipesLoading(true);
+      const response = await fetch(`/api/produkt/${id}/recipes`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setRecipes(data.recipes || []);
+      } else if (response.status !== 404) {
+        console.warn('Failed to load recipe data:', response.status);
+      }
+    } catch (err) {
+      console.warn('Could not fetch recipe data:', err);
+      // Silently fail - recipe data is optional
+    } finally {
+      setRecipesLoading(false);
     }
   };
 
@@ -154,6 +177,8 @@ const ProductDetailPage = () => {
           )}
 
           <NutritionCard nutrition={nutrition} loading={nutritionLoading} />
+
+          <RecipeSuggestions recipes={recipes} loading={recipesLoading} />
         </div>
       </div>
     </div>

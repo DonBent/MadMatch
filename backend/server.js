@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const { TilbudDataService } = require('./services/tilbudDataService');
 const { NutritionService } = require('./services/nutritionService');
+const { RecipeService } = require('./services/recipeService');
 
 const app = express();
 const PORT = process.env.PORT || 4001;
@@ -21,6 +22,12 @@ const tilbudService = new TilbudDataService({
 const nutritionService = new NutritionService();
 nutritionService.initialize().catch(err => {
   console.error('[ERROR] Failed to initialize NutritionService:', err);
+});
+
+// Initialize Recipe Service
+const recipeService = new RecipeService();
+recipeService.initialize().catch(err => {
+  console.error('[ERROR] Failed to initialize RecipeService:', err);
 });
 
 // Middleware
@@ -163,6 +170,38 @@ app.get('/api/produkt/:id/nutrition', async (req, res) => {
   }
 });
 
+// GET /api/produkt/:id/recipes - Hent opskriftsforslag fra Spoonacular
+app.get('/api/produkt/:id/recipes', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    
+    // First, get the product to extract its name
+    const product = await tilbudService.getTilbudById(id);
+    
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        error: 'Produkt ikke fundet'
+      });
+    }
+    
+    // Fetch recipe suggestions using product name
+    const recipes = await recipeService.getRecipes(product.navn);
+    
+    res.json({
+      success: true,
+      count: recipes.length,
+      data: recipes
+    });
+  } catch (error) {
+    console.error('[ERROR] Failed to fetch recipes:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -188,6 +227,7 @@ if (process.env.NODE_ENV !== 'test') {
     console.log(`  GET  /api/tilbud`);
     console.log(`  GET  /api/tilbud/:id`);
     console.log(`  GET  /api/produkt/:id/nutrition`);
+    console.log(`  GET  /api/produkt/:id/recipes`);
     console.log(`  GET  /api/butikker`);
     console.log(`  GET  /api/kategorier`);
     console.log(`  GET  /health\n`);
