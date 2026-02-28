@@ -283,7 +283,7 @@ describe('BudgetContext', () => {
       const stored = localStorage.getItem('madmatch_budget');
       expect(stored).toBeTruthy();
       const data = JSON.parse(stored);
-      expect(data.version).toBe(1);
+      expect(data.version).toBe(2);
       expect(data.budget).toBe(250);
       expect(data.enabled).toBe(true);
       expect(data.savedAt).toBeTruthy();
@@ -467,5 +467,133 @@ describe('BudgetContext', () => {
     expect(screen.getByTestId('remaining')).toHaveTextContent('200');
     expect(screen.getByTestId('exceeded')).toHaveTextContent('false');
     expect(screen.getByTestId('percent')).toHaveTextContent('0.00');
+  });
+
+  describe('Schema Validation', () => {
+    test('handles corrupted budget data gracefully', () => {
+      localStorage.setItem('madmatch_budget', 'corrupted json {{{');
+
+      render(
+        <BudgetProvider>
+          <TestComponent />
+        </BudgetProvider>
+      );
+
+      expect(screen.getByTestId('budget')).toHaveTextContent('0');
+      expect(screen.getByTestId('enabled')).toHaveTextContent('true');
+    });
+
+    test('validates and corrects invalid budget amount', () => {
+      localStorage.setItem('madmatch_budget', JSON.stringify({
+        budget: 'invalid',
+        enabled: true,
+        version: 2
+      }));
+
+      render(
+        <BudgetProvider>
+          <TestComponent />
+        </BudgetProvider>
+      );
+
+      expect(screen.getByTestId('budget')).toHaveTextContent('0');
+    });
+
+    test('validates and corrects negative budget', () => {
+      localStorage.setItem('madmatch_budget', JSON.stringify({
+        budget: -100,
+        enabled: true,
+        version: 2
+      }));
+
+      render(
+        <BudgetProvider>
+          <TestComponent />
+        </BudgetProvider>
+      );
+
+      expect(screen.getByTestId('budget')).toHaveTextContent('0');
+    });
+
+    test('validates and corrects NaN budget', () => {
+      localStorage.setItem('madmatch_budget', JSON.stringify({
+        budget: NaN,
+        enabled: true,
+        version: 2
+      }));
+
+      render(
+        <BudgetProvider>
+          <TestComponent />
+        </BudgetProvider>
+      );
+
+      expect(screen.getByTestId('budget')).toHaveTextContent('0');
+    });
+
+    test('validates and corrects Infinity budget', () => {
+      localStorage.setItem('madmatch_budget', JSON.stringify({
+        budget: Infinity,
+        enabled: true,
+        version: 2
+      }));
+
+      render(
+        <BudgetProvider>
+          <TestComponent />
+        </BudgetProvider>
+      );
+
+      expect(screen.getByTestId('budget')).toHaveTextContent('0');
+    });
+
+    test('validates and corrects invalid enabled flag', () => {
+      localStorage.setItem('madmatch_budget', JSON.stringify({
+        budget: 1000,
+        enabled: 'invalid',
+        version: 2
+      }));
+
+      render(
+        <BudgetProvider>
+          <TestComponent />
+        </BudgetProvider>
+      );
+
+      expect(screen.getByTestId('enabled')).toHaveTextContent('true');
+    });
+
+    test('accepts false enabled flag', () => {
+      localStorage.setItem('madmatch_budget', JSON.stringify({
+        budget: 1000,
+        enabled: false,
+        version: 2
+      }));
+
+      render(
+        <BudgetProvider>
+          <TestComponent />
+        </BudgetProvider>
+      );
+
+      expect(screen.getByTestId('enabled')).toHaveTextContent('false');
+    });
+
+    test('clears budget on schema version mismatch', () => {
+      localStorage.setItem('madmatch_budget', JSON.stringify({
+        budget: 1000,
+        enabled: true,
+        version: 999
+      }));
+
+      render(
+        <BudgetProvider>
+          <TestComponent />
+        </BudgetProvider>
+      );
+
+      expect(screen.getByTestId('budget')).toHaveTextContent('0');
+      expect(screen.getByTestId('enabled')).toHaveTextContent('true');
+    });
   });
 });

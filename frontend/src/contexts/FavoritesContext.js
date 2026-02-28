@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import * as storage from '../utils/storage';
 
 const FavoritesContext = createContext();
 
 const STORAGE_KEY = 'madmatch_favorites';
-const STORAGE_VERSION = 1;
+const { STORAGE_VERSION } = storage;
 
 export const useFavorites = () => {
   const context = useContext(FavoritesContext);
@@ -19,15 +20,34 @@ export const FavoritesProvider = ({ children }) => {
   // Load favorites from localStorage on mount
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = storage.getItem(STORAGE_KEY);
       if (stored) {
         const data = JSON.parse(stored);
-        if (data.version === STORAGE_VERSION && Array.isArray(data.favorites)) {
-          setFavorites(data.favorites);
+        
+        // Data is already validated and migrated by storage.getItem()
+        if (Array.isArray(data.favorites)) {
+          // Validate each favorite ID
+          const validFavorites = data.favorites.filter(id => {
+            const isValid = typeof id === 'string' || typeof id === 'number';
+            if (!isValid) {
+              console.warn('[FavoritesContext] Invalid favorite ID removed:', id);
+            }
+            return isValid;
+          });
+          
+          if (validFavorites.length !== data.favorites.length) {
+            console.warn('[FavoritesContext] Some favorites were invalid and removed');
+          }
+          
+          setFavorites(validFavorites);
+        } else {
+          console.warn('[FavoritesContext] Favorites is not an array, using empty array');
+          setFavorites([]);
         }
       }
     } catch (error) {
-      console.error('Failed to load favorites from localStorage:', error);
+      console.error('[FavoritesContext] Failed to load favorites from localStorage:', error);
+      setFavorites([]);
     }
   }, []);
 
@@ -38,7 +58,7 @@ export const FavoritesProvider = ({ children }) => {
         favorites,
         version: STORAGE_VERSION
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      storage.setItem(STORAGE_KEY, data);
     } catch (error) {
       console.error('Failed to save favorites to localStorage:', error);
     }

@@ -289,7 +289,7 @@ describe('CartContext', () => {
       const stored = localStorage.getItem('madmatch_cart');
       expect(stored).toBeTruthy();
       const data = JSON.parse(stored);
-      expect(data.version).toBe(1);
+      expect(data.version).toBe(2);
       expect(data.cart).toHaveLength(1);
       expect(data.cart[0].productId).toBe(1);
       expect(data.cart[0].quantity).toBe(1);
@@ -421,6 +421,138 @@ describe('CartContext', () => {
       expect(snapshot.butik).toBe(mockProduct1.butik);
       expect(snapshot.kategori).toBe(mockProduct1.kategori);
       expect(snapshot.billedUrl).toBe(mockProduct1.billedUrl);
+    });
+  });
+
+  describe('Schema Validation', () => {
+    test('handles corrupted cart data gracefully', () => {
+      localStorage.setItem('madmatch_cart', 'corrupted json {{{');
+
+      render(
+        <CartProvider>
+          <TestComponent />
+        </CartProvider>
+      );
+
+      expect(screen.getByTestId('cart-length')).toHaveTextContent('0');
+      expect(screen.getByTestId('total-items')).toHaveTextContent('0');
+    });
+
+    test('validates and filters cart items without productId', () => {
+      localStorage.setItem('madmatch_cart', JSON.stringify({
+        cart: [
+          { productId: 1, quantity: 2 },
+          { quantity: 3 }, // missing productId
+          { productId: 2, quantity: 1 }
+        ],
+        version: 2
+      }));
+
+      render(
+        <CartProvider>
+          <TestComponent />
+        </CartProvider>
+      );
+
+      expect(screen.getByTestId('cart-length')).toHaveTextContent('2');
+      expect(screen.getByTestId('total-items')).toHaveTextContent('3'); // 2 + 1
+    });
+
+    test('validates and filters cart items with invalid quantity', () => {
+      localStorage.setItem('madmatch_cart', JSON.stringify({
+        cart: [
+          { productId: 1, quantity: 2 },
+          { productId: 2, quantity: 0 }, // zero quantity
+          { productId: 3, quantity: -1 }, // negative quantity
+          { productId: 4, quantity: 'invalid' }, // non-number
+          { productId: 5, quantity: 1 }
+        ],
+        version: 2
+      }));
+
+      render(
+        <CartProvider>
+          <TestComponent />
+        </CartProvider>
+      );
+
+      expect(screen.getByTestId('cart-length')).toHaveTextContent('2');
+      expect(screen.getByTestId('total-items')).toHaveTextContent('3'); // 2 + 1
+    });
+
+    test('handles non-array cart', () => {
+      localStorage.setItem('madmatch_cart', JSON.stringify({
+        cart: 'not an array',
+        version: 2
+      }));
+
+      render(
+        <CartProvider>
+          <TestComponent />
+        </CartProvider>
+      );
+
+      expect(screen.getByTestId('cart-length')).toHaveTextContent('0');
+    });
+
+    test('removes invalid product snapshots', () => {
+      localStorage.setItem('madmatch_cart', JSON.stringify({
+        cart: [
+          {
+            productId: 1,
+            quantity: 2,
+            productSnapshot: {} // missing id and titel
+          }
+        ],
+        version: 2
+      }));
+
+      render(
+        <CartProvider>
+          <TestComponent />
+        </CartProvider>
+      );
+
+      expect(screen.getByTestId('cart-length')).toHaveTextContent('1');
+      // Product should still be in cart, just without snapshot
+      expect(screen.getByTestId('cart-item-1')).toHaveTextContent('Product 1: Quantity 2');
+    });
+
+    test('clears cart on schema version mismatch', () => {
+      localStorage.setItem('madmatch_cart', JSON.stringify({
+        cart: [{ productId: 1, quantity: 2 }],
+        version: 999
+      }));
+
+      render(
+        <CartProvider>
+          <TestComponent />
+        </CartProvider>
+      );
+
+      expect(screen.getByTestId('cart-length')).toHaveTextContent('0');
+    });
+
+    test('validates cart items are objects', () => {
+      localStorage.setItem('madmatch_cart', JSON.stringify({
+        cart: [
+          { productId: 1, quantity: 2 },
+          null,
+          undefined,
+          'string',
+          123,
+          { productId: 2, quantity: 1 }
+        ],
+        version: 2
+      }));
+
+      render(
+        <CartProvider>
+          <TestComponent />
+        </CartProvider>
+      );
+
+      expect(screen.getByTestId('cart-length')).toHaveTextContent('2');
     });
   });
 });

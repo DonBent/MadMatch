@@ -274,15 +274,20 @@ describe('ProductDetailPage', () => {
 
   test('shows loading skeletons for child components', async () => {
     tilbudService.getTilbudById.mockResolvedValue(mockProduct);
-    global.fetch.mockImplementation(() => new Promise(() => {})); // Never resolves
+    // Mock fetch to hang indefinitely
+    global.fetch.mockImplementation(() => new Promise(() => {})); // Never resolves or rejects
     
     renderWithProvider(<ProductDetailPage />);
     
+    // Wait for product to load
     await waitFor(() => {
       expect(screen.getByText('Test Product')).toBeInTheDocument();
     });
     
-    // Child components should show loading skeletons initially
+    // Give a moment for child data fetches to start and set loading states
+    await new Promise(resolve => setTimeout(resolve, 10));
+    
+    // Child components should show loading skeletons while data is being fetched
     expect(screen.getByTestId('skeleton-nutrition')).toBeInTheDocument();
     expect(screen.getByTestId('skeleton-recipes')).toBeInTheDocument();
     expect(screen.getByTestId('skeleton-sustainability')).toBeInTheDocument();
