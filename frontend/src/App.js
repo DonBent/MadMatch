@@ -9,6 +9,7 @@ import FilterBar from './components/FilterBar';
 import ProductDetailPage from './pages/ProductDetailPage';
 import Favoritter from './pages/Favoritter';
 import Handlekurv from './pages/Handlekurv';
+import Indstillinger from './pages/Indstillinger';
 import { tilbudService } from './services/tilbudService';
 
 function Navigation() {
@@ -23,6 +24,9 @@ function Navigation() {
       </Link>
       <Link to="/handlekurv" className="nav-link">
         🛒 Handlekurv {totalItems > 0 && <span className="nav-badge">({totalItems})</span>}
+      </Link>
+      <Link to="/indstillinger" className="nav-link">
+        ⚙️ Indstillinger
       </Link>
     </nav>
   );
@@ -154,6 +158,7 @@ function App() {
               <Route path="/produkt/:id" element={<ProductDetailPage />} />
               <Route path="/favoritter" element={<Favoritter />} />
               <Route path="/handlekurv" element={<Handlekurv />} />
+              <Route path="/indstillinger" element={<Indstillinger />} />
             </Routes>
           </Router>
         </BudgetProvider>
