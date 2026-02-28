@@ -53,7 +53,7 @@ describe('AddToCartButton', () => {
 
     fireEvent.click(screen.getByRole('button'));
 
-    expect(screen.getByText('✓ Tilføjet!')).toBeInTheDocument();
+    expect(screen.getByText('Tilføjet!')).toBeInTheDocument();
   });
 
   test('hides success feedback after delay', async () => {
@@ -67,12 +67,12 @@ describe('AddToCartButton', () => {
 
     fireEvent.click(screen.getByRole('button'));
 
-    expect(screen.getByText('✓ Tilføjet!')).toBeInTheDocument();
+    expect(screen.getByText('Tilføjet!')).toBeInTheDocument();
 
     jest.advanceTimersByTime(1500);
 
     await waitFor(() => {
-      expect(screen.queryByText('✓ Tilføjet!')).not.toBeInTheDocument();
+      expect(screen.queryByText('Tilføjet!')).not.toBeInTheDocument();
     });
 
     jest.useRealTimers();
@@ -169,6 +169,7 @@ describe('AddToCartButton', () => {
 
     fireEvent.click(screen.getByRole('button'));
 
-    expect(screen.getByText('✓ Tilføjet!')).toHaveClass('cart-feedback');
+    expect(screen.getByText('Tilføjet!')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveClass('cart-feedback');
   });
 });

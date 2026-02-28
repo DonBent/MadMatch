@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useBudget } from '../contexts/BudgetContext';
@@ -7,6 +7,10 @@ import CartItem from '../components/CartItem';
 import BudgetDisplay from '../components/BudgetDisplay';
 import './Handlekurv.css';
 
+/**
+ * Handlekurv (Shopping Cart) Page
+ * Displays cart items with budget tracking and loading states
+ */
 const Handlekurv = () => {
   const { cart, clearCart, totalItems } = useCart();
   const { budgetEnabled } = useBudget();
@@ -15,11 +19,7 @@ const Handlekurv = () => {
   const [error, setError] = useState(null);
   const [showClearDialog, setShowClearDialog] = useState(false);
 
-  useEffect(() => {
-    loadCartProducts();
-  }, [cart]);
-
-  const loadCartProducts = async () => {
+  const loadCartProducts = useCallback(async () => {
     if (cart.length === 0) {
       setProducts([]);
       setLoading(false);
@@ -28,11 +28,9 @@ const Handlekurv = () => {
 
     try {
       setLoading(true);
-      console.log('[Handlekurv] Loading cart products for', cart.length, 'items');
       
       // Try to fetch fresh product data from API
       const allTilbud = await tilbudService.getAllTilbud();
-      console.log('[Handlekurv] Fetched', allTilbud.length, 'products from API');
       
       // Map cart items to products with cart data
       // Use fresh API data if available, otherwise fall back to stored snapshot
@@ -48,7 +46,6 @@ const Handlekurv = () => {
             };
           } else if (cartItem.productSnapshot) {
             // Fall back to stored snapshot if API doesn't have the product
-            console.warn('[Handlekurv] Using snapshot for product:', cartItem.productId);
             return {
               ...cartItem.productSnapshot,
               cartItem
@@ -56,7 +53,6 @@ const Handlekurv = () => {
           }
           
           // Product not found in API or snapshot
-          console.error('[Handlekurv] Product not found:', cartItem.productId);
           return null;
         })
         .filter(p => p !== null);
@@ -64,8 +60,6 @@ const Handlekurv = () => {
       setProducts(cartProducts);
       setError(null);
     } catch (err) {
-      console.error('[Handlekurv] Failed to load from API, using snapshots:', err);
-      
       // API failed - use product snapshots from cart
       const snapshotProducts = cart
         .map(cartItem => {
@@ -75,7 +69,6 @@ const Handlekurv = () => {
               cartItem
             };
           }
-          console.error('[Handlekurv] No snapshot available for product:', cartItem.productId);
           return null;
         })
         .filter(p => p !== null);
@@ -89,12 +82,16 @@ const Handlekurv = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [cart]);
 
-  const handleClearCart = () => {
+  useEffect(() => {
+    loadCartProducts();
+  }, [loadCartProducts]);
+
+  const handleClearCart = useCallback(() => {
     clearCart();
     setShowClearDialog(false);
-  };
+  }, [clearCart]);
 
   // Calculate totals
   const totalCost = products.reduce((sum, product) => {
@@ -112,21 +109,26 @@ const Handlekurv = () => {
           <Link to="/" className="back-link">← Tilbage</Link>
           <h1>🛒 Handlekurv</h1>
         </header>
-        <div className="loading">Indlæser handlekurv...</div>
+        <div className="loading" role="status" aria-live="polite">
+          <div className="loading-spinner" aria-hidden="true"></div>
+          <p>Indlæser handlekurv...</p>
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error && products.length === 0) {
     return (
       <div className="handlekurv-page">
         <header className="handlekurv-header">
           <Link to="/" className="back-link">← Tilbage</Link>
           <h1>🛒 Handlekurv</h1>
         </header>
-        <div className="error">
+        <div className="error" role="alert">
           <p>{error}</p>
-          <button onClick={loadCartProducts}>Prøv igen</button>
+          <button onClick={loadCartProducts} className="retry-button">
+            Prøv igen
+          </button>
         </div>
       </div>
     );
@@ -139,8 +141,10 @@ const Handlekurv = () => {
           <Link to="/" className="back-link">← Tilbage</Link>
           <h1>🛒 Handlekurv</h1>
         </header>
-        <div className="empty-cart">
-          <p>Din handlekurv er tom. Tilføj varer fra tilbuddene.</p>
+        <div className="empty-cart" role="status">
+          <p className="empty-icon" aria-hidden="true">🛒</p>
+          <h3 className="empty-title">Din handlekurv er tom</h3>
+          <p className="empty-message">Find tilbud og tilføj til kurven!</p>
           <Link to="/" className="browse-link">Se tilbud</Link>
         </div>
       </div>
@@ -154,6 +158,12 @@ const Handlekurv = () => {
         <h1>🛒 Handlekurv</h1>
       </header>
 
+      {error && (
+        <div className="error-banner" role="alert">
+          <span aria-hidden="true">⚠️</span> {error}
+        </div>
+      )}
+
       <div className="handlekurv-content">
         <div className="cart-items-section">
           <div className="cart-header-actions">
@@ -161,6 +171,7 @@ const Handlekurv = () => {
             <button 
               className="clear-cart-btn"
               onClick={() => setShowClearDialog(true)}
+              aria-label="Tøm handlekurv"
             >
               Tøm kurv
             </button>
@@ -194,9 +205,15 @@ const Handlekurv = () => {
       </div>
 
       {showClearDialog && (
-        <div className="dialog-overlay" onClick={() => setShowClearDialog(false)}>
+        <div 
+          className="dialog-overlay" 
+          onClick={() => setShowClearDialog(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="dialog-title"
+        >
           <div className="dialog" onClick={(e) => e.stopPropagation()}>
-            <h3>Tøm handlekurv?</h3>
+            <h3 id="dialog-title">Tøm handlekurv?</h3>
             <p>Er du sikker på, at du vil fjerne alle varer fra handlekurven?</p>
             <div className="dialog-actions">
               <button 
@@ -208,6 +225,7 @@ const Handlekurv = () => {
               <button 
                 className="dialog-btn confirm-btn"
                 onClick={handleClearCart}
+                autoFocus
               >
                 Ja, tøm kurv
               </button>

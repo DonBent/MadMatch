@@ -5,40 +5,52 @@
   font-size: 1.5rem;
   padding: 0.5rem;
   color: #ccc;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease, background-color 0.2s ease;
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 50%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .favorite-button:hover {
   background-color: rgba(255, 0, 0, 0.1);
-  transform: scale(1.1);
 }
 
 .favorite-button.favorited {
   color: #e74c3c;
+}
+
+.favorite-button.animating {
   animation: heartBeat 0.3s ease;
 }
 
 .favorite-button:active {
-  transform: scale(0.9);
+  transform: scale(0.95);
 }
 
 @keyframes heartBeat {
-  0%, 100% {
+  0% {
     transform: scale(1);
   }
-  50% {
+  25% {
     transform: scale(1.2);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  75% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
-.favorite-button:focus {
+.favorite-button:focus-visible {
   outline: 2px solid #3498db;
   outline-offset: 2px;
 }

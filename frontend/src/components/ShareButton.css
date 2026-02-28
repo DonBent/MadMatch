@@ -3,6 +3,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
+  min-height: 44px;
   background-color: #4CAF50;
   color: white;
   border: none;
@@ -10,24 +11,43 @@
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.share-button:hover {
+.share-button:hover:not(:disabled) {
   background-color: #45a049;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.share-button:active {
+.share-button:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.share-button:focus {
-  outline: 2px solid #4CAF50;
+.share-button:focus-visible {
+  outline: 2px solid #2c3e50;
   outline-offset: 2px;
+}
+
+.share-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.share-button.sharing .share-icon {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .share-icon {
@@ -41,9 +61,10 @@
 
 /* Compact version for TilbudCard header */
 .tilbud-card-header-right .share-button {
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.75rem;
+  min-height: 44px;
   font-size: 0.875rem;
-  min-width: auto;
+  min-width: 44px;
 }
 
 .tilbud-card-header-right .share-button .share-text {
@@ -68,13 +89,26 @@
   color: white;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  animation: slideUp 0.3s ease;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 9999;
+  max-width: 90%;
+}
+
+.share-toast.success .toast-icon {
+  color: #4CAF50;
+}
+
+.share-toast.error {
+  background-color: #f44336;
+}
+
+.share-toast.error .toast-icon {
+  color: white;
 }
 
 .toast-icon {
   font-size: 1.5rem;
-  color: #4CAF50;
+  line-height: 1;
 }
 
 .toast-text {
@@ -85,11 +119,11 @@
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(20px);
+    transform: translateX(-50%) translateY(20px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0) scale(1);
   }
 }
 
@@ -109,16 +143,17 @@
     left: 1rem;
     right: 1rem;
     transform: none;
+    max-width: calc(100% - 2rem);
   }
   
   @keyframes slideUp {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(20px) scale(0.95);
     }
     to {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
     }
   }
 }

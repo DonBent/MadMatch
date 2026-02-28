@@ -4,12 +4,15 @@ import './ShareButton.css';
 /**
  * ShareButton Component
  * Allows users to share tilbud or products via native share API or clipboard fallback
+ * Includes loading state and enhanced success feedback
  * 
  * @param {Object} item - The tilbud or product object to share
  * @param {string} type - 'tilbud' or 'product'
  */
 const ShareButton = ({ item, type = 'product' }) => {
   const [showToast, setShowToast] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareError, setShareError] = useState(false);
 
   const getShareContent = () => {
     const baseUrl = window.location.origin;
@@ -31,17 +34,22 @@ const ShareButton = ({ item, type = 'product' }) => {
   };
 
   const handleShare = async () => {
+    setIsSharing(true);
+    setShareError(false);
+    
     const shareData = getShareContent();
 
     // Try native share API first (mobile-first approach)
     if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
       try {
         await navigator.share(shareData);
+        setIsSharing(false);
         return; // Success - no need to show toast for native share
       } catch (err) {
-        // User cancelled or share failed - fall through to clipboard
+        // User cancelled or share failed
+        setIsSharing(false);
         if (err.name !== 'AbortError') {
-          console.warn('Native share failed:', err);
+          // Fall through to clipboard if error wasn't cancellation
         } else {
           return; // User cancelled - don't show toast
         }
@@ -53,13 +61,21 @@ const ShareButton = ({ item, type = 'product' }) => {
       const textToShare = `${shareData.text}\n${shareData.url}`;
       await navigator.clipboard.writeText(textToShare);
       setShowToast(true);
+      setIsSharing(false);
       
       // Hide toast after 3 seconds
       setTimeout(() => {
         setShowToast(false);
       }, 3000);
     } catch (err) {
-      console.error('Failed to copy to clipboard:', err);
+      setIsSharing(false);
+      setShareError(true);
+      
+      // Hide error after 3 seconds
+      setTimeout(() => {
+        setShareError(false);
+      }, 3000);
+      
       // Final fallback for browsers that don't support clipboard API
       alert(`${shareData.text}\n${shareData.url}`);
     }
@@ -69,18 +85,28 @@ const ShareButton = ({ item, type = 'product' }) => {
     <>
       <button
         onClick={handleShare}
-        className="share-button"
+        className={`share-button ${isSharing ? 'sharing' : ''}`}
         aria-label={`Del ${item.navn}`}
         title="Del dette tilbud"
+        disabled={isSharing}
       >
-        <span className="share-icon" aria-hidden="true">↗️</span>
-        <span className="share-text">Del</span>
+        <span className="share-icon" aria-hidden="true">
+          {isSharing ? '⏳' : '↗️'}
+        </span>
+        <span className="share-text">{isSharing ? 'Deler...' : 'Del'}</span>
       </button>
       
       {showToast && (
-        <div className="share-toast" role="alert" aria-live="polite">
-          <span className="toast-icon">✓</span>
+        <div className="share-toast success" role="alert" aria-live="polite">
+          <span className="toast-icon" aria-hidden="true">✓</span>
           <span className="toast-text">Link kopieret til udklipsholder!</span>
+        </div>
+      )}
+      
+      {shareError && (
+        <div className="share-toast error" role="alert" aria-live="assertive">
+          <span className="toast-icon" aria-hidden="true">✗</span>
+          <span className="toast-text">Kunne ikke dele. Prøv igen.</span>
         </div>
       )}
     </>

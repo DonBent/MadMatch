@@ -109,9 +109,10 @@ describe('Favoritter', () => {
       expect(screen.getByText('♥ Dine favoritter (0)')).toBeInTheDocument();
     });
     
-    expect(screen.getByText('♡')).toBeInTheDocument();
-    expect(screen.getByText('Ingen favoritter endnu. Tryk på ♥ for at tilføje.')).toBeInTheDocument();
-    expect(screen.getByText('Browse tilbud')).toBeInTheDocument();
+    expect(screen.getByText('♡', { selector: '.empty-icon' })).toBeInTheDocument();
+    expect(screen.getByText('Du har ingen favoritter endnu')).toBeInTheDocument();
+    expect(screen.getByText('Klik på ❤️ for at gemme tilbud!')).toBeInTheDocument();
+    expect(screen.getByText('Se alle tilbud')).toBeInTheDocument();
   });
 
   test('displays correct header with favorite count', async () => {
@@ -287,7 +288,7 @@ describe('Favoritter', () => {
     renderWithProviders(<Favoritter />);
     
     await waitFor(() => {
-      const browseLink = screen.getByText('Browse tilbud');
+      const browseLink = screen.getByText('Se alle tilbud');
       expect(browseLink).toBeInTheDocument();
       expect(browseLink).toHaveAttribute('href', '/');
     });
@@ -305,7 +306,7 @@ describe('Favoritter', () => {
     
     await waitFor(() => {
       expect(screen.getByText('♥ Dine favoritter (0)')).toBeInTheDocument();
-      expect(screen.getByText('Ingen favoritter endnu. Tryk på ♥ for at tilføje.')).toBeInTheDocument();
+      expect(screen.getByText('Du har ingen favoritter endnu')).toBeInTheDocument();
     });
     
     // Should not call getAllTilbud when favorites is empty
@@ -387,7 +388,7 @@ describe('Favoritter', () => {
     renderWithProviders(<Favoritter />);
     
     await waitFor(() => {
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to load favorite tilbud:', error);
+      expect(screen.getByText('Kunne ikke indlæse favoritter.')).toBeInTheDocument();
     });
     
     consoleErrorSpy.mockRestore();
