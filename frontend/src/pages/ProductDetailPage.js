@@ -89,8 +89,8 @@ const ProductDetailPage = () => {
       const response = await fetch(`/api/produkt/${id}/sustainability`);
       
       if (response.ok) {
-        const data = await response.json();
-        setSustainability(data);
+        const responseData = await response.json();
+        setSustainability(responseData.data);
       } else if (response.status !== 404) {
         console.warn('Failed to load sustainability data:', response.status);
       }

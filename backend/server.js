@@ -230,9 +230,23 @@ app.get('/api/produkt/:id/sustainability', async (req, res) => {
       product.navn
     );
     
+    // Transform to frontend-expected format
+    const transformedData = sustainabilityData ? {
+      ecoScore: sustainabilityData.ecoScore,
+      carbonFootprint: sustainabilityData.carbonFootprint,
+      certifications: {
+        organic: sustainabilityData.organic,
+        fairTrade: sustainabilityData.fairTrade,
+        local: sustainabilityData.local,
+        recyclablePackaging: sustainabilityData.packagingRecyclable
+      },
+      dataSource: sustainabilityData.source,
+      lastUpdated: sustainabilityData.lastUpdated
+    } : null;
+    
     res.json({
       success: true,
-      data: sustainabilityData
+      data: transformedData
     });
   } catch (error) {
     console.error('[ERROR] Failed to fetch sustainability data:', error);
