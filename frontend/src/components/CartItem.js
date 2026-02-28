@@ -12,6 +12,27 @@ import './CartItem.css';
 const CartItem = ({ product }) => {
   const { updateQuantity, removeFromCart } = useCart();
   
+  const handleIncrement = useCallback(() => {
+    if (!product) return;
+    const quantity = product.cartItem?.quantity || 0;
+    if (quantity < 99) {
+      updateQuantity(product.id, quantity + 1);
+    }
+  }, [product, updateQuantity]);
+
+  const handleDecrement = useCallback(() => {
+    if (!product) return;
+    const quantity = product.cartItem?.quantity || 0;
+    if (quantity > 1) {
+      updateQuantity(product.id, quantity - 1);
+    }
+  }, [product, updateQuantity]);
+
+  const handleRemove = useCallback(() => {
+    if (!product) return;
+    removeFromCart(product.id);
+  }, [product, removeFromCart]);
+
   if (!product) return null;
 
   const cartItem = product.cartItem;
@@ -19,22 +40,6 @@ const CartItem = ({ product }) => {
   
   const subtotal = product.tilbudspris * quantity;
   const savings = (product.normalpris - product.tilbudspris) * quantity;
-
-  const handleIncrement = useCallback(() => {
-    if (quantity < 99) {
-      updateQuantity(product.id, quantity + 1);
-    }
-  }, [quantity, product.id, updateQuantity]);
-
-  const handleDecrement = useCallback(() => {
-    if (quantity > 1) {
-      updateQuantity(product.id, quantity - 1);
-    }
-  }, [quantity, product.id, updateQuantity]);
-
-  const handleRemove = useCallback(() => {
-    removeFromCart(product.id);
-  }, [product.id, removeFromCart]);
 
   return (
     <div className="cart-item" role="article" aria-label={`${product.navn} fra ${product.butik}`}>

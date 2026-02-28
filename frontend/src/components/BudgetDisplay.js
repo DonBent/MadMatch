@@ -13,13 +13,6 @@ import './BudgetDisplay.css';
 const BudgetDisplay = ({ cartTotal = 0, compact = false }) => {
   const { budget, budgetEnabled, calculateBudgetMetrics } = useBudget();
 
-  // Don't render if budget is not enabled
-  if (!budgetEnabled) {
-    return null;
-  }
-
-  const { remainingBudget, budgetExceeded, budgetPercentUsed } = calculateBudgetMetrics(cartTotal);
-
   // Determine color based on percentage with smooth transitions
   const getProgressColor = useMemo(() => {
     const actualPercent = budget > 0 ? (cartTotal / budget) * 100 : 0;
@@ -27,6 +20,13 @@ const BudgetDisplay = ({ cartTotal = 0, compact = false }) => {
     if (actualPercent <= 100) return '#ffc107'; // Yellow - approaching limit
     return '#dc3545'; // Red - over budget
   }, [cartTotal, budget]);
+
+  // Don't render if budget is not enabled
+  if (!budgetEnabled) {
+    return null;
+  }
+
+  const { remainingBudget, budgetExceeded, budgetPercentUsed } = calculateBudgetMetrics(cartTotal);
 
   const progressColor = getProgressColor;
   const progressWidth = Math.min(100, budgetPercentUsed);
