@@ -1,0 +1,81 @@
+---
+type: feature
+product: MadMatch
+version-impact: minor
+data-impact: none
+requires-migration: false
+breaking-change: false
+correlation-id: ZHC-MadMatch-20260226-001
+related-issue: 1
+---
+
+## Summary
+
+Implementation af Epic 1 - Tilbudsoversigt. Komplet MVP med React frontend og Node.js/Express backend der viser 15 tilbud med filtrering på butik og kategori.
+
+## Implementation Plan
+1. Opret backend med Express API på port 4001
+2. Tilføj mock data (tilbud.json) med 15 tilbud fra 3 butikker
+3. Implementer API endpoints for tilbud, butikker og kategorier med filtrering
+4. Opret React frontend med responsive grid layout
+5. Implementer TilbudCard og FilterBar komponenter
+6. Tilføj tilbudService til API kommunikation
+7. Implementer tests for backend og frontend
+8. Tilføj structured logging og observability
+
+## Changes Made
+- Backend Express server med 4 API endpoints (tilbud, tilbud/:id, butikker, kategorier)
+- Mock data med 15 tilbud fra 3 butikker (Rema 1000, Netto, Føtex) i 9 kategorier
+- React frontend med App, TilbudCard og FilterBar komponenter
+- Responsive CSS grid layout (desktop 3-4 kolonner, mobil 1 kolonne)
+- Filter funktionalitet på butik og kategori med query params
+- Tilbud viser navn, butik, normalpris, tilbudspris, rabat% og besparelse
+- Health check endpoint (/health)
+- Structured logging af alle API requests
+- README dokumentation for backend og frontend
+
+## Tests Added
+- Unit tests:
+  - Backend: 6 test cases (GET /api/tilbud med/uden filtre, GET /api/tilbud/:id, GET /api/butikker, GET /api/kategorier, GET /health)
+  - Frontend: React component render test med mocked service
+- Integration tests: N/A (ingen eksterne dependencies)
+- Edge cases covered:
+  - 404 for ikke-eksisterende tilbud
+  - Filtrering med case-insensitive matching
+  - Tom resultatliste ved filtre uden match
+  - API fejlhåndtering med brugervenlig fejlbesked
+
+## Reproduction Steps
+1. Clone repository og checkout feature/epic-1-tilbudsoversigt
+2. Start backend: `cd backend && npm install && npm start` (port 4001)
+3. Start frontend: `cd frontend && npm install && npm start` (port 3000)
+4. Åbn browser på http://localhost:3000
+5. Verificer at 15 tilbud vises i grid layout
+6. Test filtrering på butik (Rema 1000, Netto, Føtex)
+7. Test filtrering på kategori (Kød, Mejeri, Frugt, etc.)
+8. Test responsivt design ved at resize browser vindue
+9. Kør tests: `npm test` i både backend og frontend directories
+
+## Migration Details
+
+null
+
+## Observability
+- Logs added or modified:
+  - Request logging: `[timestamp] METHOD path`
+  - Filter logging: `[INFO] Returning N tilbud (butik: X, kategori: Y)`
+  - Error logging: `[ERROR] Failed to fetch tilbud: error`
+  - Server startup log med ASCII banner og endpoint liste
+- Correlation ID propagation:
+  - Correlation ID inkluderet i README og git commit message
+  - Kan tilføjes som HTTP header i fremtidige versioner
+- Health check impact:
+  - GET /health endpoint tilføjet (returnerer status: ok + timestamp)
+  - Kan bruges til monitoring og load balancer health checks
+
+## Checklist
+- [x] Tests pass locally
+- [x] CI passing (N/A - intet CI setup endnu)
+- [x] No direct main changes
+- [x] Version bump correct (minor - ny feature i MVP)
+- [x] Migration verified (ikke relevant - ingen database)

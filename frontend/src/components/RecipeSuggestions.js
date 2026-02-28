@@ -1,28 +1,32 @@
 import React from 'react';
 import './RecipeSuggestions.css';
 
+/**
+ * RecipeSuggestions Component
+ * Displays recipe suggestions with improved accessibility
+ */
 const RecipeSuggestions = ({ recipes, loading }) => {
   if (loading) {
     return (
-      <div className="recipe-suggestions">
-        <h2 className="recipe-title">Opskriftsforslag</h2>
-        <div className="recipe-loading">
-          <div className="loading-spinner"></div>
+      <section className="recipe-suggestions" aria-busy="true" aria-label="Indlæser opskrifter">
+        <h2 id="recipes-title" className="recipe-title">Opskriftsforslag</h2>
+        <div className="recipe-loading" role="status">
+          <div className="loading-spinner" aria-hidden="true"></div>
           <p>Henter opskrifter...</p>
         </div>
-      </div>
+      </section>
     );
   }
 
   if (!recipes || recipes.length === 0) {
     return (
-      <div className="recipe-suggestions">
-        <h2 className="recipe-title">Opskriftsforslag</h2>
-        <div className="recipe-fallback">
-          <p className="fallback-icon">🍽️</p>
+      <section className="recipe-suggestions" aria-labelledby="recipes-title">
+        <h2 id="recipes-title" className="recipe-title">Opskriftsforslag</h2>
+        <div className="recipe-fallback" role="status">
+          <p className="fallback-icon" aria-hidden="true">🍽️</p>
           <p className="fallback-text">Ingen opskriftsforslag fundet for dette produkt</p>
         </div>
-      </div>
+      </section>
     );
   }
 
@@ -37,10 +41,10 @@ const RecipeSuggestions = ({ recipes, loading }) => {
   const displayRecipes = recipes.slice(0, 3);
 
   return (
-    <div className="recipe-suggestions">
-      <h2 className="recipe-title">Opskriftsforslag</h2>
+    <section className="recipe-suggestions" aria-labelledby="recipes-title">
+      <h2 id="recipes-title" className="recipe-title">Opskriftsforslag</h2>
       
-      <div className="recipe-grid">
+      <div className="recipe-grid" role="list">
         {displayRecipes.map((recipe) => (
           <a
             key={recipe.id}
@@ -48,6 +52,8 @@ const RecipeSuggestions = ({ recipes, loading }) => {
             target="_blank"
             rel="noopener noreferrer"
             className="recipe-card"
+            role="listitem"
+            aria-label={`${recipe.title}, ${recipe.readyInMinutes} minutter, ${recipe.servings} portioner, ${getDifficultyLabel(recipe.complexity)} sværhedsgrad`}
           >
             {recipe.image && (
               <div className="recipe-image-container">
@@ -63,35 +69,41 @@ const RecipeSuggestions = ({ recipes, loading }) => {
             <div className="recipe-content">
               <h3 className="recipe-name">{recipe.title}</h3>
               
-              <div className="recipe-meta">
+              <div className="recipe-meta" aria-label="Opskriftsdetaljer">
                 <span className="recipe-meta-item">
-                  <span className="meta-icon">⏱️</span>
-                  {recipe.readyInMinutes} min
+                  <span className="meta-icon" aria-hidden="true">⏱️</span>
+                  <span aria-label={`${recipe.readyInMinutes} minutter`}>
+                    {recipe.readyInMinutes} min
+                  </span>
                 </span>
-                <span className="recipe-meta-divider">|</span>
+                <span className="recipe-meta-divider" aria-hidden="true">|</span>
                 <span className="recipe-meta-item">
-                  <span className="meta-icon">👥</span>
-                  {recipe.servings} portioner
+                  <span className="meta-icon" aria-hidden="true">👥</span>
+                  <span aria-label={`${recipe.servings} portioner`}>
+                    {recipe.servings} portioner
+                  </span>
                 </span>
-                <span className="recipe-meta-divider">|</span>
+                <span className="recipe-meta-divider" aria-hidden="true">|</span>
                 <span className="recipe-meta-item">
-                  <span className="meta-icon">📊</span>
-                  {getDifficultyLabel(recipe.complexity)}
+                  <span className="meta-icon" aria-hidden="true">📊</span>
+                  <span aria-label={`${getDifficultyLabel(recipe.complexity)} sværhedsgrad`}>
+                    {getDifficultyLabel(recipe.complexity)}
+                  </span>
                 </span>
               </div>
             </div>
             
-            <div className="recipe-link-indicator">
+            <div className="recipe-link-indicator" aria-hidden="true">
               <span>Se opskrift →</span>
             </div>
           </a>
         ))}
       </div>
       
-      <div className="recipe-attribution">
-        <p>Opskrifter fra Spoonacular</p>
+      <div className="recipe-attribution" role="contentinfo">
+        <p><small>Opskrifter fra Spoonacular</small></p>
       </div>
-    </div>
+    </section>
   );
 };
 

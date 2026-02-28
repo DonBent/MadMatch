@@ -4,13 +4,16 @@ import './NutritionCard.css';
 /**
  * NutritionCard Component
  * Displays nutrition facts per 100g with fallback for missing data
+ * Improved accessibility with ARIA labels and semantic HTML
  */
 const NutritionCard = ({ nutrition, loading }) => {
   if (loading) {
     return (
-      <div className="nutrition-card">
+      <div className="nutrition-card" aria-busy="true" aria-label="Indlæser næringsdata">
         <h3 className="nutrition-card__title">Næringsindhold</h3>
-        <div className="nutrition-card__loading">Indlæser næringsdata...</div>
+        <div className="nutrition-card__loading" role="status">
+          Indlæser næringsdata...
+        </div>
       </div>
     );
   }
@@ -19,7 +22,7 @@ const NutritionCard = ({ nutrition, loading }) => {
     return (
       <div className="nutrition-card">
         <h3 className="nutrition-card__title">Næringsindhold</h3>
-        <div className="nutrition-card__fallback">
+        <div className="nutrition-card__fallback" role="status">
           Næringsdata ikke tilgængelig
         </div>
       </div>
@@ -70,11 +73,11 @@ const NutritionCard = ({ nutrition, loading }) => {
   ];
 
   return (
-    <div className="nutrition-card">
-      <h3 className="nutrition-card__title">Næringsindhold</h3>
+    <section className="nutrition-card" aria-labelledby="nutrition-title">
+      <h3 id="nutrition-title" className="nutrition-card__title">Næringsindhold</h3>
       <p className="nutrition-card__serving">Per 100 g</p>
       
-      <table className="nutrition-card__table">
+      <table className="nutrition-card__table" role="table" aria-label="Næringsværdier per 100 gram">
         <tbody>
           {nutritionRows.map((row, index) => (
             <tr 
@@ -89,11 +92,11 @@ const NutritionCard = ({ nutrition, loading }) => {
       </table>
 
       {nutrition.data_source && (
-        <div className="nutrition-card__attribution">
-          Data fra {nutrition.data_source}
+        <div className="nutrition-card__attribution" role="contentinfo">
+          <small>Data fra {nutrition.data_source}</small>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 

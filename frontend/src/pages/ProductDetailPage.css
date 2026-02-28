@@ -18,11 +18,22 @@
   border-radius: 8px;
   font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .btn-back:hover {
   background-color: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-back:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+.btn-back:active {
+  transform: translateY(0);
 }
 
 /* Loading skeleton */
@@ -230,6 +241,37 @@
   }
 }
 
+/* Product actions (Share button container) */
+.product-actions {
+  margin: 1rem 0;
+}
+
+/* Smooth transitions for all interactive elements */
+button,
+a,
+.product-image {
+  transition: all 0.2s ease;
+}
+
+/* Focus indicators for accessibility */
+button:focus,
+a:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Ensure images are lazy-loaded with smooth fade-in */
+.product-image {
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
 /* Desktop styles */
 @media (min-width: 1024px) {
   .product-detail-page {
@@ -248,5 +290,16 @@
 
   .price-offer {
     font-size: 28px;
+  }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
