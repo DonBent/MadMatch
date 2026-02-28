@@ -218,7 +218,7 @@ const ProductDetailPage = () => {
             )}
 
             <div className="product-actions">
-              <ShareButton productId={id} productName={product.navn} />
+              <ShareButton item={product} type="product" />
               <FavoriteButton productId={parseInt(id)} />
             </div>
 

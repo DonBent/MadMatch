@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import FavoriteButton from './FavoriteButton';
+import ShareButton from './ShareButton';
 import AddToCartButton from './AddToCartButton';
 import './TilbudCard.css';
 
@@ -13,6 +14,7 @@ const TilbudCard = ({ tilbud }) => {
             <span className="butik-badge">{tilbud.butik}</span>
             <div className="tilbud-card-header-right">
               <span className="rabat-badge">-{tilbud.rabat}%</span>
+              <ShareButton item={tilbud} type="tilbud" />
               <FavoriteButton productId={tilbud.id} />
             </div>
           </div>
