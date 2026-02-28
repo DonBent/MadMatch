@@ -289,7 +289,7 @@ describe('CartContext', () => {
       const stored = localStorage.getItem('madmatch_cart');
       expect(stored).toBeTruthy();
       const data = JSON.parse(stored);
-      expect(data.version).toBe(1);
+      expect(data.version).toBe(2);
       expect(data.cart).toHaveLength(1);
       expect(data.cart[0].productId).toBe(1);
       expect(data.cart[0].quantity).toBe(1);

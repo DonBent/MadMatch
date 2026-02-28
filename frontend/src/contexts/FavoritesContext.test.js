@@ -142,7 +142,7 @@ describe('FavoritesContext', () => {
     // Set v1 data - should be migrated to v2 automatically
     localStorage.setItem('madmatch_favorites', JSON.stringify({
       favorites: [5, 10],
-      version: 1
+      version: 2
     }));
 
     render(

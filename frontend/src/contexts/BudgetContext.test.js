@@ -283,7 +283,7 @@ describe('BudgetContext', () => {
       const stored = localStorage.getItem('madmatch_budget');
       expect(stored).toBeTruthy();
       const data = JSON.parse(stored);
-      expect(data.version).toBe(1);
+      expect(data.version).toBe(2);
       expect(data.budget).toBe(250);
       expect(data.enabled).toBe(true);
       expect(data.savedAt).toBeTruthy();
