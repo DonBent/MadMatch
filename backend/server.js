@@ -5,6 +5,7 @@ require('dotenv').config();
 const { TilbudDataService } = require('./services/tilbudDataService');
 const { NutritionService } = require('./services/nutritionService');
 const { RecipeService } = require('./services/recipeService');
+const { SustainabilityService } = require('./services/sustainabilityService');
 
 const app = express();
 const PORT = process.env.PORT || 4001;
@@ -28,6 +29,12 @@ nutritionService.initialize().catch(err => {
 const recipeService = new RecipeService();
 recipeService.initialize().catch(err => {
   console.error('[ERROR] Failed to initialize RecipeService:', err);
+});
+
+// Initialize Sustainability Service
+const sustainabilityService = new SustainabilityService();
+sustainabilityService.initialize().catch(err => {
+  console.error('[ERROR] Failed to initialize SustainabilityService:', err);
 });
 
 // Middleware
@@ -202,6 +209,54 @@ app.get('/api/produkt/:id/recipes', async (req, res) => {
   }
 });
 
+// GET /api/produkt/:id/sustainability - Hent bæredygtighedsdata
+app.get('/api/produkt/:id/sustainability', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    
+    // First, get the product to extract its name
+    const product = await tilbudService.getTilbudById(id);
+    
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        error: 'Produkt ikke fundet'
+      });
+    }
+    
+    // Fetch sustainability data using product ID and name
+    const sustainabilityData = await sustainabilityService.getSustainabilityData(
+      id.toString(),
+      product.navn
+    );
+    
+    // Transform to frontend-expected format
+    const transformedData = sustainabilityData ? {
+      ecoScore: sustainabilityData.ecoScore,
+      carbonFootprint: sustainabilityData.carbonFootprint,
+      certifications: {
+        organic: sustainabilityData.organic,
+        fairTrade: sustainabilityData.fairTrade,
+        local: sustainabilityData.local,
+        recyclablePackaging: sustainabilityData.packagingRecyclable
+      },
+      dataSource: sustainabilityData.source,
+      lastUpdated: sustainabilityData.lastUpdated
+    } : null;
+    
+    res.json({
+      success: true,
+      data: transformedData
+    });
+  } catch (error) {
+    console.error('[ERROR] Failed to fetch sustainability data:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -228,6 +283,7 @@ if (process.env.NODE_ENV !== 'test') {
     console.log(`  GET  /api/tilbud/:id`);
     console.log(`  GET  /api/produkt/:id/nutrition`);
     console.log(`  GET  /api/produkt/:id/recipes`);
+    console.log(`  GET  /api/produkt/:id/sustainability`);
     console.log(`  GET  /api/butikker`);
     console.log(`  GET  /api/kategorier`);
     console.log(`  GET  /health\n`);

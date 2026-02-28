@@ -4,6 +4,7 @@ import './ProductDetailPage.css';
 import { tilbudService } from '../services/tilbudService';
 import NutritionCard from '../components/NutritionCard';
 import RecipeSuggestions from '../components/RecipeSuggestions';
+import SustainabilityCard from '../components/SustainabilityCard';
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -15,6 +16,8 @@ const ProductDetailPage = () => {
   const [nutritionLoading, setNutritionLoading] = useState(false);
   const [recipes, setRecipes] = useState([]);
   const [recipesLoading, setRecipesLoading] = useState(false);
+  const [sustainability, setSustainability] = useState(null);
+  const [sustainabilityLoading, setSustainabilityLoading] = useState(false);
 
   useEffect(() => {
     loadProduct();
@@ -24,6 +27,7 @@ const ProductDetailPage = () => {
     if (product) {
       loadNutrition();
       loadRecipes();
+      loadSustainability();
     }
   }, [product]);
 
@@ -76,6 +80,25 @@ const ProductDetailPage = () => {
       // Silently fail - recipe data is optional
     } finally {
       setRecipesLoading(false);
+    }
+  };
+
+  const loadSustainability = async () => {
+    try {
+      setSustainabilityLoading(true);
+      const response = await fetch(`/api/produkt/${id}/sustainability`);
+      
+      if (response.ok) {
+        const responseData = await response.json();
+        setSustainability(responseData.data);
+      } else if (response.status !== 404) {
+        console.warn('Failed to load sustainability data:', response.status);
+      }
+    } catch (err) {
+      console.warn('Could not fetch sustainability data:', err);
+      // Silently fail - sustainability data is optional
+    } finally {
+      setSustainabilityLoading(false);
     }
   };
 
@@ -179,6 +202,8 @@ const ProductDetailPage = () => {
           <NutritionCard nutrition={nutrition} loading={nutritionLoading} />
 
           <RecipeSuggestions recipes={recipes} loading={recipesLoading} />
+
+          <SustainabilityCard data={sustainability} loading={sustainabilityLoading} />
         </div>
       </div>
     </div>

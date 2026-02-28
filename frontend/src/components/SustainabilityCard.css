@@ -1,0 +1,170 @@
+.sustainability-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sustainability-card h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.no-data {
+  color: #666;
+  font-style: italic;
+  margin: 10px 0;
+}
+
+/* Eco-score badge */
+.eco-score-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 15px 0;
+}
+
+.eco-score-badge {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.eco-score-letter {
+  font-size: 2rem;
+  color: #fff;
+}
+
+/* Eco-score colors */
+.eco-score-a {
+  background-color: #2ecc71;
+}
+
+.eco-score-b {
+  background-color: #27ae60;
+}
+
+.eco-score-c {
+  background-color: #f1c40f;
+}
+
+.eco-score-d {
+  background-color: #e67e22;
+}
+
+.eco-score-e {
+  background-color: #e74c3c;
+}
+
+.eco-score-label {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Carbon footprint */
+.carbon-footprint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.carbon-icon {
+  font-size: 1.5rem;
+}
+
+.carbon-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Certifications */
+.certifications {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.cert-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #e8f5e9;
+  border-radius: 6px;
+}
+
+.cert-icon {
+  color: #2ecc71;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.cert-label {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* Data attribution */
+.data-attribution {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #e0e0e0;
+  text-align: right;
+}
+
+.data-attribution small {
+  color: #999;
+  font-size: 0.8rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .sustainability-card {
+    padding: 15px;
+  }
+
+  .eco-score-badge {
+    width: 50px;
+    height: 50px;
+  }
+
+  .eco-score-letter {
+    font-size: 1.5rem;
+  }
+
+  .certifications {
+    grid-template-columns: 1fr;
+  }
+
+  .cert-item {
+    padding: 6px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sustainability-card h3 {
+    font-size: 1.2rem;
+  }
+
+  .eco-score-section {
+    gap: 10px;
+  }
+
+  .carbon-value {
+    font-size: 1rem;
+  }
+}
