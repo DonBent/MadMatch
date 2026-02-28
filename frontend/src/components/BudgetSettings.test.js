@@ -28,48 +28,46 @@ describe('BudgetSettings', () => {
     expect(screen.getByText('Aktiver budget tracking')).toBeInTheDocument();
   });
 
-  test('toggle starts unchecked by default', () => {
+  test('toggle starts checked by default', () => {
     renderWithProvider(<BudgetSettings />);
-    expect(screen.getByTestId('budget-toggle')).not.toBeChecked();
-  });
-
-  test('toggle can be checked', () => {
-    renderWithProvider(<BudgetSettings />);
-    const toggle = screen.getByTestId('budget-toggle');
-    
-    fireEvent.click(toggle);
-    expect(toggle).toBeChecked();
+    expect(screen.getByTestId('budget-toggle')).toBeChecked();
   });
 
   test('toggle can be unchecked', () => {
     renderWithProvider(<BudgetSettings />);
     const toggle = screen.getByTestId('budget-toggle');
     
-    fireEvent.click(toggle);
+    // Starts checked, click to uncheck
     expect(toggle).toBeChecked();
-    
     fireEvent.click(toggle);
     expect(toggle).not.toBeChecked();
+  });
+
+  test('toggle can be checked again', () => {
+    renderWithProvider(<BudgetSettings />);
+    const toggle = screen.getByTestId('budget-toggle');
+    
+    // Starts checked, click to uncheck
+    expect(toggle).toBeChecked();
+    fireEvent.click(toggle);
+    expect(toggle).not.toBeChecked();
+    
+    // Click again to check
+    fireEvent.click(toggle);
+    expect(toggle).toBeChecked();
   });
 
   test('shows budget input when enabled', () => {
     renderWithProvider(<BudgetSettings />);
     
-    // Input should not be visible initially
-    expect(screen.queryByTestId('budget-amount-input')).not.toBeInTheDocument();
-    
-    // Enable budget
-    fireEvent.click(screen.getByTestId('budget-toggle'));
-    
-    // Input should now be visible
+    // Input should be visible by default (enabled by default)
     expect(screen.getByTestId('budget-amount-input')).toBeInTheDocument();
   });
 
   test('hides budget input when disabled', () => {
     renderWithProvider(<BudgetSettings />);
     
-    // Enable budget
-    fireEvent.click(screen.getByTestId('budget-toggle'));
+    // Input visible by default
     expect(screen.getByTestId('budget-amount-input')).toBeInTheDocument();
     
     // Disable budget
@@ -80,16 +78,14 @@ describe('BudgetSettings', () => {
   test('shows reset button when enabled', () => {
     renderWithProvider(<BudgetSettings />);
     
-    expect(screen.queryByTestId('reset-budget-button')).not.toBeInTheDocument();
-    
-    fireEvent.click(screen.getByTestId('budget-toggle'));
+    // Reset button visible by default (enabled by default)
     expect(screen.getByTestId('reset-budget-button')).toBeInTheDocument();
   });
 
   test('budget input starts with 0', () => {
     renderWithProvider(<BudgetSettings />);
     
-    fireEvent.click(screen.getByTestId('budget-toggle'));
+    // Input visible by default - no toggle needed
     const input = screen.getByTestId('budget-amount-input');
     
     expect(input).toHaveValue(0);
@@ -98,7 +94,7 @@ describe('BudgetSettings', () => {
   test('can set budget amount', () => {
     renderWithProvider(<BudgetSettings />);
     
-    fireEvent.click(screen.getByTestId('budget-toggle'));
+    // Input visible by default - no toggle needed
     const input = screen.getByTestId('budget-amount-input');
     
     fireEvent.change(input, { target: { value: '250' } });
@@ -108,7 +104,7 @@ describe('BudgetSettings', () => {
   test('can update budget amount multiple times', () => {
     renderWithProvider(<BudgetSettings />);
     
-    fireEvent.click(screen.getByTestId('budget-toggle'));
+    // Input visible by default - no toggle needed
     const input = screen.getByTestId('budget-amount-input');
     
     fireEvent.change(input, { target: { value: '100' } });
@@ -121,7 +117,7 @@ describe('BudgetSettings', () => {
   test('rejects negative budget amounts', () => {
     renderWithProvider(<BudgetSettings />);
     
-    fireEvent.click(screen.getByTestId('budget-toggle'));
+    // Input visible by default - no toggle needed
     const input = screen.getByTestId('budget-amount-input');
     
     fireEvent.change(input, { target: { value: '200' } });
@@ -136,7 +132,7 @@ describe('BudgetSettings', () => {
   test('handles non-numeric input gracefully', () => {
     renderWithProvider(<BudgetSettings />);
     
-    fireEvent.click(screen.getByTestId('budget-toggle'));
+    // Input visible by default - no toggle needed
     const input = screen.getByTestId('budget-amount-input');
     
     // When non-numeric value is entered, input temporarily shows it
@@ -149,8 +145,7 @@ describe('BudgetSettings', () => {
   test('reset button resets budget to 0 and disables', async () => {
     renderWithProvider(<BudgetSettings />);
     
-    // Enable and set budget
-    fireEvent.click(screen.getByTestId('budget-toggle'));
+    // Already enabled by default, set budget
     const input = screen.getByTestId('budget-amount-input');
     fireEvent.change(input, { target: { value: '500' } });
     expect(input).toHaveValue(500);
@@ -172,7 +167,7 @@ describe('BudgetSettings', () => {
   test('input has correct attributes', () => {
     renderWithProvider(<BudgetSettings />);
     
-    fireEvent.click(screen.getByTestId('budget-toggle'));
+    // Input visible by default - no toggle needed
     const input = screen.getByTestId('budget-amount-input');
     
     expect(input).toHaveAttribute('type', 'number');
@@ -183,7 +178,7 @@ describe('BudgetSettings', () => {
   test('persists budget to localStorage when changed', async () => {
     renderWithProvider(<BudgetSettings />);
     
-    fireEvent.click(screen.getByTestId('budget-toggle'));
+    // Input visible by default - no toggle needed
     const input = screen.getByTestId('budget-amount-input');
     fireEvent.change(input, { target: { value: '350' } });
     
@@ -199,7 +194,11 @@ describe('BudgetSettings', () => {
   test('persists enabled state to localStorage', async () => {
     renderWithProvider(<BudgetSettings />);
     
-    fireEvent.click(screen.getByTestId('budget-toggle'));
+    // Context starts with enabled=true by default
+    // Trigger a state change to force save (toggle off then on)
+    const toggle = screen.getByTestId('budget-toggle');
+    fireEvent.click(toggle); // Disable
+    fireEvent.click(toggle); // Enable again
     
     await waitFor(() => {
       const stored = localStorage.getItem('madmatch_budget');
@@ -227,8 +226,7 @@ describe('BudgetSettings', () => {
   test('reset clears localStorage correctly', async () => {
     renderWithProvider(<BudgetSettings />);
     
-    // Enable and set budget
-    fireEvent.click(screen.getByTestId('budget-toggle'));
+    // Already enabled by default, set budget
     const input = screen.getByTestId('budget-amount-input');
     fireEvent.change(input, { target: { value: '500' } });
     
@@ -254,7 +252,7 @@ describe('BudgetSettings', () => {
   test('handles decimal budget values', () => {
     renderWithProvider(<BudgetSettings />);
     
-    fireEvent.click(screen.getByTestId('budget-toggle'));
+    // Input visible by default - no toggle needed
     const input = screen.getByTestId('budget-amount-input');
     
     fireEvent.change(input, { target: { value: '123.45' } });
