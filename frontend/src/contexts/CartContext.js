@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import * as storage from '../utils/storage';
 
 const CartContext = createContext();
 
@@ -15,40 +16,71 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
+  const [storageWarning, setStorageWarning] = useState(null);
 
-  // Load cart from localStorage on mount
+  // Log storage status on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const data = JSON.parse(stored);
-        if (data.version === STORAGE_VERSION && Array.isArray(data.cart)) {
-          console.log('[CartContext] Loaded cart from localStorage:', data.cart.length, 'items');
-          setCart(data.cart);
-        } else {
-          console.warn('[CartContext] Invalid cart data structure in localStorage');
-        }
-      } else {
-        console.log('[CartContext] No cart data in localStorage');
-      }
-    } catch (error) {
-      console.error('[CartContext] Failed to load cart from localStorage:', error);
+    const status = storage.getStorageStatus();
+    console.log('[CartContext] Storage status:', status);
+    
+    if (!status.localStorageAvailable) {
+      console.warn('[CartContext] localStorage not available, using fallback');
+      setStorageWarning('Cart data may not persist across browser restarts');
     }
   }, []);
 
-  // Save cart to localStorage whenever it changes
+  // Load cart from storage on mount
   useEffect(() => {
     try {
-      const data = {
-        cart,
-        version: STORAGE_VERSION,
-        savedAt: new Date().toISOString()
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      console.log('[CartContext] Saved cart to localStorage:', cart.length, 'items');
+      const stored = storage.getItem(STORAGE_KEY);
+      if (stored) {
+        const data = JSON.parse(stored);
+        if (data.version === STORAGE_VERSION && Array.isArray(data.cart)) {
+          console.log('[CartContext] Loaded cart from storage:', data.cart.length, 'items');
+          setCart(data.cart);
+        } else {
+          console.warn('[CartContext] Invalid cart data structure in storage');
+        }
+      } else {
+        console.log('[CartContext] No cart data in storage');
+      }
     } catch (error) {
-      console.error('[CartContext] Failed to save cart to localStorage:', error);
+      console.error('[CartContext] Failed to load cart from storage:', error);
     }
+  }, []);
+
+  // Save cart to storage whenever it changes
+  useEffect(() => {
+    const saveCart = async () => {
+      try {
+        const data = {
+          cart,
+          version: STORAGE_VERSION,
+          savedAt: new Date().toISOString()
+        };
+        
+        const result = await storage.setItem(STORAGE_KEY, data);
+        
+        if (result.success) {
+          console.log('[CartContext] Saved cart to storage:', cart.length, 'items via', result.backend);
+          
+          // Show warning if using fallback storage
+          if (result.warning && result.backend !== 'localStorage') {
+            setStorageWarning(result.warning);
+          } else {
+            setStorageWarning(null);
+          }
+        } else {
+          console.error('[CartContext] Failed to save cart:', result.error);
+          setStorageWarning('Failed to save cart - data may be lost');
+        }
+      } catch (error) {
+        console.error('[CartContext] Failed to save cart to storage:', error);
+        setStorageWarning('Failed to save cart - data may be lost');
+      }
+    };
+    
+    saveCart();
   }, [cart]);
 
   const addToCart = (product) => {
@@ -123,7 +155,9 @@ export const CartProvider = ({ children }) => {
     removeFromCart,
     updateQuantity,
     clearCart,
-    totalItems
+    totalItems,
+    storageWarning, // Expose storage warning to UI
+    storageStatus: storage.getStorageStatus() // Expose storage status
   };
 
   return (
