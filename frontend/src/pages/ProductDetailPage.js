@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './ProductDetailPage.css';
 import { tilbudService } from '../services/tilbudService';
+import NutritionCard from '../components/NutritionCard';
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -9,10 +10,18 @@ const ProductDetailPage = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [nutrition, setNutrition] = useState(null);
+  const [nutritionLoading, setNutritionLoading] = useState(false);
 
   useEffect(() => {
     loadProduct();
   }, [id]);
+
+  useEffect(() => {
+    if (product) {
+      loadNutrition();
+    }
+  }, [product]);
 
   const loadProduct = async () => {
     try {
@@ -25,6 +34,25 @@ const ProductDetailPage = () => {
       setError(err.response?.status === 404 ? 'Produkt ikke fundet' : 'Kunne ikke indlæse produkt');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadNutrition = async () => {
+    try {
+      setNutritionLoading(true);
+      const response = await fetch(`/api/produkt/${id}/nutrition`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setNutrition(data);
+      } else if (response.status !== 404) {
+        console.warn('Failed to load nutrition data:', response.status);
+      }
+    } catch (err) {
+      console.warn('Could not fetch nutrition data:', err);
+      // Silently fail - nutrition data is optional
+    } finally {
+      setNutritionLoading(false);
     }
   };
 
@@ -124,6 +152,8 @@ const ProductDetailPage = () => {
               <span>Gyldig {product.gyldigFra} - {product.gyldigTil}</span>
             </div>
           )}
+
+          <NutritionCard nutrition={nutrition} loading={nutritionLoading} />
         </div>
       </div>
     </div>
