@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
+import { useBudget } from '../contexts/BudgetContext';
 import { tilbudService } from '../services/tilbudService';
 import CartItem from '../components/CartItem';
+import BudgetDisplay from '../components/BudgetDisplay';
 import './Handlekurv.css';
 
 const Handlekurv = () => {
   const { cart, clearCart, totalItems } = useCart();
+  const { budgetEnabled } = useBudget();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -172,6 +175,9 @@ const Handlekurv = () => {
 
         <div className="cart-summary">
           <h2>Oversigt</h2>
+          
+          {budgetEnabled && <BudgetDisplay cartTotal={totalCost} />}
+          
           <div className="summary-row">
             <span>Antal varer:</span>
             <span className="summary-value">{totalItems}</span>
