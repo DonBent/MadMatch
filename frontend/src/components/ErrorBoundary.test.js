@@ -93,21 +93,34 @@ describe('ErrorBoundary', () => {
   });
 
   test('resets error state when "Prøv igen" is clicked', () => {
+    let shouldThrow = true;
+    
+    const TestComponent = () => {
+      if (shouldThrow) {
+        throw new Error('Test error');
+      }
+      return <div>No error</div>;
+    };
+    
     const { rerender } = render(
       <ErrorBoundary>
-        <ThrowError shouldThrow={true} />
+        <TestComponent />
       </ErrorBoundary>
     );
     
     expect(screen.getByText('Noget gik galt')).toBeInTheDocument();
     
     const resetButton = screen.getByText('Prøv igen');
+    
+    // Reset the error state before clicking
+    shouldThrow = false;
+    
     fireEvent.click(resetButton);
     
-    // After reset, render without error
+    // After reset, component should render without error
     rerender(
       <ErrorBoundary>
-        <ThrowError shouldThrow={false} />
+        <TestComponent />
       </ErrorBoundary>
     );
     

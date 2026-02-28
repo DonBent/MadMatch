@@ -1,7 +1,6 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import { useParams, useNavigate } from 'react-router-dom';
-import userEvent from '@testing-library/user-event';
 import ProductDetailPage from './ProductDetailPage';
 import { tilbudService } from '../services/tilbudService';
 
@@ -219,7 +218,6 @@ describe('ProductDetailPage', () => {
   test('back button navigates to home', async () => {
     tilbudService.getTilbudById.mockResolvedValue(mockProduct);
     global.fetch.mockResolvedValue({ ok: false, status: 404 });
-    const user = userEvent.setup();
     
     render(<ProductDetailPage />);
     
@@ -228,7 +226,7 @@ describe('ProductDetailPage', () => {
     });
     
     const backButton = screen.getByLabelText('Tilbage til tilbudsoversigt');
-    await user.click(backButton);
+    fireEvent.click(backButton);
     
     expect(mockNavigate).toHaveBeenCalledWith('/');
   });

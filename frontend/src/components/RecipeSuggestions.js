@@ -44,61 +44,61 @@ const RecipeSuggestions = ({ recipes, loading }) => {
     <section className="recipe-suggestions" aria-labelledby="recipes-title">
       <h2 id="recipes-title" className="recipe-title">Opskriftsforslag</h2>
       
-      <div className="recipe-grid" role="list">
+      <ul className="recipe-grid" role="list">
         {displayRecipes.map((recipe) => (
-          <a
-            key={recipe.id}
-            href={recipe.sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="recipe-card"
-            role="listitem"
-            aria-label={`${recipe.title}, ${recipe.readyInMinutes} minutter, ${recipe.servings} portioner, ${getDifficultyLabel(recipe.complexity)} sværhedsgrad`}
-          >
-            {recipe.image && (
-              <div className="recipe-image-container">
-                <img 
-                  src={recipe.image} 
-                  alt={recipe.title}
-                  className="recipe-image"
-                  loading="lazy"
-                />
-              </div>
-            )}
-            
-            <div className="recipe-content">
-              <h3 className="recipe-name">{recipe.title}</h3>
+          <li key={recipe.id}>
+            <a
+              href={recipe.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="recipe-card"
+              aria-label={`${recipe.title}, ${recipe.readyInMinutes} minutter, ${recipe.servings} portioner, ${getDifficultyLabel(recipe.complexity)} sværhedsgrad`}
+            >
+              {recipe.image && (
+                <div className="recipe-image-container">
+                  <img 
+                    src={recipe.image} 
+                    alt={recipe.title}
+                    className="recipe-image"
+                    loading="lazy"
+                  />
+                </div>
+              )}
               
-              <div className="recipe-meta" aria-label="Opskriftsdetaljer">
-                <span className="recipe-meta-item">
-                  <span className="meta-icon" aria-hidden="true">⏱️</span>
-                  <span aria-label={`${recipe.readyInMinutes} minutter`}>
-                    {recipe.readyInMinutes} min
+              <div className="recipe-content">
+                <h3 className="recipe-name">{recipe.title}</h3>
+                
+                <div className="recipe-meta" aria-label="Opskriftsdetaljer">
+                  <span className="recipe-meta-item">
+                    <span className="meta-icon" aria-hidden="true">⏱️</span>
+                    <span aria-label={`${recipe.readyInMinutes} minutter`}>
+                      {recipe.readyInMinutes} min
+                    </span>
                   </span>
-                </span>
-                <span className="recipe-meta-divider" aria-hidden="true">|</span>
-                <span className="recipe-meta-item">
-                  <span className="meta-icon" aria-hidden="true">👥</span>
-                  <span aria-label={`${recipe.servings} portioner`}>
-                    {recipe.servings} portioner
+                  <span className="recipe-meta-divider" aria-hidden="true">|</span>
+                  <span className="recipe-meta-item">
+                    <span className="meta-icon" aria-hidden="true">👥</span>
+                    <span aria-label={`${recipe.servings} portioner`}>
+                      {recipe.servings} portioner
+                    </span>
                   </span>
-                </span>
-                <span className="recipe-meta-divider" aria-hidden="true">|</span>
-                <span className="recipe-meta-item">
-                  <span className="meta-icon" aria-hidden="true">📊</span>
-                  <span aria-label={`${getDifficultyLabel(recipe.complexity)} sværhedsgrad`}>
-                    {getDifficultyLabel(recipe.complexity)}
+                  <span className="recipe-meta-divider" aria-hidden="true">|</span>
+                  <span className="recipe-meta-item">
+                    <span className="meta-icon" aria-hidden="true">📊</span>
+                    <span aria-label={`${getDifficultyLabel(recipe.complexity)} sværhedsgrad`}>
+                      {getDifficultyLabel(recipe.complexity)}
+                    </span>
                   </span>
-                </span>
+                </div>
               </div>
-            </div>
-            
-            <div className="recipe-link-indicator" aria-hidden="true">
-              <span>Se opskrift →</span>
-            </div>
-          </a>
+              
+              <div className="recipe-link-indicator" aria-hidden="true">
+                <span>Se opskrift →</span>
+              </div>
+            </a>
+          </li>
         ))}
-      </div>
+      </ul>
       
       <div className="recipe-attribution" role="contentinfo">
         <p><small>Opskrifter fra Spoonacular</small></p>

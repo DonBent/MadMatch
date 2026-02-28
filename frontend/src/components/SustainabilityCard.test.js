@@ -8,7 +8,7 @@ describe('SustainabilityCard', () => {
     it('should display fallback message when no data provided', () => {
       render(<SustainabilityCard data={null} />);
       
-      expect(screen.getByText('🌱 Bæredygtighed')).toBeInTheDocument();
+      expect(screen.getByText(/Bæredygtighed/)).toBeInTheDocument();
       expect(screen.getByText('Ingen bæredygtighedsdata tilgængelig')).toBeInTheDocument();
     });
 
@@ -213,7 +213,8 @@ describe('SustainabilityCard', () => {
       };
       render(<SustainabilityCard data={data} />);
       
-      expect(screen.getByText('Data fra manual')).toBeInTheDocument();
+      expect(screen.getByText(/Data fra/i)).toBeInTheDocument();
+      expect(screen.getByText(/manuel kilde/i)).toBeInTheDocument();
     });
 
     it('should display Open Food Facts data source attribution', () => {
@@ -258,7 +259,8 @@ describe('SustainabilityCard', () => {
       expect(screen.getByText('Fair Trade')).toBeInTheDocument();
       expect(screen.getByText('Lokalt')).toBeInTheDocument();
       expect(screen.getByText('Genanvendelig emballage')).toBeInTheDocument();
-      expect(screen.getByText('Data fra manual')).toBeInTheDocument();
+      expect(screen.getByText(/Data fra/i)).toBeInTheDocument();
+      expect(screen.getByText(/manuel kilde/i)).toBeInTheDocument();
     });
   });
 });
