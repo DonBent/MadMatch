@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import FavoriteButton from './FavoriteButton';
 import './TilbudCard.css';
 
 const TilbudCard = ({ tilbud }) => {
@@ -8,7 +9,10 @@ const TilbudCard = ({ tilbud }) => {
       <div className="tilbud-card">
       <div className="tilbud-card-header">
         <span className="butik-badge">{tilbud.butik}</span>
-        <span className="rabat-badge">-{tilbud.rabat}%</span>
+        <div className="tilbud-card-header-right">
+          <span className="rabat-badge">-{tilbud.rabat}%</span>
+          <FavoriteButton productId={tilbud.id} />
+        </div>
       </div>
       
       <div className="tilbud-card-body">

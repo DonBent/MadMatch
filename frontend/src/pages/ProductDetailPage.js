@@ -6,6 +6,7 @@ import NutritionCard from '../components/NutritionCard';
 import RecipeSuggestions from '../components/RecipeSuggestions';
 import SustainabilityCard from '../components/SustainabilityCard';
 import ShareButton from '../components/ShareButton';
+import FavoriteButton from '../components/FavoriteButton';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import ErrorBoundary from '../components/ErrorBoundary';
 
@@ -221,6 +222,7 @@ const ProductDetailPage = () => {
 
             <div className="product-actions">
               <ShareButton productId={id} productName={product.navn} />
+              <FavoriteButton productId={parseInt(id)} />
             </div>
 
             {nutritionLoading ? (

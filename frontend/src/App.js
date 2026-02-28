@@ -1,10 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { FavoritesProvider, useFavorites } from './contexts/FavoritesContext';
 import './App.css';
 import TilbudCard from './components/TilbudCard';
 import FilterBar from './components/FilterBar';
 import ProductDetailPage from './pages/ProductDetailPage';
+import Favoritter from './pages/Favoritter';
 import { tilbudService } from './services/tilbudService';
+
+function Navigation() {
+  const { favorites } = useFavorites();
+  
+  return (
+    <nav className="app-nav">
+      <Link to="/" className="nav-link">Alle tilbud</Link>
+      <Link to="/favoritter" className="nav-link">
+        ♥ Favoritter {favorites.length > 0 && <span className="nav-badge">({favorites.length})</span>}
+      </Link>
+    </nav>
+  );
+}
 
 function TilbudOversigt() {
   const [tilbud, setTilbud] = useState([]);
@@ -91,6 +106,7 @@ function TilbudOversigt() {
       <header className="app-header">
         <h1>🛒 MadMatch</h1>
         <p className="tagline">Find de bedste tilbud</p>
+        <Navigation />
       </header>
 
       <main className="app-main">
@@ -123,7 +139,7 @@ function TilbudOversigt() {
       </main>
 
       <footer className="app-footer">
-        <p>MadMatch MVP v1.0 | Epic 1 - Tilbudsoversigt</p>
+        <p>MadMatch MVP v1.6 | Epic 3 - Favoritter</p>
       </footer>
     </div>
   );
@@ -131,12 +147,15 @@ function TilbudOversigt() {
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<TilbudOversigt />} />
-        <Route path="/produkt/:id" element={<ProductDetailPage />} />
-      </Routes>
-    </Router>
+    <FavoritesProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<TilbudOversigt />} />
+          <Route path="/produkt/:id" element={<ProductDetailPage />} />
+          <Route path="/favoritter" element={<Favoritter />} />
+        </Routes>
+      </Router>
+    </FavoritesProvider>
   );
 }
 
