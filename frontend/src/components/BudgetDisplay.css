@@ -1,0 +1,93 @@
+.budget-display {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.budget-display-compact {
+  padding: 8px 0;
+  margin-bottom: 12px;
+}
+
+.budget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.budget-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.budget-warning {
+  color: #dc3545;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.budget-info {
+  margin-bottom: 16px;
+}
+
+.budget-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.budget-label {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.budget-value {
+  color: #212529;
+  font-weight: 600;
+}
+
+.budget-value.negative {
+  color: #dc3545;
+}
+
+.budget-progress-container {
+  width: 100%;
+  height: 24px;
+  background-color: #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.budget-progress-bar {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  border-radius: 12px;
+}
+
+.budget-percentage {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.budget-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.budget-exceeded {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.budget-ok {
+  color: #28a745;
+}

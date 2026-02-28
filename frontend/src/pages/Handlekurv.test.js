@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import Handlekurv from './Handlekurv';
 import { CartProvider } from '../contexts/CartContext';
+import { BudgetProvider } from '../contexts/BudgetContext';
 import { tilbudService } from '../services/tilbudService';
 
 // Mock the tilbudService
@@ -39,7 +40,9 @@ const renderWithRouter = (component) => {
   return render(
     <BrowserRouter>
       <CartProvider>
-        {component}
+        <BudgetProvider>
+          {component}
+        </BudgetProvider>
       </CartProvider>
     </BrowserRouter>
   );

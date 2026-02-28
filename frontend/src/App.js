@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { FavoritesProvider, useFavorites } from './contexts/FavoritesContext';
 import { CartProvider, useCart } from './contexts/CartContext';
+import { BudgetProvider } from './contexts/BudgetContext';
 import './App.css';
 import TilbudCard from './components/TilbudCard';
 import FilterBar from './components/FilterBar';
@@ -146,14 +147,16 @@ function App() {
   return (
     <FavoritesProvider>
       <CartProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<TilbudOversigt />} />
-            <Route path="/produkt/:id" element={<ProductDetailPage />} />
-            <Route path="/favoritter" element={<Favoritter />} />
-            <Route path="/handlekurv" element={<Handlekurv />} />
-          </Routes>
-        </Router>
+        <BudgetProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<TilbudOversigt />} />
+              <Route path="/produkt/:id" element={<ProductDetailPage />} />
+              <Route path="/favoritter" element={<Favoritter />} />
+              <Route path="/handlekurv" element={<Handlekurv />} />
+            </Routes>
+          </Router>
+        </BudgetProvider>
       </CartProvider>
     </FavoritesProvider>
   );
