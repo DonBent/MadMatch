@@ -39,6 +39,21 @@
   line-height: 1;
 }
 
+/* Compact version for TilbudCard header */
+.tilbud-card-header-right .share-button {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.875rem;
+  min-width: auto;
+}
+
+.tilbud-card-header-right .share-button .share-text {
+  display: none;
+}
+
+.tilbud-card-header-right .share-button .share-icon {
+  font-size: 1rem;
+}
+
 /* Toast notification */
 .share-toast {
   position: fixed;
@@ -83,6 +98,11 @@
   .share-button {
     width: 100%;
     justify-content: center;
+  }
+  
+  /* Keep compact in card header on mobile */
+  .tilbud-card-header-right .share-button {
+    width: auto;
   }
   
   .share-toast {

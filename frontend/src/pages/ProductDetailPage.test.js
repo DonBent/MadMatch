@@ -62,8 +62,8 @@ jest.mock('../components/SustainabilityCard', () => ({
 
 jest.mock('../components/ShareButton', () => ({
   __esModule: true,
-  default: ({ productId, productName }) => (
-    <button data-testid="share-button">Del {productName}</button>
+  default: ({ item, type }) => (
+    <button data-testid="share-button">Del {item?.navn || 'Product'}</button>
   ),
 }));
 
