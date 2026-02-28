@@ -27,6 +27,12 @@
   align-items: center;
 }
 
+.tilbud-card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .butik-badge {
   background: #4CAF50;
   color: white;

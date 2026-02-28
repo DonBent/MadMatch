@@ -3,12 +3,34 @@ import { render, screen, waitFor, within, fireEvent } from '@testing-library/rea
 import { useParams, useNavigate } from 'react-router-dom';
 import ProductDetailPage from './ProductDetailPage';
 import { tilbudService } from '../services/tilbudService';
+import { FavoritesProvider } from '../contexts/FavoritesContext';
 
 // Mock react-router-dom
 jest.mock('react-router-dom');
 
 // Mock the service
 jest.mock('../services/tilbudService');
+
+// Mock localStorage
+const localStorageMock = (() => {
+  let store = {};
+  return {
+    getItem: (key) => store[key] || null,
+    setItem: (key, value) => {
+      store[key] = value.toString();
+    },
+    removeItem: (key) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    }
+  };
+})();
+
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock
+});
 
 // Mock child components to isolate ProductDetailPage tests
 jest.mock('../components/NutritionCard', () => ({
@@ -55,6 +77,15 @@ jest.mock('../components/ErrorBoundary', () => ({
   default: ({ children }) => <div data-testid="error-boundary">{children}</div>,
 }));
 
+// Helper to render with FavoritesProvider
+const renderWithProvider = (ui) => {
+  return render(
+    <FavoritesProvider>
+      {ui}
+    </FavoritesProvider>
+  );
+};
+
 describe('ProductDetailPage', () => {
   const mockProduct = {
     id: 1,
@@ -73,6 +104,7 @@ describe('ProductDetailPage', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    localStorage.clear();
     useParams.mockReturnValue({ id: '1' });
     useNavigate.mockReturnValue(mockNavigate);
     
@@ -83,7 +115,7 @@ describe('ProductDetailPage', () => {
   test('renders loading skeleton initially', () => {
     tilbudService.getTilbudById.mockImplementation(() => new Promise(() => {}));
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     expect(screen.getByTestId('skeleton-product')).toBeInTheDocument();
   });
@@ -92,7 +124,7 @@ describe('ProductDetailPage', () => {
     tilbudService.getTilbudById.mockResolvedValue(mockProduct);
     global.fetch.mockResolvedValue({ ok: false, status: 404 });
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       expect(screen.getByText('Test Product')).toBeInTheDocument();
@@ -109,7 +141,7 @@ describe('ProductDetailPage', () => {
     tilbudService.getTilbudById.mockResolvedValue(mockProduct);
     global.fetch.mockResolvedValue({ ok: false, status: 404 });
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       const image = screen.getByAltText('Test Product');
@@ -123,7 +155,7 @@ describe('ProductDetailPage', () => {
     tilbudService.getTilbudById.mockResolvedValue(productWithoutImage);
     global.fetch.mockResolvedValue({ ok: false, status: 404 });
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       expect(screen.getByText('Intet billede tilgængeligt')).toBeInTheDocument();
@@ -135,7 +167,7 @@ describe('ProductDetailPage', () => {
     tilbudService.getTilbudById.mockResolvedValue(mockProduct);
     global.fetch.mockResolvedValue({ ok: false, status: 404 });
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       expect(screen.getByText(/Du sparer 25.00 kr/)).toBeInTheDocument();
@@ -146,7 +178,7 @@ describe('ProductDetailPage', () => {
     tilbudService.getTilbudById.mockResolvedValue(mockProduct);
     global.fetch.mockResolvedValue({ ok: false, status: 404 });
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       expect(screen.getByTestId('share-button')).toBeInTheDocument();
@@ -158,7 +190,7 @@ describe('ProductDetailPage', () => {
     tilbudService.getTilbudById.mockResolvedValue(mockProduct);
     global.fetch.mockResolvedValue({ ok: false, status: 404 });
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       expect(screen.getByTestId('error-boundary')).toBeInTheDocument();
@@ -169,7 +201,7 @@ describe('ProductDetailPage', () => {
     tilbudService.getTilbudById.mockResolvedValue(mockProduct);
     global.fetch.mockResolvedValue({ ok: false, status: 404 });
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       expect(screen.getByLabelText('Tilbage til tilbudsoversigt')).toBeInTheDocument();
@@ -182,7 +214,7 @@ describe('ProductDetailPage', () => {
     tilbudService.getTilbudById.mockResolvedValue(mockProduct);
     global.fetch.mockResolvedValue({ ok: false, status: 404 });
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       expect(screen.getByLabelText('Butik: Test Store')).toBeInTheDocument();
@@ -194,7 +226,7 @@ describe('ProductDetailPage', () => {
   test('handles error state with proper ARIA role', async () => {
     tilbudService.getTilbudById.mockRejectedValue(new Error('Network error'));
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       const errorContainer = screen.getByRole('alert');
@@ -208,7 +240,7 @@ describe('ProductDetailPage', () => {
     error.response = { status: 404 };
     tilbudService.getTilbudById.mockRejectedValue(error);
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       expect(screen.getByText(/Produkt ikke fundet/)).toBeInTheDocument();
@@ -219,7 +251,7 @@ describe('ProductDetailPage', () => {
     tilbudService.getTilbudById.mockResolvedValue(mockProduct);
     global.fetch.mockResolvedValue({ ok: false, status: 404 });
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       expect(screen.getByText('← Tilbage til tilbud')).toBeInTheDocument();
@@ -235,7 +267,7 @@ describe('ProductDetailPage', () => {
     tilbudService.getTilbudById.mockResolvedValue(mockProduct);
     global.fetch.mockResolvedValue({ ok: false, status: 404 });
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       expect(screen.getByText(/Gyldig 01\/03 - 07\/03/)).toBeInTheDocument();
@@ -246,7 +278,7 @@ describe('ProductDetailPage', () => {
     tilbudService.getTilbudById.mockResolvedValue(mockProduct);
     global.fetch.mockImplementation(() => new Promise(() => {})); // Never resolves
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       expect(screen.getByText('Test Product')).toBeInTheDocument();
@@ -270,7 +302,7 @@ describe('ProductDetailPage', () => {
       return Promise.resolve({ ok: false, status: 404 });
     });
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       expect(screen.getByText('Test Product')).toBeInTheDocument();
@@ -293,7 +325,7 @@ describe('ProductDetailPage', () => {
       return Promise.resolve({ ok: false, status: 404 });
     });
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       expect(screen.getByText('Test Product')).toBeInTheDocument();
@@ -316,7 +348,7 @@ describe('ProductDetailPage', () => {
       return Promise.resolve({ ok: false, status: 404 });
     });
     
-    render(<ProductDetailPage />);
+    renderWithProvider(<ProductDetailPage />);
     
     await waitFor(() => {
       expect(screen.getByText('Test Product')).toBeInTheDocument();
