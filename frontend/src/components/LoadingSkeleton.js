@@ -8,7 +8,7 @@ import './LoadingSkeleton.css';
 const LoadingSkeleton = ({ type = 'product' }) => {
   if (type === 'nutrition') {
     return (
-      <div className="skeleton-card" aria-label="Indlæser næringsdata">
+      <div className="skeleton-card" data-testid="skeleton-nutrition" aria-label="Indlæser næringsdata">
         <div className="skeleton-title"></div>
         <div className="skeleton-line"></div>
         <div className="skeleton-line"></div>
@@ -20,7 +20,7 @@ const LoadingSkeleton = ({ type = 'product' }) => {
 
   if (type === 'recipes') {
     return (
-      <div className="skeleton-card" aria-label="Indlæser opskrifter">
+      <div className="skeleton-card" data-testid="skeleton-recipes" aria-label="Indlæser opskrifter">
         <div className="skeleton-title"></div>
         <div className="skeleton-recipe-grid">
           {[1, 2, 3].map((i) => (
@@ -37,7 +37,7 @@ const LoadingSkeleton = ({ type = 'product' }) => {
 
   if (type === 'sustainability') {
     return (
-      <div className="skeleton-card" aria-label="Indlæser bæredygtighedsdata">
+      <div className="skeleton-card" data-testid="skeleton-sustainability" aria-label="Indlæser bæredygtighedsdata">
         <div className="skeleton-title"></div>
         <div className="skeleton-circle"></div>
         <div className="skeleton-line"></div>
@@ -48,7 +48,7 @@ const LoadingSkeleton = ({ type = 'product' }) => {
 
   // Default: full product page skeleton
   return (
-    <div className="skeleton-product-page" aria-label="Indlæser produkt">
+    <div className="skeleton-product-page" data-testid="skeleton-product" aria-label="Indlæser produkt">
       <div className="skeleton-header">
         <div className="skeleton-back-button"></div>
       </div>
