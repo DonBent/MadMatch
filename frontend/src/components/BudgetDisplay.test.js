@@ -62,7 +62,7 @@ describe('BudgetDisplay', () => {
   test('shows warning when budget is exceeded', () => {
     renderWithBudget(<BudgetDisplay cartTotal={250} />, 200, true);
     expect(screen.getByTestId('budget-warning')).toBeInTheDocument();
-    expect(screen.getByText('⚠️ Budget overskredet')).toBeInTheDocument();
+    expect(screen.getByText('Budget overskredet')).toBeInTheDocument();
   });
 
   test('does not show warning when budget is not exceeded', () => {

@@ -1,9 +1,25 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useBudget } from '../contexts/BudgetContext';
 import './BudgetDisplay.css';
 
+/**
+ * BudgetDisplay Component
+ * Shows budget tracking with visual progress bar and color coding
+ * Colors: green (under 75%), yellow (75-100%), red (over 100%)
+ * 
+ * @param {number} cartTotal - Total cost of items in cart
+ * @param {boolean} compact - Whether to show compact version
+ */
 const BudgetDisplay = ({ cartTotal = 0, compact = false }) => {
   const { budget, budgetEnabled, calculateBudgetMetrics } = useBudget();
+
+  // Determine color based on percentage with smooth transitions
+  const getProgressColor = useMemo(() => {
+    const actualPercent = budget > 0 ? (cartTotal / budget) * 100 : 0;
+    if (actualPercent <= 75) return '#28a745'; // Green - under budget
+    if (actualPercent <= 100) return '#ffc107'; // Yellow - approaching limit
+    return '#dc3545'; // Red - over budget
+  }, [cartTotal, budget]);
 
   // Don't render if budget is not enabled
   if (!budgetEnabled) {
@@ -12,15 +28,7 @@ const BudgetDisplay = ({ cartTotal = 0, compact = false }) => {
 
   const { remainingBudget, budgetExceeded, budgetPercentUsed } = calculateBudgetMetrics(cartTotal);
 
-  // Determine color based on percentage (use uncapped value for color logic)
-  const getProgressColor = () => {
-    const actualPercent = budget > 0 ? (cartTotal / budget) * 100 : 0;
-    if (actualPercent <= 75) return '#28a745'; // Green
-    if (actualPercent <= 100) return '#ffc107'; // Yellow
-    return '#dc3545'; // Red
-  };
-
-  const progressColor = getProgressColor();
+  const progressColor = getProgressColor;
   const progressWidth = Math.min(100, budgetPercentUsed);
 
   if (compact) {
@@ -46,8 +54,8 @@ const BudgetDisplay = ({ cartTotal = 0, compact = false }) => {
       <div className="budget-header">
         <h3>Budget</h3>
         {budgetExceeded && (
-          <span className="budget-warning" data-testid="budget-warning">
-            ⚠️ Budget overskredet
+          <span className="budget-warning" data-testid="budget-warning" role="alert">
+            <span aria-hidden="true">⚠️</span> Budget overskredet
           </span>
         )}
       </div>
@@ -69,15 +77,18 @@ const BudgetDisplay = ({ cartTotal = 0, compact = false }) => {
         </div>
       </div>
 
-      <div className="budget-progress-container">
+      <div className="budget-progress-container" role="progressbar" aria-valuenow={progressWidth} aria-valuemin="0" aria-valuemax="100">
         <div
           className="budget-progress-bar"
-          style={{ width: `${progressWidth}%`, backgroundColor: progressColor }}
+          style={{ 
+            width: `${progressWidth}%`, 
+            backgroundColor: progressColor,
+          }}
           data-testid="budget-progress-bar"
         ></div>
       </div>
 
-      <div className="budget-percentage">
+      <div className="budget-percentage" aria-live="polite">
         {budgetPercentUsed.toFixed(0)}% af budget brugt
       </div>
     </div>

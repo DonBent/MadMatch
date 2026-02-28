@@ -162,7 +162,7 @@ describe('CartItem', () => {
       </CartProvider>
     );
 
-    const removeButton = screen.getByLabelText('Fjern vare');
+    const removeButton = screen.getByLabelText('Fjern Test Product fra kurv');
     fireEvent.click(removeButton);
 
     // Check that item was removed from localStorage

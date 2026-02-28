@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { tilbudService } from '../services/tilbudService';
 import TilbudCard from '../components/TilbudCard';
 import './Favoritter.css';
 
+/**
+ * Favoritter Page
+ * Displays user's favorite tilbud with loading and empty states
+ */
 const Favoritter = () => {
   const { favorites } = useFavorites();
   const [tilbud, setTilbud] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    loadFavoriteTilbud();
-  }, [favorites]);
-
-  const loadFavoriteTilbud = async () => {
+  const loadFavoriteTilbud = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -31,12 +31,15 @@ const Favoritter = () => {
       const favoriteTilbud = allTilbud.filter(item => favorites.includes(item.id));
       setTilbud(favoriteTilbud);
     } catch (err) {
-      console.error('Failed to load favorite tilbud:', err);
       setError('Kunne ikke indlæse favoritter.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [favorites]);
+
+  useEffect(() => {
+    loadFavoriteTilbud();
+  }, [loadFavoriteTilbud]);
 
   if (loading) {
     return (
@@ -46,7 +49,10 @@ const Favoritter = () => {
           <p className="tagline">Find de bedste tilbud</p>
         </header>
         <main className="app-main">
-          <div className="loading">Indlæser favoritter...</div>
+          <div className="loading" role="status" aria-live="polite">
+            <div className="loading-spinner" aria-hidden="true"></div>
+            <p>Indlæser favoritter...</p>
+          </div>
         </main>
       </div>
     );
@@ -60,10 +66,12 @@ const Favoritter = () => {
           <p className="tagline">Find de bedste tilbud</p>
         </header>
         <main className="app-main">
-          <div className="error">
+          <div className="error" role="alert">
             <h2>⚠️ Fejl</h2>
             <p>{error}</p>
-            <button onClick={loadFavoriteTilbud}>Prøv igen</button>
+            <button onClick={loadFavoriteTilbud} className="retry-button">
+              Prøv igen
+            </button>
           </div>
         </main>
       </div>
@@ -84,10 +92,11 @@ const Favoritter = () => {
         </div>
 
         {favorites.length === 0 ? (
-          <div className="empty-state">
-            <p className="empty-icon">♡</p>
-            <p className="empty-message">Ingen favoritter endnu. Tryk på ♥ for at tilføje.</p>
-            <Link to="/" className="browse-button">Browse tilbud</Link>
+          <div className="empty-state" role="status">
+            <p className="empty-icon" aria-hidden="true">♡</p>
+            <h3 className="empty-title">Du har ingen favoritter endnu</h3>
+            <p className="empty-message">Klik på ❤️ for at gemme tilbud!</p>
+            <Link to="/" className="browse-button">Se alle tilbud</Link>
           </div>
         ) : (
           <div className="tilbud-grid">

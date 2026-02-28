@@ -1,10 +1,38 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useCart } from '../contexts/CartContext';
 import './CartItem.css';
 
+/**
+ * CartItem Component
+ * Displays a single item in the shopping cart with quantity controls
+ * Optimized with memoized callbacks and accessible controls
+ * 
+ * @param {Object} product - Product object with cart data
+ */
 const CartItem = ({ product }) => {
   const { updateQuantity, removeFromCart } = useCart();
   
+  const handleIncrement = useCallback(() => {
+    if (!product) return;
+    const quantity = product.cartItem?.quantity || 0;
+    if (quantity < 99) {
+      updateQuantity(product.id, quantity + 1);
+    }
+  }, [product, updateQuantity]);
+
+  const handleDecrement = useCallback(() => {
+    if (!product) return;
+    const quantity = product.cartItem?.quantity || 0;
+    if (quantity > 1) {
+      updateQuantity(product.id, quantity - 1);
+    }
+  }, [product, updateQuantity]);
+
+  const handleRemove = useCallback(() => {
+    if (!product) return;
+    removeFromCart(product.id);
+  }, [product, removeFromCart]);
+
   if (!product) return null;
 
   const cartItem = product.cartItem;
@@ -13,24 +41,8 @@ const CartItem = ({ product }) => {
   const subtotal = product.tilbudspris * quantity;
   const savings = (product.normalpris - product.tilbudspris) * quantity;
 
-  const handleIncrement = () => {
-    if (quantity < 99) {
-      updateQuantity(product.id, quantity + 1);
-    }
-  };
-
-  const handleDecrement = () => {
-    if (quantity > 1) {
-      updateQuantity(product.id, quantity - 1);
-    }
-  };
-
-  const handleRemove = () => {
-    removeFromCart(product.id);
-  };
-
   return (
-    <div className="cart-item">
+    <div className="cart-item" role="article" aria-label={`${product.navn} fra ${product.butik}`}>
       <div className="cart-item-info">
         <h3 className="cart-item-name">{product.navn}</h3>
         <div className="cart-item-store">{product.butik}</div>
@@ -40,16 +52,18 @@ const CartItem = ({ product }) => {
       </div>
       
       <div className="cart-item-controls">
-        <div className="quantity-controls">
+        <div className="quantity-controls" role="group" aria-label="Antal kontroller">
           <button 
             className="quantity-btn"
             onClick={handleDecrement}
             disabled={quantity <= 1}
             aria-label="Reducer antal"
           >
-            -
+            −
           </button>
-          <span className="quantity-display">{quantity}</span>
+          <span className="quantity-display" aria-label={`Antal: ${quantity}`}>
+            {quantity}
+          </span>
           <button 
             className="quantity-btn"
             onClick={handleIncrement}
@@ -63,15 +77,17 @@ const CartItem = ({ product }) => {
         <div className="cart-item-subtotal">
           <div className="subtotal-label">Subtotal:</div>
           <div className="subtotal-amount">{subtotal.toFixed(2)} kr</div>
-          <div className="subtotal-savings">Spar {savings.toFixed(2)} kr</div>
+          {savings > 0 && (
+            <div className="subtotal-savings">Spar {savings.toFixed(2)} kr</div>
+          )}
         </div>
         
         <button 
           className="remove-btn"
           onClick={handleRemove}
-          aria-label="Fjern vare"
+          aria-label={`Fjern ${product.navn} fra kurv`}
         >
-          🗑️ Fjern
+          <span aria-hidden="true">🗑️</span> Fjern
         </button>
       </div>
     </div>

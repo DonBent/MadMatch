@@ -65,7 +65,8 @@ describe('Handlekurv', () => {
     renderWithRouter(<Handlekurv />);
 
     await waitFor(() => {
-      expect(screen.getByText('Din handlekurv er tom. Tilføj varer fra tilbuddene.')).toBeInTheDocument();
+      expect(screen.getByText('Din handlekurv er tom')).toBeInTheDocument();
+      expect(screen.getByText('Find tilbud og tilføj til kurven!')).toBeInTheDocument();
     });
   });
 
@@ -204,7 +205,7 @@ describe('Handlekurv', () => {
     fireEvent.click(screen.getByText('Ja, tøm kurv'));
 
     await waitFor(() => {
-      expect(screen.getByText('Din handlekurv er tom. Tilføj varer fra tilbuddene.')).toBeInTheDocument();
+      expect(screen.getByText('Din handlekurv er tom')).toBeInTheDocument();
     });
 
     const stored = localStorage.getItem('madmatch_cart');
