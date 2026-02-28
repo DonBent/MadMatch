@@ -80,11 +80,18 @@ class NutritionService {
     const url = `${this.baseUrl}/search?search_terms=${searchQuery}&page_size=1&fields=product_name,nutriments,serving_size`;
 
     try {
+      // Create abort controller for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
       const response = await fetch(url, {
+        signal: controller.signal,
         headers: {
           'User-Agent': this.userAgent
         }
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         console.error(`[NutritionService] API returned status ${response.status}`);
@@ -102,6 +109,10 @@ class NutritionService {
       const product = data.products[0];
       return this._parseNutritionData(product);
     } catch (error) {
+      if (error.name === 'AbortError') {
+        console.error('[NutritionService] API request timed out after 15 seconds');
+        return null;
+      }
       console.error('[NutritionService] API request failed:', error.message);
       throw error;
     }
