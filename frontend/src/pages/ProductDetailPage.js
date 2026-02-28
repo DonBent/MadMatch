@@ -183,9 +183,6 @@ const ProductDetailPage = () => {
               <span className="badge-store" role="listitem" aria-label={`Butik: ${product.butik}`}>
                 {product.butik}
               </span>
-              <span className="badge-category" role="listitem" aria-label={`Kategori: ${product.kategori}`}>
-                {product.kategori}
-              </span>
               <span className="badge-discount" role="listitem" aria-label={`Rabat: ${product.rabat} procent`}>
                 -{product.rabat}%
               </span>

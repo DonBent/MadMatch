@@ -24,9 +24,7 @@ function Navigation() {
 function TilbudOversigt() {
   const [tilbud, setTilbud] = useState([]);
   const [butikker, setButikker] = useState([]);
-  const [kategorier, setKategorier] = useState([]);
   const [selectedButik, setSelectedButik] = useState('');
-  const [selectedKategori, setSelectedKategori] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -38,20 +36,18 @@ function TilbudOversigt() {
   // Load tilbud when filters change
   useEffect(() => {
     loadTilbud();
-  }, [selectedButik, selectedKategori]);
+  }, [selectedButik]);
 
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      const [tilbudData, butikkerData, kategorierData] = await Promise.all([
+      const [tilbudData, butikkerData] = await Promise.all([
         tilbudService.getAllTilbud(),
-        tilbudService.getButikker(),
-        tilbudService.getKategorier()
+        tilbudService.getButikker()
       ]);
       
       setTilbud(tilbudData);
       setButikker(butikkerData);
-      setKategorier(kategorierData);
       setError(null);
     } catch (err) {
       console.error('Failed to load initial data:', err);
@@ -65,7 +61,6 @@ function TilbudOversigt() {
     try {
       const filters = {};
       if (selectedButik) filters.butik = selectedButik;
-      if (selectedKategori) filters.kategori = selectedKategori;
       
       const data = await tilbudService.getAllTilbud(filters);
       setTilbud(data);
@@ -78,7 +73,6 @@ function TilbudOversigt() {
 
   const handleReset = () => {
     setSelectedButik('');
-    setSelectedKategori('');
   };
 
   if (loading) {
@@ -112,11 +106,8 @@ function TilbudOversigt() {
       <main className="app-main">
         <FilterBar
           butikker={butikker}
-          kategorier={kategorier}
           selectedButik={selectedButik}
-          selectedKategori={selectedKategori}
           onButikChange={setSelectedButik}
-          onKategoriChange={setSelectedKategori}
           onReset={handleReset}
         />
 
