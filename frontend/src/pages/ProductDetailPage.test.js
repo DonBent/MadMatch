@@ -131,7 +131,6 @@ describe('ProductDetailPage', () => {
     });
     
     expect(screen.getByText('Test Store')).toBeInTheDocument();
-    expect(screen.getByText('Test Category')).toBeInTheDocument();
     expect(screen.getByText('100.00 kr')).toBeInTheDocument();
     expect(screen.getByText('75.00 kr')).toBeInTheDocument();
     expect(screen.getByText('-25%')).toBeInTheDocument();
@@ -218,7 +217,6 @@ describe('ProductDetailPage', () => {
     
     await waitFor(() => {
       expect(screen.getByLabelText('Butik: Test Store')).toBeInTheDocument();
-      expect(screen.getByLabelText('Kategori: Test Category')).toBeInTheDocument();
       expect(screen.getByLabelText('Rabat: 25 procent')).toBeInTheDocument();
     });
   });

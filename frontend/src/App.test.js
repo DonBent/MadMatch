@@ -12,14 +12,12 @@ jest.mock('./services/tilbudService', () => ({
         id: 1,
         navn: 'Test Produkt',
         butik: 'Test Butik',
-        kategori: 'Test',
         normalpris: 100,
         tilbudspris: 50,
         rabat: 50
       }
     ])),
-    getButikker: jest.fn(() => Promise.resolve(['Test Butik'])),
-    getKategorier: jest.fn(() => Promise.resolve(['Test']))
+    getButikker: jest.fn(() => Promise.resolve(['Test Butik']))
   }
 }));
 

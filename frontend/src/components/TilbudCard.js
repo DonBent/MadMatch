@@ -17,7 +17,6 @@ const TilbudCard = ({ tilbud }) => {
       
       <div className="tilbud-card-body">
         <h3 className="tilbud-navn">{tilbud.navn}</h3>
-        <p className="tilbud-kategori">{tilbud.kategori}</p>
         
         <div className="tilbud-priser">
           <span className="normalpris">{tilbud.normalpris.toFixed(2)} kr</span>
