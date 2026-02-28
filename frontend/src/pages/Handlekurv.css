@@ -1,0 +1,269 @@
+.handlekurv-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 20px;
+}
+
+.handlekurv-header {
+  margin-bottom: 24px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: #1976d2;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.handlekurv-header h1 {
+  margin: 0;
+  font-size: 32px;
+  color: #333;
+}
+
+.loading,
+.error {
+  text-align: center;
+  padding: 40px;
+  background: white;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.error button {
+  margin-top: 16px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.empty-cart {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.empty-cart p {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.browse-link {
+  display: inline-block;
+  background: #1976d2;
+  color: white;
+  padding: 12px 32px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.browse-link:hover {
+  background: #1565c0;
+}
+
+.handlekurv-content {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 24px;
+  align-items: start;
+}
+
+.cart-items-section {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.cart-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.cart-header-actions h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+}
+
+.clear-cart-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.clear-cart-btn:hover {
+  background: #d32f2f;
+}
+
+.cart-items-list {
+  /* Items will be rendered here */
+}
+
+.cart-summary {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  position: sticky;
+  top: 20px;
+}
+
+.cart-summary h2 {
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  color: #333;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.summary-value {
+  font-weight: 600;
+}
+
+.savings-row {
+  border-top: 2px solid #f0f0f0;
+  margin-top: 8px;
+  padding-top: 16px;
+  font-size: 18px;
+}
+
+.savings-row .summary-value.savings {
+  color: #4CAF50;
+  font-weight: 700;
+}
+
+/* Dialog styles */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.dialog h3 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  color: #333;
+}
+
+.dialog p {
+  margin: 0 0 24px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.dialog-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.cancel-btn {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.cancel-btn:hover {
+  background: #d0d0d0;
+}
+
+.confirm-btn {
+  background: #f44336;
+  color: white;
+}
+
+.confirm-btn:hover {
+  background: #d32f2f;
+}
+
+@media (max-width: 968px) {
+  .handlekurv-content {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-summary {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .handlekurv-page {
+    padding: 12px;
+  }
+
+  .handlekurv-header h1 {
+    font-size: 24px;
+  }
+
+  .cart-items-section,
+  .cart-summary {
+    padding: 16px;
+  }
+
+  .cart-header-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .clear-cart-btn {
+    width: 100%;
+  }
+}

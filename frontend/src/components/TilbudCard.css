@@ -1,3 +1,8 @@
+.tilbud-card-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
 .tilbud-card-link {
   text-decoration: none;
   color: inherit;
@@ -95,6 +100,13 @@
   font-weight: 600;
 }
 
+.tilbud-card-actions {
+  padding: 0 16px 16px 16px;
+  background: white;
+  border-radius: 0 0 8px 8px;
+  margin-top: -8px;
+}
+
 @media (max-width: 768px) {
   .tilbud-card {
     padding: 12px;
@@ -106,5 +118,9 @@
   
   .tilbudspris {
     font-size: 1.2rem;
+  }
+  
+  .tilbud-card-actions {
+    padding: 0 12px 12px 12px;
   }
 }
