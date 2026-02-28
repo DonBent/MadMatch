@@ -53,15 +53,25 @@ export const FavoritesProvider = ({ children }) => {
 
   // Save favorites to localStorage whenever they change
   useEffect(() => {
-    try {
-      const data = {
-        favorites,
-        version: STORAGE_VERSION
-      };
-      storage.setItem(STORAGE_KEY, data);
-    } catch (error) {
-      console.error('Failed to save favorites to localStorage:', error);
-    }
+    const saveFavorites = async () => {
+      try {
+        const data = {
+          favorites,
+          version: STORAGE_VERSION
+        };
+        const result = await storage.setItem(STORAGE_KEY, data);
+        
+        if (!result.success) {
+          console.error('[FavoritesContext] Failed to save:', result.error);
+        } else if (result.warning) {
+          console.warn('[FavoritesContext] Storage warning:', result.warning);
+        }
+      } catch (error) {
+        console.error('[FavoritesContext] Failed to save favorites:', error);
+      }
+    };
+    
+    saveFavorites();
   }, [favorites]);
 
   const addFavorite = (id) => {
