@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import TilbudCard from './components/TilbudCard';
 import FilterBar from './components/FilterBar';
+import ProductDetailPage from './pages/ProductDetailPage';
 import { tilbudService } from './services/tilbudService';
 
-function App() {
+function TilbudOversigt() {
   const [tilbud, setTilbud] = useState([]);
   const [butikker, setButikker] = useState([]);
   const [kategorier, setKategorier] = useState([]);
@@ -124,6 +126,17 @@ function App() {
         <p>MadMatch MVP v1.0 | Epic 1 - Tilbudsoversigt</p>
       </footer>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<TilbudOversigt />} />
+        <Route path="/produkt/:id" element={<ProductDetailPage />} />
+      </Routes>
+    </Router>
   );
 }
 

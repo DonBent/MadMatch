@@ -1,9 +1,11 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './TilbudCard.css';
 
 const TilbudCard = ({ tilbud }) => {
   return (
-    <div className="tilbud-card">
+    <Link to={`/produkt/${tilbud.id}`} className="tilbud-card-link">
+      <div className="tilbud-card">
       <div className="tilbud-card-header">
         <span className="butik-badge">{tilbud.butik}</span>
         <span className="rabat-badge">-{tilbud.rabat}%</span>
@@ -23,6 +25,7 @@ const TilbudCard = ({ tilbud }) => {
         </div>
       </div>
     </div>
+    </Link>
   );
 };
 
