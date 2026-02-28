@@ -1,0 +1,166 @@
+/* Base skeleton styles */
+.skeleton-card,
+.skeleton-product-page {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Shimmer effect for skeleton elements */
+.skeleton-title,
+.skeleton-line,
+.skeleton-circle,
+.skeleton-badge,
+.skeleton-product-name,
+.skeleton-product-image,
+.skeleton-recipe-image,
+.skeleton-back-button {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Skeleton card (for nutrition, recipes, sustainability) */
+.skeleton-card {
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.skeleton-title {
+  height: 1.5rem;
+  width: 40%;
+  margin-bottom: 1rem;
+}
+
+.skeleton-line {
+  height: 1rem;
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-line.short {
+  width: 60%;
+}
+
+.skeleton-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 1rem auto;
+}
+
+/* Recipe skeleton grid */
+.skeleton-recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.skeleton-recipe-card {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.skeleton-recipe-image {
+  height: 200px;
+  width: 100%;
+}
+
+/* Full product page skeleton */
+.skeleton-product-page {
+  padding: 1rem;
+}
+
+.skeleton-header {
+  margin-bottom: 2rem;
+}
+
+.skeleton-back-button {
+  height: 2.5rem;
+  width: 150px;
+}
+
+.skeleton-content {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+}
+
+.skeleton-image-section {
+  display: flex;
+  justify-content: center;
+}
+
+.skeleton-product-image {
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 1;
+  border-radius: 8px;
+}
+
+.skeleton-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.skeleton-badges {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.skeleton-badge {
+  height: 1.5rem;
+  width: 80px;
+  border-radius: 12px;
+}
+
+.skeleton-product-name {
+  height: 2rem;
+  width: 80%;
+}
+
+.skeleton-pricing {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .skeleton-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .skeleton-recipe-grid {
+    grid-template-columns: 1fr;
+  }
+}

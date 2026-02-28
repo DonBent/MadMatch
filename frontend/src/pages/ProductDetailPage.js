@@ -5,6 +5,9 @@ import { tilbudService } from '../services/tilbudService';
 import NutritionCard from '../components/NutritionCard';
 import RecipeSuggestions from '../components/RecipeSuggestions';
 import SustainabilityCard from '../components/SustainabilityCard';
+import ShareButton from '../components/ShareButton';
+import LoadingSkeleton from '../components/LoadingSkeleton';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -107,24 +110,19 @@ const ProductDetailPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="product-detail-page">
-        <div className="loading-skeleton">
-          <div className="skeleton-header"></div>
-          <div className="skeleton-image"></div>
-          <div className="skeleton-info"></div>
-          <div className="skeleton-info"></div>
-        </div>
-      </div>
-    );
+    return <LoadingSkeleton type="product" />;
   }
 
   if (error) {
     return (
       <div className="product-detail-page">
-        <div className="error-container">
+        <div className="error-container" role="alert">
           <h2>⚠️ {error}</h2>
-          <button onClick={handleBack} className="btn-back">
+          <button 
+            onClick={handleBack} 
+            className="btn-back"
+            aria-label="Tilbage til tilbudsoversigt"
+          >
             ← Tilbage til oversigt
           </button>
         </div>
@@ -135,9 +133,13 @@ const ProductDetailPage = () => {
   if (!product) {
     return (
       <div className="product-detail-page">
-        <div className="error-container">
+        <div className="error-container" role="alert">
           <h2>⚠️ Produkt ikke fundet</h2>
-          <button onClick={handleBack} className="btn-back">
+          <button 
+            onClick={handleBack} 
+            className="btn-back"
+            aria-label="Tilbage til tilbudsoversigt"
+          >
             ← Tilbage til oversigt
           </button>
         </div>
@@ -146,67 +148,102 @@ const ProductDetailPage = () => {
   }
 
   return (
-    <div className="product-detail-page">
-      <header className="product-header">
-        <button onClick={handleBack} className="btn-back">
-          ← Tilbage til tilbud
-        </button>
-      </header>
+    <ErrorBoundary onReset={loadProduct}>
+      <div className="product-detail-page">
+        <header className="product-header">
+          <button 
+            onClick={handleBack} 
+            className="btn-back"
+            aria-label="Tilbage til tilbudsoversigt"
+          >
+            ← Tilbage til tilbud
+          </button>
+        </header>
 
-      <div className="product-detail-container">
-        <div className="product-image-section">
-          {product.billedeUrl ? (
-            <img 
-              src={product.billedeUrl} 
-              alt={product.navn}
-              className="product-image"
-            />
-          ) : (
-            <div className="product-image-placeholder">
-              <span className="placeholder-icon">🛒</span>
-              <span className="placeholder-text">Intet billede tilgængeligt</span>
-            </div>
-          )}
-        </div>
-
-        <div className="product-info-section">
-          <div className="product-badges">
-            <span className="badge-store">{product.butik}</span>
-            <span className="badge-category">{product.kategori}</span>
-            <span className="badge-discount">-{product.rabat}%</span>
+        <div className="product-detail-container">
+          <div className="product-image-section">
+            {product.billedeUrl ? (
+              <img 
+                src={product.billedeUrl} 
+                alt={product.navn}
+                className="product-image"
+                loading="lazy"
+              />
+            ) : (
+              <div className="product-image-placeholder" role="img" aria-label="Intet produktbillede">
+                <span className="placeholder-icon" aria-hidden="true">🛒</span>
+                <span className="placeholder-text">Intet billede tilgængeligt</span>
+              </div>
+            )}
           </div>
 
-          <h1 className="product-name">{product.navn}</h1>
+          <div className="product-info-section">
+            <div className="product-badges" role="list">
+              <span className="badge-store" role="listitem" aria-label={`Butik: ${product.butik}`}>
+                {product.butik}
+              </span>
+              <span className="badge-category" role="listitem" aria-label={`Kategori: ${product.kategori}`}>
+                {product.kategori}
+              </span>
+              <span className="badge-discount" role="listitem" aria-label={`Rabat: ${product.rabat} procent`}>
+                -{product.rabat}%
+              </span>
+            </div>
 
-          <div className="product-pricing">
-            <div className="price-row">
-              <span className="price-label">Normalpris:</span>
-              <span className="price-normal">{product.normalpris.toFixed(2)} kr</span>
+            <h1 className="product-name">{product.navn}</h1>
+
+            <div className="product-pricing" role="region" aria-label="Prisoplysninger">
+              <div className="price-row">
+                <span className="price-label">Normalpris:</span>
+                <span className="price-normal" aria-label={`Normalpris ${product.normalpris} kroner`}>
+                  {product.normalpris.toFixed(2)} kr
+                </span>
+              </div>
+              <div className="price-row">
+                <span className="price-label">Tilbudspris:</span>
+                <span className="price-offer" aria-label={`Tilbudspris ${product.tilbudspris} kroner`}>
+                  {product.tilbudspris.toFixed(2)} kr
+                </span>
+              </div>
+              <div className="price-savings">
+                <strong aria-label={`Du sparer ${(product.normalpris - product.tilbudspris).toFixed(2)} kroner`}>
+                  Du sparer {(product.normalpris - product.tilbudspris).toFixed(2)} kr
+                </strong>
+              </div>
             </div>
-            <div className="price-row">
-              <span className="price-label">Tilbudspris:</span>
-              <span className="price-offer">{product.tilbudspris.toFixed(2)} kr</span>
+
+            {product.gyldigFra && product.gyldigTil && (
+              <div className="product-validity" role="region" aria-label="Gyldighed">
+                <span className="validity-icon" aria-hidden="true">📅</span>
+                <span>Gyldig {product.gyldigFra} - {product.gyldigTil}</span>
+              </div>
+            )}
+
+            <div className="product-actions">
+              <ShareButton productId={id} productName={product.navn} />
             </div>
-            <div className="price-savings">
-              <strong>Du sparer {(product.normalpris - product.tilbudspris).toFixed(2)} kr</strong>
-            </div>
+
+            {nutritionLoading ? (
+              <LoadingSkeleton type="nutrition" />
+            ) : (
+              <NutritionCard nutrition={nutrition} loading={nutritionLoading} />
+            )}
+
+            {recipesLoading ? (
+              <LoadingSkeleton type="recipes" />
+            ) : (
+              <RecipeSuggestions recipes={recipes} loading={recipesLoading} />
+            )}
+
+            {sustainabilityLoading ? (
+              <LoadingSkeleton type="sustainability" />
+            ) : (
+              <SustainabilityCard data={sustainability} loading={sustainabilityLoading} />
+            )}
           </div>
-
-          {product.gyldigFra && product.gyldigTil && (
-            <div className="product-validity">
-              <span className="validity-icon">📅</span>
-              <span>Gyldig {product.gyldigFra} - {product.gyldigTil}</span>
-            </div>
-          )}
-
-          <NutritionCard nutrition={nutrition} loading={nutritionLoading} />
-
-          <RecipeSuggestions recipes={recipes} loading={recipesLoading} />
-
-          <SustainabilityCard data={sustainability} loading={sustainabilityLoading} />
         </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 };
 
