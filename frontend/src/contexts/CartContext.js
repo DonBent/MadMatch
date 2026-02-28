@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import * as storage from '../utils/storage';
 
 const CartContext = createContext();
@@ -14,9 +14,37 @@ export const useCart = () => {
   return context;
 };
 
+/**
+ * Load initial cart from storage synchronously
+ * This prevents the race condition where the save useEffect runs before load completes
+ */
+const getInitialCart = () => {
+  try {
+    const stored = storage.getItem(STORAGE_KEY);
+    if (stored) {
+      const data = JSON.parse(stored);
+      if (data.version === STORAGE_VERSION && Array.isArray(data.cart)) {
+        console.log('[CartContext] Loaded initial cart from storage:', data.cart.length, 'items');
+        return data.cart;
+      } else {
+        console.warn('[CartContext] Invalid cart data structure in storage');
+      }
+    } else {
+      console.log('[CartContext] No cart data in storage, starting with empty cart');
+    }
+  } catch (error) {
+    console.error('[CartContext] Failed to load cart from storage:', error);
+  }
+  return [];
+};
+
 export const CartProvider = ({ children }) => {
-  const [cart, setCart] = useState([]);
+  // Initialize cart from storage synchronously to prevent race condition
+  const [cart, setCart] = useState(getInitialCart);
   const [storageWarning, setStorageWarning] = useState(null);
+  
+  // Track first mount to prevent saving initial state
+  const isFirstMount = useRef(true);
 
   // Log storage status on mount
   useEffect(() => {
@@ -29,28 +57,15 @@ export const CartProvider = ({ children }) => {
     }
   }, []);
 
-  // Load cart from storage on mount
+  // Save cart to storage whenever it changes (skip first mount to prevent overwriting loaded data)
   useEffect(() => {
-    try {
-      const stored = storage.getItem(STORAGE_KEY);
-      if (stored) {
-        const data = JSON.parse(stored);
-        if (data.version === STORAGE_VERSION && Array.isArray(data.cart)) {
-          console.log('[CartContext] Loaded cart from storage:', data.cart.length, 'items');
-          setCart(data.cart);
-        } else {
-          console.warn('[CartContext] Invalid cart data structure in storage');
-        }
-      } else {
-        console.log('[CartContext] No cart data in storage');
-      }
-    } catch (error) {
-      console.error('[CartContext] Failed to load cart from storage:', error);
+    // Skip save on first mount - cart is already initialized from storage
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      console.log('[CartContext] Skipping save on first mount to prevent race condition');
+      return;
     }
-  }, []);
-
-  // Save cart to storage whenever it changes
-  useEffect(() => {
+    
     const saveCart = async () => {
       try {
         const data = {
