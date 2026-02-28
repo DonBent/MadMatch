@@ -25,18 +25,35 @@ const Handlekurv = () => {
 
     try {
       setLoading(true);
+      console.log('[Handlekurv] Loading cart products for', cart.length, 'items');
+      
+      // Try to fetch fresh product data from API
       const allTilbud = await tilbudService.getAllTilbud();
+      console.log('[Handlekurv] Fetched', allTilbud.length, 'products from API');
       
       // Map cart items to products with cart data
+      // Use fresh API data if available, otherwise fall back to stored snapshot
       const cartProducts = cart
         .map(cartItem => {
-          const product = allTilbud.find(t => t.id === cartItem.productId);
-          if (product) {
+          const freshProduct = allTilbud.find(t => t.id === cartItem.productId);
+          
+          if (freshProduct) {
+            // Use fresh product data from API
             return {
-              ...product,
+              ...freshProduct,
+              cartItem
+            };
+          } else if (cartItem.productSnapshot) {
+            // Fall back to stored snapshot if API doesn't have the product
+            console.warn('[Handlekurv] Using snapshot for product:', cartItem.productId);
+            return {
+              ...cartItem.productSnapshot,
               cartItem
             };
           }
+          
+          // Product not found in API or snapshot
+          console.error('[Handlekurv] Product not found:', cartItem.productId);
           return null;
         })
         .filter(p => p !== null);
@@ -44,8 +61,28 @@ const Handlekurv = () => {
       setProducts(cartProducts);
       setError(null);
     } catch (err) {
-      console.error('Failed to load cart products:', err);
-      setError('Kunne ikke indlæse handlekurv.');
+      console.error('[Handlekurv] Failed to load from API, using snapshots:', err);
+      
+      // API failed - use product snapshots from cart
+      const snapshotProducts = cart
+        .map(cartItem => {
+          if (cartItem.productSnapshot) {
+            return {
+              ...cartItem.productSnapshot,
+              cartItem
+            };
+          }
+          console.error('[Handlekurv] No snapshot available for product:', cartItem.productId);
+          return null;
+        })
+        .filter(p => p !== null);
+      
+      if (snapshotProducts.length > 0) {
+        setProducts(snapshotProducts);
+        setError('Kunne ikke opdatere priser. Viser gemte produkter.');
+      } else {
+        setError('Kunne ikke indlæse handlekurv.');
+      }
     } finally {
       setLoading(false);
     }

@@ -23,6 +23,37 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock
 });
 
+// Mock product data
+const mockProduct1 = {
+  id: 1,
+  titel: 'Test Product 1',
+  beskrivelse: 'Test description 1',
+  normalpris: 100,
+  tilbudspris: 75,
+  besparelse: 25,
+  besparelseProcentvis: 25,
+  gyldigFra: '2026-02-28',
+  gyldigTil: '2026-03-07',
+  butik: 'Test Butik',
+  kategori: 'Test Kategori',
+  billedUrl: 'test1.jpg'
+};
+
+const mockProduct2 = {
+  id: 2,
+  titel: 'Test Product 2',
+  beskrivelse: 'Test description 2',
+  normalpris: 200,
+  tilbudspris: 150,
+  besparelse: 50,
+  besparelseProcentvis: 25,
+  gyldigFra: '2026-02-28',
+  gyldigTil: '2026-03-07',
+  butik: 'Test Butik',
+  kategori: 'Test Kategori',
+  billedUrl: 'test2.jpg'
+};
+
 // Test component that uses the cart context
 const TestComponent = () => {
   const { cart, addToCart, removeFromCart, updateQuantity, clearCart, totalItems } = useCart();
@@ -31,10 +62,10 @@ const TestComponent = () => {
     <div>
       <div data-testid="total-items">{totalItems}</div>
       <div data-testid="cart-length">{cart.length}</div>
-      <button onClick={() => addToCart({ id: 1, name: 'Test Product 1' })}>
+      <button onClick={() => addToCart(mockProduct1)}>
         Add Product 1
       </button>
-      <button onClick={() => addToCart({ id: 2, name: 'Test Product 2' })}>
+      <button onClick={() => addToCart(mockProduct2)}>
         Add Product 2
       </button>
       <button onClick={() => removeFromCart(1)}>Remove Product 1</button>
@@ -159,7 +190,7 @@ describe('CartContext', () => {
       return (
         <div>
           <div data-testid="total-items">{totalItems}</div>
-          <button onClick={() => addToCart({ id: 1 })}>Add Product</button>
+          <button onClick={() => addToCart(mockProduct1)}>Add Product</button>
           <button onClick={() => updateQuantity(1, 0)}>Set to 0</button>
           <button onClick={() => updateQuantity(1, -5)}>Set to -5</button>
           {cart.map(item => (
@@ -190,7 +221,7 @@ describe('CartContext', () => {
       const { cart, addToCart, updateQuantity } = useCart();
       return (
         <div>
-          <button onClick={() => addToCart({ id: 1 })}>Add Product</button>
+          <button onClick={() => addToCart(mockProduct1)}>Add Product</button>
           <button onClick={() => updateQuantity(1, 100)}>Set to 100</button>
           <button onClick={() => updateQuantity(1, 150)}>Set to 150</button>
           {cart.map(item => (
@@ -263,6 +294,9 @@ describe('CartContext', () => {
       expect(data.cart[0].productId).toBe(1);
       expect(data.cart[0].quantity).toBe(1);
       expect(data.cart[0].addedAt).toBeTruthy();
+      expect(data.cart[0].productSnapshot).toBeTruthy();
+      expect(data.cart[0].productSnapshot.id).toBe(1);
+      expect(data.cart[0].productSnapshot.titel).toBe('Test Product 1');
     });
   });
 
@@ -358,5 +392,35 @@ describe('CartContext', () => {
     expect(addedAt).toBeTruthy();
     expect(addedAt >= beforeAdd).toBe(true);
     expect(addedAt <= afterAdd).toBe(true);
+  });
+
+  test('stores product snapshot for offline resilience', async () => {
+    render(
+      <CartProvider>
+        <TestComponent />
+      </CartProvider>
+    );
+
+    fireEvent.click(screen.getByText('Add Product 1'));
+
+    await waitFor(() => {
+      const stored = localStorage.getItem('madmatch_cart');
+      const data = JSON.parse(stored);
+      const snapshot = data.cart[0].productSnapshot;
+
+      // Verify all product fields are stored in snapshot
+      expect(snapshot.id).toBe(mockProduct1.id);
+      expect(snapshot.titel).toBe(mockProduct1.titel);
+      expect(snapshot.beskrivelse).toBe(mockProduct1.beskrivelse);
+      expect(snapshot.normalpris).toBe(mockProduct1.normalpris);
+      expect(snapshot.tilbudspris).toBe(mockProduct1.tilbudspris);
+      expect(snapshot.besparelse).toBe(mockProduct1.besparelse);
+      expect(snapshot.besparelseProcentvis).toBe(mockProduct1.besparelseProcentvis);
+      expect(snapshot.gyldigFra).toBe(mockProduct1.gyldigFra);
+      expect(snapshot.gyldigTil).toBe(mockProduct1.gyldigTil);
+      expect(snapshot.butik).toBe(mockProduct1.butik);
+      expect(snapshot.kategori).toBe(mockProduct1.kategori);
+      expect(snapshot.billedUrl).toBe(mockProduct1.billedUrl);
+    });
   });
 });
