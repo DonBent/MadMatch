@@ -24,6 +24,7 @@ const TilbudCard = ({ tilbud }) => {
           Spar {(tilbud.normalpris - tilbud.tilbudspris).toFixed(2)} kr
         </div>
       </div>
+    </div>
     </Link>
   );
 };
