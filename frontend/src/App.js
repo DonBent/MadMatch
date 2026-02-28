@@ -1,21 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { FavoritesProvider, useFavorites } from './contexts/FavoritesContext';
+import { CartProvider, useCart } from './contexts/CartContext';
 import './App.css';
 import TilbudCard from './components/TilbudCard';
 import FilterBar from './components/FilterBar';
 import ProductDetailPage from './pages/ProductDetailPage';
 import Favoritter from './pages/Favoritter';
+import Handlekurv from './pages/Handlekurv';
 import { tilbudService } from './services/tilbudService';
 
 function Navigation() {
   const { favorites } = useFavorites();
+  const { totalItems } = useCart();
   
   return (
     <nav className="app-nav">
       <Link to="/" className="nav-link">Alle tilbud</Link>
       <Link to="/favoritter" className="nav-link">
         ♥ Favoritter {favorites.length > 0 && <span className="nav-badge">({favorites.length})</span>}
+      </Link>
+      <Link to="/handlekurv" className="nav-link">
+        🛒 Handlekurv {totalItems > 0 && <span className="nav-badge">({totalItems})</span>}
       </Link>
     </nav>
   );
@@ -130,7 +136,7 @@ function TilbudOversigt() {
       </main>
 
       <footer className="app-footer">
-        <p>MadMatch MVP v1.6 | Epic 3 - Favoritter</p>
+        <p>MadMatch MVP v1.7 | Epic 3 - Favoritter & Handlekurv</p>
       </footer>
     </div>
   );
@@ -139,13 +145,16 @@ function TilbudOversigt() {
 function App() {
   return (
     <FavoritesProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<TilbudOversigt />} />
-          <Route path="/produkt/:id" element={<ProductDetailPage />} />
-          <Route path="/favoritter" element={<Favoritter />} />
-        </Routes>
-      </Router>
+      <CartProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<TilbudOversigt />} />
+            <Route path="/produkt/:id" element={<ProductDetailPage />} />
+            <Route path="/favoritter" element={<Favoritter />} />
+            <Route path="/handlekurv" element={<Handlekurv />} />
+          </Routes>
+        </Router>
+      </CartProvider>
     </FavoritesProvider>
   );
 }
