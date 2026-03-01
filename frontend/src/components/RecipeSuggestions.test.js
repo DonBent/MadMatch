@@ -1,248 +1,370 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import RecipeSuggestions from './RecipeSuggestions';
+import * as recipeService from '../services/recipeService';
 
-// Mock recipe data
-const mockRecipes = [
+// Mock the recipeService
+jest.mock('../services/recipeService');
+
+// Mock recipe data with Epic 3.5 structure
+const mockDatabaseRecipes = {
+  recipes: [
+    {
+      id: 'recipe-db-1',
+      title: 'Grillet Kylling',
+      imageUrl: 'https://arla.dk/kylling.jpg',
+      totalTimeMinutes: 45,
+      servings: 4,
+      difficulty: 'medium',
+      sourceUrl: 'https://arla.dk/recipes/kylling',
+      source: { name: 'Arla' },
+      language: 'da'
+    },
+    {
+      id: 'recipe-db-2',
+      title: 'Pasta Carbonara',
+      imageUrl: 'https://arla.dk/carbonara.jpg',
+      totalTimeMinutes: 30,
+      servings: 2,
+      difficulty: 'easy',
+      sourceUrl: 'https://arla.dk/recipes/carbonara',
+      source: { name: 'Arla' },
+      language: 'da'
+    }
+  ],
+  total: 2,
+  limit: 3,
+  offset: 0,
+  hasMore: false
+};
+
+const mockLegacyRecipes = [
   {
-    id: 1,
-    title: 'Pasta Carbonara',
-    image: 'https://example.com/carbonara.jpg',
-    readyInMinutes: 30,
-    servings: 4,
-    complexity: 25,
-    sourceUrl: 'https://example.com/carbonara'
-  },
-  {
-    id: 2,
-    title: 'Caesar Salad',
-    image: 'https://example.com/caesar.jpg',
-    readyInMinutes: 15,
-    servings: 2,
-    complexity: 45,
-    sourceUrl: 'https://example.com/caesar'
-  },
-  {
-    id: 3,
-    title: 'Beef Wellington',
-    image: 'https://example.com/wellington.jpg',
-    readyInMinutes: 120,
+    id: 'recipe-legacy-1',
+    title: 'Spoonacular Recipe',
+    image: 'https://spoonacular.com/recipe.jpg',
+    readyInMinutes: 60,
     servings: 6,
-    complexity: 75,
-    sourceUrl: 'https://example.com/wellington'
-  },
-  {
-    id: 4,
-    title: 'Extra Recipe (should not display)',
-    image: 'https://example.com/extra.jpg',
-    readyInMinutes: 45,
-    servings: 3,
-    complexity: 50,
-    sourceUrl: 'https://example.com/extra'
+    complexity: 55,
+    sourceUrl: 'https://spoonacular.com/recipe',
+    source: { name: 'Spoonacular' },
+    language: 'en'
   }
 ];
 
-describe('RecipeSuggestions', () => {
+describe('RecipeSuggestions - Epic 3.5 Integration', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('Loading state', () => {
-    it('should display loading spinner when loading is true', () => {
-      render(<RecipeSuggestions recipes={[]} loading={true} />);
+    it('should display loading spinner while fetching', async () => {
+      recipeService.searchRecipes.mockImplementation(
+        () => new Promise(resolve => setTimeout(() => resolve(mockDatabaseRecipes), 100))
+      );
+
+      render(<RecipeSuggestions productName="kylling" />);
       
       expect(screen.getByText('Henter opskrifter...')).toBeInTheDocument();
       expect(document.querySelector('.loading-spinner')).toBeInTheDocument();
     });
+  });
 
-    it('should display title when loading', () => {
-      render(<RecipeSuggestions recipes={[]} loading={true} />);
-      
-      expect(screen.getByText('Opskriftsforslag')).toBeInTheDocument();
+  describe('New Recipe API (Epic 3.5)', () => {
+    it('should fetch recipes using searchRecipes with productName', async () => {
+      recipeService.searchRecipes.mockResolvedValue(mockDatabaseRecipes);
+
+      render(<RecipeSuggestions productName="kylling" />);
+
+      await waitFor(() => {
+        expect(recipeService.searchRecipes).toHaveBeenCalledWith('kylling', {
+          language: 'da',
+          limit: 3
+        });
+        expect(screen.getByText('Grillet Kylling')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText('Pasta Carbonara')).toBeInTheDocument();
+    });
+
+    it('should display source badges for database recipes', async () => {
+      recipeService.searchRecipes.mockResolvedValue(mockDatabaseRecipes);
+
+      render(<RecipeSuggestions productName="kylling" />);
+
+      await waitFor(() => {
+        const badges = screen.getAllByText('Arla');
+        expect(badges.length).toBeGreaterThan(0);
+      });
+    });
+
+    it('should display language indicators', async () => {
+      recipeService.searchRecipes.mockResolvedValue(mockDatabaseRecipes);
+
+      render(<RecipeSuggestions productName="kylling" />);
+
+      await waitFor(() => {
+        // Danish flag emoji
+        const flags = screen.getAllByTitle('Dansk');
+        expect(flags.length).toBeGreaterThan(0);
+      });
+    });
+
+    it('should display Arla badge with correct styling class', async () => {
+      recipeService.searchRecipes.mockResolvedValue(mockDatabaseRecipes);
+      const { container } = render(<RecipeSuggestions productName="kylling" />);
+
+      await waitFor(() => {
+        const arlaBadges = container.querySelectorAll('.source-badge-arla');
+        expect(arlaBadges.length).toBeGreaterThan(0);
+      });
     });
   });
 
-  describe('Fallback state', () => {
-    it('should display fallback message when recipes is empty', () => {
-      render(<RecipeSuggestions recipes={[]} loading={false} />);
-      
-      expect(screen.getByText('Ingen opskriftsforslag fundet for dette produkt')).toBeInTheDocument();
+  describe('Backward Compatibility (Epic 2)', () => {
+    it('should fallback to legacy endpoint if new API fails', async () => {
+      recipeService.searchRecipes.mockRejectedValue(new Error('API error'));
+      recipeService.getRecipesForProduct.mockResolvedValue(mockLegacyRecipes);
+
+      render(<RecipeSuggestions productId="123" productName="test" />);
+
+      await waitFor(() => {
+        expect(recipeService.getRecipesForProduct).toHaveBeenCalledWith('123');
+      });
+
+      expect(screen.getByText('Spoonacular Recipe')).toBeInTheDocument();
     });
 
-    it('should display fallback message when recipes is null', () => {
-      render(<RecipeSuggestions recipes={null} loading={false} />);
-      
-      expect(screen.getByText('Ingen opskriftsforslag fundet for dette produkt')).toBeInTheDocument();
+    it('should not call legacy endpoint if new API succeeds', async () => {
+      recipeService.searchRecipes.mockResolvedValue(mockDatabaseRecipes);
+
+      render(<RecipeSuggestions productName="kylling" />);
+
+      await waitFor(() => {
+        expect(recipeService.searchRecipes).toHaveBeenCalled();
+      });
+
+      expect(recipeService.getRecipesForProduct).not.toHaveBeenCalled();
     });
 
-    it('should display fallback message when recipes is undefined', () => {
-      render(<RecipeSuggestions loading={false} />);
-      
-      expect(screen.getByText('Ingen opskriftsforslag fundet for dette produkt')).toBeInTheDocument();
+    it('should display Spoonacular badge for legacy recipes', async () => {
+      recipeService.searchRecipes.mockRejectedValue(new Error('API error'));
+      recipeService.getRecipesForProduct.mockResolvedValue(mockLegacyRecipes);
+
+      const { container } = render(<RecipeSuggestions productId="123" />);
+
+      await waitFor(() => {
+        const spoonBadges = container.querySelectorAll('.source-badge-spoonacular');
+        expect(spoonBadges.length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe('Error handling', () => {
+    it('should display error state when all APIs fail', async () => {
+      recipeService.searchRecipes.mockRejectedValue(new Error('Search failed'));
+      recipeService.getRecipesForProduct.mockRejectedValue(new Error('Legacy failed'));
+
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      render(<RecipeSuggestions productId="123" productName="test" />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Der opstod en fejl ved indlæsning af opskrifter')).toBeInTheDocument();
+      });
+
+      consoleErrorSpy.mockRestore();
     });
 
-    it('should display fallback icon', () => {
-      render(<RecipeSuggestions recipes={[]} loading={false} />);
-      
-      expect(screen.getByText('🍽️')).toBeInTheDocument();
+    it('should display fallback when no recipes found', async () => {
+      recipeService.searchRecipes.mockResolvedValue({
+        recipes: [],
+        total: 0
+      });
+
+      render(<RecipeSuggestions productName="unknown" />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Ingen opskriftsforslag fundet for dette produkt')).toBeInTheDocument();
+      });
     });
   });
 
   describe('Recipe display', () => {
-    it('should display recipe cards when recipes are available', () => {
-      render(<RecipeSuggestions recipes={mockRecipes} loading={false} />);
-      
-      expect(screen.getByText('Pasta Carbonara')).toBeInTheDocument();
-      expect(screen.getByText('Caesar Salad')).toBeInTheDocument();
-      expect(screen.getByText('Beef Wellington')).toBeInTheDocument();
+    it('should display maximum 3 recipes from database', async () => {
+      const manyRecipes = {
+        recipes: [
+          ...mockDatabaseRecipes.recipes,
+          {
+            id: 'recipe-db-3',
+            title: 'Third Recipe',
+            imageUrl: 'https://arla.dk/third.jpg',
+            totalTimeMinutes: 20,
+            servings: 2,
+            difficulty: 'easy',
+            sourceUrl: 'https://arla.dk/third',
+            source: { name: 'Arla' },
+            language: 'da'
+          },
+          {
+            id: 'recipe-db-4',
+            title: 'Fourth Recipe (should not display)',
+            imageUrl: 'https://arla.dk/fourth.jpg',
+            totalTimeMinutes: 40,
+            servings: 4,
+            difficulty: 'medium',
+            sourceUrl: 'https://arla.dk/fourth',
+            source: { name: 'Arla' },
+            language: 'da'
+          }
+        ],
+        total: 4
+      };
+
+      recipeService.searchRecipes.mockResolvedValue(manyRecipes);
+
+      render(<RecipeSuggestions productName="test" />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Grillet Kylling')).toBeInTheDocument();
+        expect(screen.getByText('Pasta Carbonara')).toBeInTheDocument();
+        expect(screen.getByText('Third Recipe')).toBeInTheDocument();
+        expect(screen.queryByText('Fourth Recipe (should not display)')).not.toBeInTheDocument();
+      });
     });
 
-    it('should display a maximum of 3 recipes', () => {
-      render(<RecipeSuggestions recipes={mockRecipes} loading={false} />);
-      
-      // Should display first 3
-      expect(screen.getByText('Pasta Carbonara')).toBeInTheDocument();
-      expect(screen.getByText('Caesar Salad')).toBeInTheDocument();
-      expect(screen.getByText('Beef Wellington')).toBeInTheDocument();
-      
-      // Should NOT display the 4th recipe
-      expect(screen.queryByText('Extra Recipe (should not display)')).not.toBeInTheDocument();
+    it('should map difficulty to complexity correctly', async () => {
+      recipeService.searchRecipes.mockResolvedValue(mockDatabaseRecipes);
+
+      render(<RecipeSuggestions productName="test" />);
+
+      await waitFor(() => {
+        // medium difficulty -> complexity 50 -> "Middel"
+        expect(screen.getByText('Middel')).toBeInTheDocument();
+        // easy difficulty -> complexity 20 -> "Let"
+        expect(screen.getByText('Let')).toBeInTheDocument();
+      });
     });
 
-    it('should display recipe images with correct alt text', () => {
-      render(<RecipeSuggestions recipes={mockRecipes} loading={false} />);
-      
-      const carbonaraImage = screen.getByAltText('Pasta Carbonara');
-      expect(carbonaraImage).toBeInTheDocument();
-      expect(carbonaraImage).toHaveAttribute('src', 'https://example.com/carbonara.jpg');
-      expect(carbonaraImage).toHaveAttribute('loading', 'lazy');
-    });
+    it('should display totalTimeMinutes as readyInMinutes', async () => {
+      recipeService.searchRecipes.mockResolvedValue(mockDatabaseRecipes);
 
-    it('should display recipe metadata correctly', () => {
-      render(<RecipeSuggestions recipes={mockRecipes} loading={false} />);
-      
-      // Check time, servings for first recipe
-      expect(screen.getByText('30 min')).toBeInTheDocument();
-      expect(screen.getByText('4 portioner')).toBeInTheDocument();
-    });
+      render(<RecipeSuggestions productName="test" />);
 
-    it('should display difficulty levels correctly', () => {
-      render(<RecipeSuggestions recipes={mockRecipes} loading={false} />);
-      
-      // complexity 25 -> Let
-      expect(screen.getByText('Let')).toBeInTheDocument();
-      // complexity 45 -> Middel
-      expect(screen.getByText('Middel')).toBeInTheDocument();
-      // complexity 75 -> Svær
-      expect(screen.getByText('Svær')).toBeInTheDocument();
-    });
-
-    it('should create external links with correct attributes', () => {
-      render(<RecipeSuggestions recipes={mockRecipes} loading={false} />);
-      
-      const links = screen.getAllByRole('link');
-      
-      // Should have 3 links (max 3 recipes)
-      expect(links).toHaveLength(3);
-      
-      // Check first link
-      expect(links[0]).toHaveAttribute('href', 'https://example.com/carbonara');
-      expect(links[0]).toHaveAttribute('target', '_blank');
-      expect(links[0]).toHaveAttribute('rel', 'noopener noreferrer');
-    });
-
-    it('should display "Se opskrift" link indicator', () => {
-      render(<RecipeSuggestions recipes={mockRecipes} loading={false} />);
-      
-      const linkIndicators = screen.getAllByText('Se opskrift →');
-      expect(linkIndicators).toHaveLength(3); // One for each of max 3 recipes
+      await waitFor(() => {
+        expect(screen.getByText('45 min')).toBeInTheDocument();
+        expect(screen.getByText('30 min')).toBeInTheDocument();
+      });
     });
   });
 
   describe('Attribution', () => {
-    it('should display Spoonacular attribution when recipes are shown', () => {
-      render(<RecipeSuggestions recipes={mockRecipes} loading={false} />);
-      
-      expect(screen.getByText('Opskrifter fra Spoonacular')).toBeInTheDocument();
+    it('should show "Arla og Spoonacular" when Arla recipes present', async () => {
+      recipeService.searchRecipes.mockResolvedValue(mockDatabaseRecipes);
+
+      render(<RecipeSuggestions productName="test" />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Opskrifter fra Arla og Spoonacular')).toBeInTheDocument();
+      });
     });
 
-    it('should not display attribution in fallback state', () => {
-      render(<RecipeSuggestions recipes={[]} loading={false} />);
-      
-      expect(screen.queryByText('Opskrifter fra Spoonacular')).not.toBeInTheDocument();
-    });
+    it('should show "Spoonacular" only when no Arla recipes', async () => {
+      recipeService.searchRecipes.mockRejectedValue(new Error('No database'));
+      recipeService.getRecipesForProduct.mockResolvedValue(mockLegacyRecipes);
 
-    it('should not display attribution in loading state', () => {
-      render(<RecipeSuggestions recipes={[]} loading={true} />);
-      
-      expect(screen.queryByText('Opskrifter fra Spoonacular')).not.toBeInTheDocument();
-    });
-  });
+      render(<RecipeSuggestions productId="123" />);
 
-  describe('Responsive layout', () => {
-    it('should apply recipe-grid class for responsive layout', () => {
-      const { container } = render(<RecipeSuggestions recipes={mockRecipes} loading={false} />);
-      
-      const grid = container.querySelector('.recipe-grid');
-      expect(grid).toBeInTheDocument();
-    });
-
-    it('should have recipe-card class on each card', () => {
-      const { container } = render(<RecipeSuggestions recipes={mockRecipes} loading={false} />);
-      
-      const cards = container.querySelectorAll('.recipe-card');
-      expect(cards).toHaveLength(3); // Max 3 recipes
+      await waitFor(() => {
+        expect(screen.getByText('Opskrifter fra Spoonacular')).toBeInTheDocument();
+      });
     });
   });
 
   describe('Edge cases', () => {
-    it('should handle single recipe', () => {
-      const singleRecipe = [mockRecipes[0]];
-      render(<RecipeSuggestions recipes={singleRecipe} loading={false} />);
-      
-      expect(screen.getByText('Pasta Carbonara')).toBeInTheDocument();
-      expect(screen.queryByText('Caesar Salad')).not.toBeInTheDocument();
+    it('should handle missing productId and productName gracefully', async () => {
+      render(<RecipeSuggestions />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Ingen opskriftsforslag fundet for dette produkt')).toBeInTheDocument();
+      });
+
+      expect(recipeService.searchRecipes).not.toHaveBeenCalled();
     });
 
-    it('should handle recipe without image gracefully', () => {
-      const recipeNoImage = [{
-        ...mockRecipes[0],
-        image: null
-      }];
-      
-      render(<RecipeSuggestions recipes={recipeNoImage} loading={false} />);
-      
-      expect(screen.getByText('Pasta Carbonara')).toBeInTheDocument();
-      expect(screen.queryByAltText('Pasta Carbonara')).not.toBeInTheDocument();
+    it('should handle recipes without source gracefully', async () => {
+      const recipesNoSource = {
+        recipes: [{
+          id: 'recipe-1',
+          title: 'Recipe Without Source',
+          imageUrl: 'https://example.com/image.jpg',
+          totalTimeMinutes: 30,
+          servings: 2,
+          difficulty: 'easy',
+          sourceUrl: 'https://example.com/recipe',
+          language: 'da'
+          // source is missing
+        }]
+      };
+
+      recipeService.searchRecipes.mockResolvedValue(recipesNoSource);
+
+      render(<RecipeSuggestions productName="test" />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Recipe Without Source')).toBeInTheDocument();
+        // Should default to Spoonacular
+        expect(screen.getByText('Spoonacular')).toBeInTheDocument();
+      });
     });
 
-    it('should handle boundary difficulty levels', () => {
-      const boundaryRecipes = [
-        { ...mockRecipes[0], id: 101, complexity: 30, title: 'Recipe 30' },
-        { ...mockRecipes[0], id: 102, complexity: 60, title: 'Recipe 60' },
-        { ...mockRecipes[0], id: 103, complexity: 61, title: 'Recipe 61' }
-      ];
-      
-      render(<RecipeSuggestions recipes={boundaryRecipes} loading={false} />);
-      
-      // complexity 30 -> Let (<=30)
-      // complexity 60 -> Middel (<=60)
-      // complexity 61 -> Svær (>60)
-      const difficulties = screen.getAllByText(/Let|Middel|Svær/);
-      expect(difficulties).toHaveLength(3);
+    it('should handle English language recipes', async () => {
+      const englishRecipes = {
+        recipes: [{
+          id: 'recipe-en-1',
+          title: 'English Recipe',
+          imageUrl: 'https://example.com/en.jpg',
+          totalTimeMinutes: 40,
+          servings: 4,
+          difficulty: 'medium',
+          sourceUrl: 'https://example.com/en',
+          source: { name: 'Spoonacular' },
+          language: 'en'
+        }]
+      };
+
+      recipeService.searchRecipes.mockResolvedValue(englishRecipes);
+
+      render(<RecipeSuggestions productName="test" />);
+
+      await waitFor(() => {
+        // English flag emoji
+        const flags = screen.getAllByTitle('English');
+        expect(flags.length).toBeGreaterThan(0);
+      });
     });
   });
 
   describe('Accessibility', () => {
-    it('should have semantic heading', () => {
-      render(<RecipeSuggestions recipes={mockRecipes} loading={false} />);
-      
-      const heading = screen.getByRole('heading', { name: 'Opskriftsforslag' });
-      expect(heading).toBeInTheDocument();
+    it('should have aria-labels for source badges', async () => {
+      recipeService.searchRecipes.mockResolvedValue(mockDatabaseRecipes);
+
+      render(<RecipeSuggestions productName="test" />);
+
+      await waitFor(() => {
+        const badges = screen.getAllByLabelText(/Kilde:/);
+        expect(badges.length).toBeGreaterThan(0);
+      });
     });
 
-    it('should have accessible links', () => {
-      render(<RecipeSuggestions recipes={mockRecipes} loading={false} />);
-      
-      const links = screen.getAllByRole('link');
-      links.forEach(link => {
-        expect(link).toHaveAttribute('href');
+    it('should have aria-labels for language indicators', async () => {
+      recipeService.searchRecipes.mockResolvedValue(mockDatabaseRecipes);
+
+      render(<RecipeSuggestions productName="test" />);
+
+      await waitFor(() => {
+        const indicators = screen.getAllByLabelText('Dansk');
+        expect(indicators.length).toBeGreaterThan(0);
       });
     });
   });
