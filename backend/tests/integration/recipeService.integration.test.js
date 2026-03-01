@@ -5,9 +5,7 @@
 const { RecipeService } = require('../../services/recipeServiceNew');
 const { DatabaseRecipeSource } = require('../../recipe-sources/DatabaseRecipeSource');
 const { SpoonacularRecipeSource } = require('../../recipe-sources/SpoonacularRecipeSource');
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+const { getPrismaClient } = require('../../services/databaseService');
 
 /**
  * Integration Test Suite
@@ -23,9 +21,12 @@ describe('RecipeService Integration Tests', () => {
   let recipeService;
   let testRecipeId;
   let testSourceId;
+  let prisma;
 
   // Setup: Create test data in database
   beforeAll(async () => {
+    // Initialize Prisma client (must be done here, after setup.js loads env vars)
+    prisma = getPrismaClient();
     // Find or create test recipe source
     const arlaSource = await prisma.recipeSource.findFirst({
       where: { name: 'Arla' }
@@ -59,13 +60,12 @@ describe('RecipeService Integration Tests', () => {
         cookTimeMinutes: 30,
         totalTimeMinutes: 45,
         imageUrl: 'https://test.example.com/test.jpg',
-        sourceUrl: 'https://test.example.com/recipe/test',
         instructions: 'Step 1: Test\nStep 2: Integration\nStep 3: Success',
         ingredients: {
           create: [
-            { name: 'kyllingebryst', quantity: '500 g', order: 1 },
-            { name: 'hakket oksekød', quantity: '250 g', order: 2 },
-            { name: 'løg', quantity: '2 stk', order: 3 }
+            { ingredientName: 'kyllingebryst', quantity: '500 g', order: 1 },
+            { ingredientName: 'hakket oksekød', quantity: '250 g', order: 2 },
+            { ingredientName: 'løg', quantity: '2 stk', order: 3 }
           ]
         }
       }
