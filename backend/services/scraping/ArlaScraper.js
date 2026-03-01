@@ -115,7 +115,9 @@ class ArlaScraper {
     if (!this.dryRun) {
       job = await this.prisma.scrapingJob.create({
         data: {
-          sourceId: this.sourceId,
+          source: {
+            connect: { id: this.sourceId }
+          },
           status: 'RUNNING',
           startedAt: new Date()
         }
