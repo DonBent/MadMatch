@@ -62,16 +62,19 @@ class ArlaScraper {
     this.maxRetries = 3;
     this.retryDelay = 1000;
     
-    // Puppeteer configuration
+    // Puppeteer configuration - ZHC-MadMatch-20260301-DebugScraper
     this.puppeteerOptions = {
       headless: 'new',
       protocolTimeout: 0, // Disable Chrome DevTools Protocol timeout to prevent ~30min crashes
+      dumpio: true, // Log Chrome stdout/stderr for crash detection
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-accelerated-2d-canvas',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--enable-logging',
+        '--v=1' // Verbose logging
       ]
     };
   }
@@ -95,6 +98,12 @@ class ArlaScraper {
       // Launch browser
       this.log('info', 'Launching headless browser...');
       this.browser = await puppeteer.launch(this.puppeteerOptions);
+      
+      // Add browser crash detection - ZHC-MadMatch-20260301-DebugScraper
+      this.browser.on('disconnected', () => {
+        this.log('error', '❌ BROWSER DISCONNECTED EVENT - Chrome crashed or was killed!');
+      });
+      
       this.page = await this.browser.newPage();
       await this.page.setDefaultNavigationTimeout(30000);
       this.log('info', 'Browser launched successfully');
@@ -121,6 +130,12 @@ class ArlaScraper {
     
     // Reinitialize
     this.browser = await puppeteer.launch(this.puppeteerOptions);
+    
+    // Re-attach browser crash detection - ZHC-MadMatch-20260301-DebugScraper
+    this.browser.on('disconnected', () => {
+      this.log('error', '❌ BROWSER DISCONNECTED EVENT - Chrome crashed or was killed!');
+    });
+    
     this.page = await this.browser.newPage();
     await this.page.setDefaultNavigationTimeout(30000);
     
@@ -182,6 +197,10 @@ class ArlaScraper {
           this.log('verbose', `[${i + 1}/${recipeUrls.length}] Fetching: ${url}`);
           
           const recipe = await this.scrapeRecipePage(url);
+
+          // Memory tracking per recipe - ZHC-MadMatch-20260301-DebugScraper
+          const mem = process.memoryUsage();
+          this.log('debug', `Memory: heap=${Math.floor(mem.heapUsed/1024/1024)}MB, rss=${Math.floor(mem.rss/1024/1024)}MB`);
 
           if (!this.dryRun) {
             const inserted = await this.saveRecipe(recipe);
@@ -312,8 +331,15 @@ class ArlaScraper {
     try {
       await page.setUserAgent(this.userAgent);
       
+      // Enhanced error handling for page navigation - ZHC-MadMatch-20260301-DebugScraper
       this.log('verbose', `Loading page: ${url}`);
-      await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+      try {
+        await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+      } catch (error) {
+        this.log('error', `❌ PAGE GOTO FAILED: ${error.message}`);
+        this.log('error', `Stack: ${error.stack}`);
+        throw error;
+      }
       
       // Wait for Vue.js to render recipe content
       await page.waitForSelector('h1, [class*="title"], [class*="recipe"]', { timeout: 10000 });
@@ -663,18 +689,20 @@ class ArlaScraper {
 
   /**
    * Log message
-   * @param {string} level - Log level (info, warn, error, verbose)
+   * @param {string} level - Log level (info, warn, error, verbose, debug)
    * @param {string} message - Log message
    */
   log(level, message) {
     if (level === 'verbose' && !this.verbose) return;
+    if (level === 'debug' && !this.verbose) return; // Debug messages also require verbose mode
     
     const timestamp = new Date().toISOString();
     const prefix = {
       error: '❌',
       warn: '⚠️',
       info: 'ℹ️',
-      verbose: '🔍'
+      verbose: '🔍',
+      debug: '🐛'
     }[level] || '';
     
     console.log(`[${timestamp}] ${prefix} ${message}`);

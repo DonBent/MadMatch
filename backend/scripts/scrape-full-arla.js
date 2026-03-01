@@ -15,6 +15,32 @@ const path = require('path');
 const BATCH_SIZE = 100;
 const TOTAL_TARGET = 3000;
 
+// ==============================================================================
+// PROCESS MONITORING & DEBUGGING - ZHC-MadMatch-20260301-DebugScraper
+// ==============================================================================
+
+let lastHeartbeat = Date.now();
+setInterval(() => {
+  const elapsed = Math.floor((Date.now() - lastHeartbeat) / 1000);
+  console.log(`[HEARTBEAT] Process alive: ${process.pid}, memory: ${Math.floor(process.memoryUsage().heapUsed / 1024 / 1024)}MB, uptime: ${elapsed}s`);
+  lastHeartbeat = Date.now();
+}, 30000); // Every 30 seconds
+
+// Add exit handlers
+process.on('exit', (code) => {
+  console.log(`[EXIT] Process exiting with code: ${code}`);
+});
+
+process.on('beforeExit', (code) => {
+  console.log(`[BEFORE_EXIT] Process about to exit with code: ${code}`);
+});
+
+process.on('disconnect', () => {
+  console.log(`[DISCONNECT] Process disconnected from parent`);
+});
+
+// ==============================================================================
+
 async function main() {
   console.log('╔════════════════════════════════════════════════════╗');
   console.log('║   Arla Full Scraper - 3,000 Recipes               ║');
