@@ -65,6 +65,7 @@ class ArlaScraper {
     // Puppeteer configuration
     this.puppeteerOptions = {
       headless: 'new',
+      protocolTimeout: 0, // Disable Chrome DevTools Protocol timeout to prevent ~30min crashes
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
