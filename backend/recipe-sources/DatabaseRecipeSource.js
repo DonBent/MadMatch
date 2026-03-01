@@ -188,7 +188,7 @@ class DatabaseRecipeSource extends IRecipeSource {
       `);
 
       // Join all fragments into one query
-      const sqlQuery = Prisma.join(sqlFragments, Prisma.raw(' '));
+      const sqlQuery = Prisma.join(sqlFragments, ' ');
       const recipes = await prisma.$queryRaw(sqlQuery);
 
       // Fetch full recipe data with relations
@@ -275,7 +275,7 @@ class DatabaseRecipeSource extends IRecipeSource {
       `);
 
       // Join all fragments into one query
-      const sqlQuery = Prisma.join(sqlFragments, Prisma.raw(' '));
+      const sqlQuery = Prisma.join(sqlFragments, ' ');
       const recipes = await prisma.$queryRaw(sqlQuery);
 
       // Fetch full recipe data with relations
