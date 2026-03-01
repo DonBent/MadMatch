@@ -543,11 +543,18 @@ class ArlaScraper {
    */
   async saveRecipe(recipeData) {
     try {
-      // Check for duplicate
+      // Check for duplicate (by title OR slug to handle unique constraint)
       const existing = await this.prisma.recipe.findFirst({
         where: {
-          title: recipeData.title,
-          sourceId: this.sourceId
+          AND: [
+            { sourceId: this.sourceId },
+            {
+              OR: [
+                { title: recipeData.title },
+                { slug: recipeData.slug }
+              ]
+            }
+          ]
         }
       });
 
