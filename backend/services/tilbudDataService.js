@@ -192,7 +192,7 @@ class MockDataAdapter {
         normalpris: 59.95,
         tilbudspris: 39.95,
         rabat: 33,
-        billedeUrl: '/images/oksekoed.jpg',
+        billedeUrl: 'https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=400',
         _source: 'mock-data'
       },
       {
@@ -203,7 +203,7 @@ class MockDataAdapter {
         normalpris: 20.00,
         tilbudspris: 12.00,
         rabat: 40,
-        billedeUrl: '/images/cola.jpg',
+        billedeUrl: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400',
         _source: 'mock-data'
       },
       {
@@ -214,7 +214,7 @@ class MockDataAdapter {
         normalpris: 18.95,
         tilbudspris: 12.95,
         rabat: 32,
-        billedeUrl: '/images/smoer.jpg',
+        billedeUrl: 'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=400',
         _source: 'mock-data'
       },
       {
@@ -225,7 +225,7 @@ class MockDataAdapter {
         normalpris: 25.95,
         tilbudspris: 19.95,
         rabat: 23,
-        billedeUrl: '/images/aeg.jpg',
+        billedeUrl: 'https://images.unsplash.com/photo-1518569656558-1f25e69d93d7?w=400',
         _source: 'mock-data'
       },
       {
@@ -236,7 +236,7 @@ class MockDataAdapter {
         normalpris: 12.95,
         tilbudspris: 8.95,
         rabat: 31,
-        billedeUrl: '/images/pasta.jpg',
+        billedeUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400',
         _source: 'mock-data'
       },
       {
@@ -247,7 +247,7 @@ class MockDataAdapter {
         normalpris: 69.95,
         tilbudspris: 49.95,
         rabat: 29,
-        billedeUrl: '/images/laks.jpg',
+        billedeUrl: 'https://images.unsplash.com/photo-1574781330855-d0db8cc6a79c?w=400',
         _source: 'mock-data'
       },
       {
@@ -258,7 +258,7 @@ class MockDataAdapter {
         normalpris: 15.00,
         tilbudspris: 10.00,
         rabat: 33,
-        billedeUrl: '/images/bananer.jpg',
+        billedeUrl: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400',
         _source: 'mock-data'
       },
       {
@@ -269,7 +269,7 @@ class MockDataAdapter {
         normalpris: 12.95,
         tilbudspris: 8.95,
         rabat: 31,
-        billedeUrl: '/images/maelk.jpg',
+        billedeUrl: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400',
         _source: 'mock-data'
       },
       {
