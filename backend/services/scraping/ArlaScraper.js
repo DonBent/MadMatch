@@ -1,11 +1,10 @@
-// Epic 3.5 Slice 3: Arla Recipe Scraper
-// Correlation ID: ZHC-MadMatch-20260301-004
-// Scrapes Danish recipes from Arla.dk and stores in PostgreSQL database
+// Epic 3.5 Slice 3: Arla Recipe Scraper (Puppeteer Refactor)
+// Correlation ID: ZHC-MadMatch-20260301-PuppeteerScraper
+// Scrapes Danish recipes from Arla.dk (Vue.js SPA) using Puppeteer headless browser
 
 require('dotenv').config();
 
-const axios = require('axios');
-const cheerio = require('cheerio');
+const puppeteer = require('puppeteer');
 const { PrismaClient } = require('@prisma/client');
 const { PrismaPg } = require('@prisma/adapter-pg');
 const { Pool } = require('pg');
@@ -13,18 +12,19 @@ const fs = require('fs').promises;
 const path = require('path');
 
 /**
- * ArlaScraper - Web scraper for Arla.dk recipes
+ * ArlaScraper - Web scraper for Arla.dk recipes (Puppeteer-based)
  * 
  * Features:
+ * - Headless browser automation with Puppeteer
+ * - JavaScript-rendered content support (Vue.js SPA)
  * - Polite scraping with rate limiting (1 req/2 seconds)
- * - HTML parsing with Cheerio
  * - Database insertion via Prisma
  * - Duplicate detection
  * - Error handling and logging
  * - Progress tracking
  * 
  * AC-3.1: Respects robots.txt and rate limits
- * AC-3.2: Parses Arla recipe pages correctly
+ * AC-3.2: Parses Arla recipe pages correctly (Vue.js rendered)
  * AC-3.3: Stores recipes in database with all fields
  */
 class ArlaScraper {
@@ -34,6 +34,7 @@ class ArlaScraper {
     this.dryRun = options.dryRun || false;
     this.verbose = options.verbose || false;
     this.sourceId = null;
+    this.browser = null;
     
     // Initialize Prisma with adapter (unless mock provided for tests)
     if (options.prisma) {
@@ -59,10 +60,22 @@ class ArlaScraper {
     this.userAgent = 'MadMatch/1.4.0 (contact@madmatch.dk)';
     this.maxRetries = 3;
     this.retryDelay = 1000;
+    
+    // Puppeteer configuration
+    this.puppeteerOptions = {
+      headless: 'new',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu'
+      ]
+    };
   }
 
   /**
-   * Initialize scraper - fetch Arla source ID from database
+   * Initialize scraper - fetch Arla source ID from database and launch browser
    */
   async initialize() {
     try {
@@ -76,6 +89,12 @@ class ArlaScraper {
 
       this.sourceId = source.id;
       this.log('info', `Initialized with Arla source ID: ${this.sourceId}`);
+      
+      // Launch browser
+      this.log('info', 'Launching headless browser...');
+      this.browser = await puppeteer.launch(this.puppeteerOptions);
+      this.log('info', 'Browser launched successfully');
+      
     } catch (error) {
       this.log('error', `Failed to initialize: ${error.message}`);
       throw error;
@@ -129,8 +148,7 @@ class ArlaScraper {
 
           this.log('verbose', `[${i + 1}/${recipeUrls.length}] Fetching: ${url}`);
           
-          const html = await this.fetchRecipePage(url);
-          const recipe = await this.parseRecipe(html, url);
+          const recipe = await this.scrapeRecipePage(url);
 
           if (!this.dryRun) {
             const inserted = await this.saveRecipe(recipe);
@@ -195,389 +213,332 @@ class ArlaScraper {
   }
 
   /**
-   * Fetch recipe URLs from category pages
+   * Fetch recipe URLs from category pages using Puppeteer
    * @param {string|null} category - Category filter
    * @param {number} limit - Max URLs to fetch
    * @returns {Promise<string[]>} Array of recipe URLs
    */
   async fetchRecipeUrls(category = null, limit = 1000) {
-    const urls = [];
-    let page = 1;
-    let hasMore = true;
-
-    // Note: This is a simplified implementation
-    // In production, you'd need to analyze Arla.dk's actual structure
-    // For MVP, we'll scrape a fixed list or allow direct URL input
+    const urls = new Set();
+    const page = await this.browser.newPage();
     
-    while (hasMore && urls.length < limit) {
-      const categoryUrl = category
-        ? `${this.baseUrl}${category}?page=${page}`
-        : `${this.baseUrl}?page=${page}`;
-
-      try {
-        this.log('verbose', `Fetching category page: ${categoryUrl}`);
-        const html = await this.fetchRecipePage(categoryUrl);
-        const $ = cheerio.load(html);
-
+    try {
+      await page.setUserAgent(this.userAgent);
+      await page.setViewport({ width: 1920, height: 1080 });
+      
+      const baseUrl = category 
+        ? `${this.baseUrl}${category}` 
+        : this.baseUrl;
+      
+      this.log('verbose', `Navigating to: ${baseUrl}`);
+      await page.goto(baseUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+      
+      // Wait for Vue.js to render the content
+      await page.waitForSelector('a[href*="/opskrifter/"]', { timeout: 10000 });
+      
+      // Scroll to load more recipes (Vue.js lazy loading)
+      let previousCount = 0;
+      let scrollAttempts = 0;
+      const maxScrolls = 20;
+      
+      while (urls.size < limit && scrollAttempts < maxScrolls) {
         // Extract recipe links
-        // NOTE: These selectors are examples and need to be adjusted
-        // based on actual Arla.dk HTML structure
-        const newUrls = [];
-        $('a[href*="/opskrifter/"]').each((i, el) => {
-          const href = $(el).attr('href');
-          if (href && !href.includes('?') && !urls.includes(href) && !newUrls.includes(href)) {
-            const fullUrl = href.startsWith('http') ? href : `https://www.arla.dk${href}`;
-            // Filter out category pages, only keep actual recipe pages
-            if (fullUrl.match(/\/opskrifter\/[^\/]+$/)) {
-              newUrls.push(fullUrl);
+        const newUrls = await page.evaluate(() => {
+          const links = Array.from(document.querySelectorAll('a[href*="/opskrifter/"]'));
+          return links
+            .map(a => a.href)
+            .filter(href => {
+              // Filter only actual recipe pages (not category/index pages)
+              const parts = href.split('/opskrifter/')[1];
+              return parts && !parts.includes('?') && parts.split('/').length === 1 && parts.length > 0;
+            });
+        });
+        
+        newUrls.forEach(url => urls.add(url));
+        
+        this.log('verbose', `Found ${urls.size} recipe URLs after scroll ${scrollAttempts + 1}`);
+        
+        // Check if we got new URLs
+        if (urls.size === previousCount) {
+          // Try clicking "Load More" button if it exists
+          const loadMoreClicked = await page.evaluate(() => {
+            const buttons = Array.from(document.querySelectorAll('button, a'));
+            const loadMoreBtn = buttons.find(btn => 
+              btn.textContent.toLowerCase().includes('mere') ||
+              btn.textContent.toLowerCase().includes('flere') ||
+              btn.textContent.toLowerCase().includes('load')
+            );
+            if (loadMoreBtn) {
+              loadMoreBtn.click();
+              return true;
             }
+            return false;
+          });
+          
+          if (loadMoreClicked) {
+            await this.sleep(2000); // Wait for new content to load
+          } else {
+            break; // No more content to load
           }
-        });
-
-        urls.push(...newUrls);
-        this.log('verbose', `Found ${newUrls.length} new recipe URLs (total: ${urls.length})`);
-
-        // Check for pagination
-        hasMore = $('.pagination .next, a.next-page').length > 0 && newUrls.length > 0;
-        page++;
-
-        // Safety limit on pagination
-        if (page > 100) {
-          this.log('warn', 'Reached max pagination limit (100 pages)');
-          hasMore = false;
         }
-
-      } catch (error) {
-        this.log('error', `Failed to fetch category page ${page}: ${error.message}`);
-        hasMore = false;
+        
+        previousCount = urls.size;
+        
+        // Scroll down to trigger lazy loading
+        await page.evaluate(() => window.scrollBy(0, window.innerHeight));
+        await this.sleep(1000);
+        
+        scrollAttempts++;
       }
-
-      // Rate limiting between category pages
-      if (hasMore) {
-        await this.sleep(this.rateLimit);
-      }
+      
+    } catch (error) {
+      this.log('error', `Failed to fetch recipe URLs: ${error.message}`);
+      throw error;
+    } finally {
+      await page.close();
     }
-
-    return urls.slice(0, limit);
+    
+    const urlArray = Array.from(urls).slice(0, limit);
+    this.log('info', `Collected ${urlArray.length} unique recipe URLs`);
+    return urlArray;
   }
 
   /**
-   * Fetch a single recipe page with retry logic
+   * Scrape a single recipe page using Puppeteer
    * @param {string} url - Recipe URL
-   * @returns {Promise<string>} HTML content
-   */
-  async fetchRecipePage(url) {
-    let lastError;
-    
-    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
-      try {
-        const response = await axios.get(url, {
-          headers: {
-            'User-Agent': this.userAgent,
-            'Accept': 'text/html,application/xhtml+xml',
-            'Accept-Language': 'da-DK,da;q=0.9,en;q=0.8'
-          },
-          timeout: 15000,
-          validateStatus: (status) => status === 200
-        });
-        
-        return response.data;
-        
-      } catch (error) {
-        lastError = error;
-        
-        if (error.response?.status === 404) {
-          throw new Error(`Page not found: ${url}`);
-        }
-        
-        if (attempt < this.maxRetries) {
-          const delay = this.retryDelay * attempt;
-          this.log('warn', `Attempt ${attempt} failed for ${url}, retrying in ${delay}ms...`);
-          await this.sleep(delay);
-        }
-      }
-    }
-    
-    throw new Error(`Failed to fetch ${url} after ${this.maxRetries} attempts: ${lastError.message}`);
-  }
-
-  /**
-   * Parse recipe data from HTML
-   * @param {string} html - HTML content
-   * @param {string} sourceUrl - Original URL
    * @returns {Promise<object>} Parsed recipe data
    */
-  async parseRecipe(html, sourceUrl) {
-    const $ = cheerio.load(html);
-
-    // Extract title
-    const title = this.extractTitle($);
+  async scrapeRecipePage(url) {
+    const page = await this.browser.newPage();
     
-    // Extract description
-    const description = this.extractDescription($);
-    
-    // Extract image
-    const imageUrl = this.extractImage($);
-    
-    // Extract times
-    const { prepTime, cookTime, totalTime } = this.extractTimes($);
-    
-    // Extract servings
-    const servings = this.extractServings($);
-    
-    // Extract ingredients
-    const ingredients = this.extractIngredients($);
-    
-    // Extract instructions
-    const instructions = this.extractInstructions($);
-
-    // Validate required fields
-    if (!title || ingredients.length === 0) {
-      throw new Error('Missing required fields (title or ingredients)');
-    }
-
-    // Calculate difficulty
-    const difficulty = this.inferDifficulty(totalTime || prepTime + cookTime);
-
-    return {
-      title,
-      slug: this.generateSlug(title),
-      description: description || null,
-      imageUrl: imageUrl || null,
-      prepTimeMinutes: prepTime || null,
-      cookTimeMinutes: cookTime || null,
-      totalTimeMinutes: totalTime || prepTime + cookTime || null,
-      servings: servings || null,
-      difficulty,
-      instructions: instructions || null,
-      language: 'da',
-      ingredients,
-      sourceUrl
-    };
-  }
-
-  /**
-   * Extract title from HTML
-   */
-  extractTitle($) {
-    // Try multiple selectors
-    const selectors = [
-      'h1.recipe-title',
-      'h1[itemprop="name"]',
-      '.recipe-header h1',
-      'article h1',
-      'h1'
-    ];
-
-    for (const selector of selectors) {
-      const text = $(selector).first().text().trim();
-      if (text) return text;
-    }
-
-    // Fallback to meta tags
-    return $('meta[property="og:title"]').attr('content')?.trim() || 
-           $('meta[name="twitter:title"]').attr('content')?.trim() ||
-           $('title').text().trim().replace(/\s*\|\s*Arla.*$/, '');
-  }
-
-  /**
-   * Extract description from HTML
-   */
-  extractDescription($) {
-    return $('meta[name="description"]').attr('content')?.trim() ||
-           $('meta[property="og:description"]').attr('content')?.trim() ||
-           $('.recipe-intro, .recipe-description, p.intro').first().text().trim() ||
-           null;
-  }
-
-  /**
-   * Extract image URL from HTML
-   */
-  extractImage($) {
-    const selectors = [
-      'meta[property="og:image"]',
-      'meta[name="twitter:image"]',
-      'img[itemprop="image"]',
-      '.recipe-image img',
-      'article img',
-      'img.main-image'
-    ];
-
-    for (const selector of selectors) {
-      let url = null;
+    try {
+      await page.setUserAgent(this.userAgent);
+      await page.setViewport({ width: 1920, height: 1080 });
       
-      if (selector.startsWith('meta')) {
-        url = $(selector).attr('content');
-      } else {
-        url = $(selector).first().attr('src') || $(selector).first().attr('data-src');
-      }
-
-      if (url) {
-        // Convert relative to absolute URL
-        if (url.startsWith('//')) {
-          url = 'https:' + url;
-        } else if (url.startsWith('/')) {
-          url = 'https://www.arla.dk' + url;
+      this.log('verbose', `Loading page: ${url}`);
+      await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+      
+      // Wait for Vue.js to render recipe content
+      await page.waitForSelector('h1, [class*="title"], [class*="recipe"]', { timeout: 10000 });
+      await this.sleep(1000); // Additional wait for dynamic content
+      
+      // Extract recipe data from JSON-LD (structured data)
+      const recipeData = await page.evaluate(() => {
+        // Try to extract from JSON-LD first (most reliable)
+        const jsonLdScripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
+        let recipeSchema = null;
+        
+        for (const script of jsonLdScripts) {
+          try {
+            const data = JSON.parse(script.textContent);
+            // Data might be nested in arrays
+            const findRecipe = (obj) => {
+              if (!obj) return null;
+              if (Array.isArray(obj)) {
+                for (const item of obj) {
+                  const found = findRecipe(item);
+                  if (found) return found;
+                }
+              } else if (obj['@type'] === 'Recipe' || obj.type === 'Recipe') {
+                return obj;
+              }
+              return null;
+            };
+            recipeSchema = findRecipe(data);
+            if (recipeSchema) break;
+          } catch (e) {
+            // Skip invalid JSON
+          }
         }
-        return url;
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Extract times from HTML
-   */
-  extractTimes($) {
-    const times = { prepTime: null, cookTime: null, totalTime: null };
-
-    // Try structured data
-    const prepTimeEl = $('[itemprop="prepTime"]').attr('content') || $('[itemprop="prepTime"]').text();
-    const cookTimeEl = $('[itemprop="cookTime"]').attr('content') || $('[itemprop="cookTime"]').text();
-    const totalTimeEl = $('[itemprop="totalTime"]').attr('content') || $('[itemprop="totalTime"]').text();
-
-    if (prepTimeEl) times.prepTime = this.parseTime(prepTimeEl);
-    if (cookTimeEl) times.cookTime = this.parseTime(cookTimeEl);
-    if (totalTimeEl) times.totalTime = this.parseTime(totalTimeEl);
-
-    // Try text-based extraction
-    if (!times.prepTime || !times.cookTime) {
-      $('.recipe-time, .time-info, .prep-time, .cook-time').each((i, el) => {
-        const text = $(el).text();
-        if (text.match(/forberedelse|prep/i)) {
-          times.prepTime = this.parseTime(text);
-        }
-        if (text.match(/tilberedning|kog|cook/i)) {
-          times.cookTime = this.parseTime(text);
-        }
-        if (text.match(/total|samlet/i)) {
-          times.totalTime = this.parseTime(text);
-        }
-      });
-    }
-
-    return times;
-  }
-
-  /**
-   * Extract servings from HTML
-   */
-  extractServings($) {
-    const selectors = [
-      '[itemprop="recipeYield"]',
-      '.servings',
-      '.portions',
-      '.personer'
-    ];
-
-    for (const selector of selectors) {
-      const text = $(selector).first().text();
-      const match = text.match(/(\d+)/);
-      if (match) {
-        return parseInt(match[1]);
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Extract ingredients from HTML
-   */
-  extractIngredients($) {
-    const ingredients = [];
-    
-    const listSelectors = [
-      '[itemprop="recipeIngredient"]',
-      '.ingredients li',
-      '.ingredient-list li',
-      'ul.ingredients li'
-    ];
-
-    for (const selector of listSelectors) {
-      const items = $(selector);
-      if (items.length > 0) {
-        items.each((i, el) => {
-          const text = $(el).text().trim();
-          if (text) {
-            // Try to split quantity and name
-            const match = text.match(/^([0-9.,\s½¼¾]+\s*[a-zæøåA-ZÆØÅ]+\.?)\s+(.+)$/);
-            if (match) {
-              ingredients.push({
-                quantity: match[1].trim(),
-                name: match[2].trim(),
-                order: i + 1
-              });
-            } else {
-              ingredients.push({
-                quantity: null,
-                name: text,
-                order: i + 1
-              });
+        
+        // Helper functions for fallback HTML extraction
+        const getText = (selector) => {
+          const el = document.querySelector(selector);
+          return el ? el.textContent.trim() : null;
+        };
+        
+        const getAttr = (selector, attr) => {
+          const el = document.querySelector(selector);
+          return el ? el.getAttribute(attr) : null;
+        };
+        
+        const parseISODuration = (duration) => {
+          if (!duration) return null;
+          const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+          if (match) {
+            const hours = parseInt(match[1]) || 0;
+            const mins = parseInt(match[2]) || 0;
+            return hours * 60 + mins;
+          }
+          return null;
+        };
+        
+        // Extract data from JSON-LD if available, otherwise fallback to HTML
+        let title, description, imageUrl, prepTime, cookTime, totalTime, servings, ingredients, instructions;
+        
+        if (recipeSchema) {
+          // Use structured data
+          title = recipeSchema.name || '';
+          description = recipeSchema.description || null;
+          imageUrl = Array.isArray(recipeSchema.image) ? recipeSchema.image[0] : recipeSchema.image || null;
+          prepTime = parseISODuration(recipeSchema.prepTime);
+          cookTime = parseISODuration(recipeSchema.cookTime);
+          totalTime = parseISODuration(recipeSchema.totalTime);
+          
+          // Parse servings from recipeYield
+          if (recipeSchema.recipeYield) {
+            const yieldMatch = recipeSchema.recipeYield.toString().match(/(\d+)/);
+            servings = yieldMatch ? parseInt(yieldMatch[1]) : null;
+          } else {
+            servings = null;
+          }
+          
+          // Parse ingredients
+          ingredients = [];
+          if (recipeSchema.recipeIngredient && Array.isArray(recipeSchema.recipeIngredient)) {
+            ingredients = recipeSchema.recipeIngredient.map((ing, index) => {
+              // Try to split quantity and name
+              const match = ing.match(/^([0-9.,\s½¼¾]+\s*[a-zæøåA-ZÆØÅ]+\.?)\s+(.+)$/i);
+              if (match) {
+                return {
+                  quantity: match[1].trim(),
+                  name: match[2].trim(),
+                  order: index + 1
+                };
+              } else {
+                return {
+                  quantity: null,
+                  name: ing.trim(),
+                  order: index + 1
+                };
+              }
+            });
+          }
+          
+          // Parse instructions
+          instructions = [];
+          if (recipeSchema.recipeInstructions && Array.isArray(recipeSchema.recipeInstructions)) {
+            recipeSchema.recipeInstructions.forEach(instruction => {
+              if (typeof instruction === 'string') {
+                instructions.push(instruction);
+              } else if (instruction['@type'] === 'HowToStep' || instruction.type === 'HowToStep') {
+                instructions.push(instruction.text);
+              } else if (instruction['@type'] === 'HowToSection' || instruction.type === 'HowToSection') {
+                if (instruction.itemListElement && Array.isArray(instruction.itemListElement)) {
+                  instruction.itemListElement.forEach(step => {
+                    if (step.text) instructions.push(step.text);
+                  });
+                }
+              }
+            });
+          }
+          
+        } else {
+          // Fallback to HTML scraping
+          title = 
+            getText('h1') ||
+            getAttr('meta[property="og:title"]', 'content') ||
+            '';
+          
+          description = 
+            getAttr('meta[name="description"]', 'content') ||
+            getAttr('meta[property="og:description"]', 'content') ||
+            null;
+          
+          imageUrl = 
+            getAttr('meta[property="og:image"]', 'content') ||
+            getAttr('img[class*="recipe"]', 'src') ||
+            null;
+          
+          prepTime = cookTime = totalTime = servings = null;
+          ingredients = [];
+          instructions = [];
+          
+          // Try to extract from HTML (basic implementation)
+          const ingredientElements = document.querySelectorAll(
+            '.c-recipe__ingredient-list li, [class*="ingredient-list"] li, [class*="ingredient"] li'
+          );
+          
+          ingredientElements.forEach((el, index) => {
+            const text = el.textContent.trim();
+            if (text) {
+              const match = text.match(/^([0-9.,\s½¼¾]+\s*[a-zæøåA-ZÆØÅ]+\.?)\s+(.+)$/);
+              if (match) {
+                ingredients.push({
+                  quantity: match[1].trim(),
+                  name: match[2].trim(),
+                  order: index + 1
+                });
+              } else {
+                ingredients.push({
+                  quantity: null,
+                  name: text,
+                  order: index + 1
+                });
+              }
             }
-          }
-        });
-        break; // Found ingredients, stop searching
+          });
+        }
+        
+        return {
+          title,
+          description,
+          imageUrl,
+          prepTime,
+          cookTime,
+          totalTime,
+          servings,
+          ingredients,
+          instructions: instructions.length > 0 ? instructions.join('\n\n') : null,
+          difficulty: null  // Will be inferred later
+        };
+      });
+      
+      // Validate required fields
+      if (!recipeData.title || recipeData.ingredients.length === 0) {
+        throw new Error('Missing required fields (title or ingredients)');
       }
-    }
-
-    return ingredients;
-  }
-
-  /**
-   * Extract instructions from HTML
-   */
-  extractInstructions($) {
-    const instructions = [];
-    
-    const selectors = [
-      '[itemprop="recipeInstructions"] li',
-      '[itemprop="recipeInstructions"] p',
-      '.instructions li',
-      '.method li',
-      '.steps li',
-      '.instructions p'
-    ];
-
-    for (const selector of selectors) {
-      const items = $(selector);
-      if (items.length > 0) {
-        items.each((i, el) => {
-          const step = $(el).text().trim();
-          if (step && step.length > 5) { // Filter out empty or very short items
-            instructions.push(step);
-          }
-        });
-        break;
+      
+      // Calculate difficulty if not provided
+      if (!recipeData.difficulty) {
+        const timeForDifficulty = recipeData.totalTime || (recipeData.prepTime || 0) + (recipeData.cookTime || 0);
+        recipeData.difficulty = this.inferDifficulty(timeForDifficulty);
       }
+      
+      // Clean up image URL
+      if (recipeData.imageUrl) {
+        if (recipeData.imageUrl.startsWith('//')) {
+          recipeData.imageUrl = 'https:' + recipeData.imageUrl;
+        } else if (recipeData.imageUrl.startsWith('/')) {
+          recipeData.imageUrl = 'https://www.arla.dk' + recipeData.imageUrl;
+        }
+      }
+      
+      // Build final recipe object
+      const recipe = {
+        title: recipeData.title,
+        slug: this.generateSlug(recipeData.title),
+        description: recipeData.description || null,
+        imageUrl: recipeData.imageUrl || null,
+        prepTimeMinutes: recipeData.prepTime || null,
+        cookTimeMinutes: recipeData.cookTime || null,
+        totalTimeMinutes: recipeData.totalTime || (recipeData.prepTime || 0) + (recipeData.cookTime || 0) || null,
+        servings: recipeData.servings || null,
+        difficulty: recipeData.difficulty,
+        instructions: recipeData.instructions || null,
+        language: 'da',
+        ingredients: recipeData.ingredients,
+        sourceUrl: url
+      };
+      
+      return recipe;
+      
+    } catch (error) {
+      this.log('error', `Failed to scrape ${url}: ${error.message}`);
+      throw error;
+    } finally {
+      await page.close();
     }
-
-    return instructions.length > 0 ? instructions.join('\n\n') : null;
-  }
-
-  /**
-   * Parse time string to minutes
-   * @param {string} timeStr - Time string (e.g., "30 min", "1 time 30 min", "PT30M")
-   * @returns {number|null} Minutes
-   */
-  parseTime(timeStr) {
-    if (!timeStr) return null;
-
-    // Handle ISO 8601 duration (e.g., PT30M, PT1H30M)
-    const isoMatch = timeStr.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
-    if (isoMatch) {
-      const hours = parseInt(isoMatch[1]) || 0;
-      const mins = parseInt(isoMatch[2]) || 0;
-      return hours * 60 + mins;
-    }
-
-    // Handle Danish text (e.g., "1 time 30 min", "30 minutter")
-    const hours = timeStr.match(/(\d+)\s*(time|timer|hour|hours)/i)?.[1] || 0;
-    const mins = timeStr.match(/(\d+)\s*(min|minutter|minutes)/i)?.[1] || 0;
-    
-    const totalMins = parseInt(hours) * 60 + parseInt(mins);
-    return totalMins > 0 ? totalMins : null;
   }
 
   /**
@@ -746,6 +707,10 @@ class ArlaScraper {
    * Clean up resources
    */
   async close() {
+    if (this.browser) {
+      await this.browser.close();
+      this.log('info', 'Browser closed');
+    }
     await this.prisma.$disconnect();
     if (this.pool) {
       await this.pool.end();
