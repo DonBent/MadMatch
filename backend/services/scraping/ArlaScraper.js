@@ -179,8 +179,38 @@ class ArlaScraper {
       const recipeUrls = await this.fetchRecipeUrls(category, limit);
       this.log('info', `Found ${recipeUrls.length} recipe URLs`);
 
-      // Step 2: Scrape each recipe
-      for (let i = 0; i < recipeUrls.length; i++) {
+      // Step 1.5: Check for existing recipes to determine resume point
+      this.log('info', 'Checking for existing recipes in database...');
+      const existingRecipes = await this.getExistingRecipeUrls();
+      this.log('info', `Database contains ${existingRecipes.length} existing recipes from this source`);
+
+      // Find resume point
+      let startIndex = 0;
+      if (existingRecipes.length > 0) {
+        // Convert to Set for O(1) lookup
+        const existingSet = new Set(existingRecipes);
+        
+        // Find last URL that exists in our current URL list
+        for (let i = recipeUrls.length - 1; i >= 0; i--) {
+          if (existingSet.has(recipeUrls[i])) {
+            startIndex = i + 1;
+            if (startIndex < recipeUrls.length) {
+              this.log('info', `✅ RESUME MODE: Starting from recipe #${startIndex + 1} (${recipeUrls[startIndex]})`);
+              this.log('info', `Skipping ${startIndex} recipes already in database`);
+            } else {
+              this.log('info', `✅ All recipes already scraped! Nothing to do.`);
+            }
+            break;
+          }
+        }
+        
+        if (startIndex === 0 && existingRecipes.length > 0) {
+          this.log('info', `⚠️  Found ${existingRecipes.length} existing recipes, but none match current URL list. Starting from beginning.`);
+        }
+      }
+
+      // Step 2: Scrape each recipe (starting from resume point)
+      for (let i = startIndex; i < recipeUrls.length; i++) {
         const url = recipeUrls[i];
         
         try {
@@ -216,10 +246,20 @@ class ArlaScraper {
             this.log('info', `[DRY RUN] Would insert: ${recipe.title}`);
           }
 
-          // Progress update
+          // Progress update with enhanced logging
           const total = stats.scraped + stats.duplicates + stats.failed;
-          if (total % 50 === 0) {
-            this.log('info', `Progress: ${total}/${recipeUrls.length} (${Math.round(total / recipeUrls.length * 100)}%) - Scraped: ${stats.scraped}, Duplicates: ${stats.duplicates}, Failed: ${stats.failed}`);
+          if (total % 50 === 0 && total > 0) {
+            const processed = i + 1;
+            const remaining = recipeUrls.length - processed;
+            const percentComplete = Math.floor((processed / recipeUrls.length) * 100);
+            const avgTimePerRecipe = 5; // ~5 seconds per recipe (2s rate limit + processing)
+            const etaMinutes = Math.floor((remaining * avgTimePerRecipe) / 60);
+            
+            this.log('info', `\n📊 PROGRESS UPDATE:`);
+            this.log('info', `   Processed: ${processed}/${recipeUrls.length} (${percentComplete}%)`);
+            this.log('info', `   Scraped: ${stats.scraped} | Duplicates: ${stats.duplicates} | Failed: ${stats.failed}`);
+            this.log('info', `   Remaining: ${remaining} recipes`);
+            this.log('info', `   ETA: ~${etaMinutes} minutes\n`);
           }
 
         } catch (error) {
@@ -261,7 +301,33 @@ class ArlaScraper {
     }
 
     this.printSummary(stats);
-    return stats;
+    
+    // Return stats with aliases for backward compatibility
+    return {
+      ...stats,
+      successCount: stats.scraped,
+      failedCount: stats.failed
+    };
+  }
+
+  /**
+   * Get list of URLs for all recipes from this source already in database
+   * Used for resume functionality
+   * @returns {Promise<string[]>} Array of recipe URLs
+   */
+  async getExistingRecipeUrls() {
+    try {
+      const recipes = await this.prisma.recipe.findMany({
+        where: { sourceId: this.sourceId },
+        select: { externalId: true }
+      });
+      
+      // externalId stores the full URL
+      return recipes.map(r => r.externalId).filter(Boolean);
+    } catch (error) {
+      this.log('error', `Failed to fetch existing recipe URLs: ${error.message}`);
+      return []; // Fail safe: return empty array to start from beginning
+    }
   }
 
   /**
@@ -633,7 +699,7 @@ class ArlaScraper {
             difficulty: recipeData.difficulty,
             instructions: recipeData.instructions,
             language: recipeData.language,
-            externalId: null
+            externalId: recipeData.sourceUrl // Store URL for resume functionality
           }
         });
 
