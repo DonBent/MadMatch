@@ -2,6 +2,7 @@
 // Correlation ID: ZHC-MadMatch-20260301-004
 // Implements IRecipeSource for PostgreSQL database via Prisma
 
+const { Prisma } = require('@prisma/client');
 const { IRecipeSource } = require('../interfaces/IRecipeSource');
 const { getPrismaClient } = require('../services/databaseService');
 
@@ -149,26 +150,46 @@ class DatabaseRecipeSource extends IRecipeSource {
     const offset = filters.offset || 0;
 
     try {
-      // Build where clause for filters
-      const where = this._buildWhereClause(filters);
+      // Build conditional SQL fragments using Prisma.sql
+      // CRITICAL FIX: Cannot nest $queryRaw templates - must use Prisma.sql for fragments
+      const sqlFragments = [
+        Prisma.sql`
+          SELECT 
+            r.*,
+            ts_rank(to_tsvector('simple', r.title || ' ' || COALESCE(r.description, '')), plainto_tsquery('simple', ${query})) as rank
+          FROM recipes r
+          WHERE 
+            to_tsvector('simple', r.title || ' ' || COALESCE(r.description, '')) @@ plainto_tsquery('simple', ${query})
+        `,
+      ];
 
-      // Use raw SQL for full-text search with ranking
-      // PostgreSQL's to_tsvector with 'simple' config works for both Danish and English
-      const recipes = await prisma.$queryRaw`
-        SELECT 
-          r.*,
-          ts_rank(to_tsvector('simple', r.title || ' ' || COALESCE(r.description, '')), plainto_tsquery('simple', ${query})) as rank
-        FROM recipes r
-        WHERE 
-          to_tsvector('simple', r.title || ' ' || COALESCE(r.description, '')) @@ plainto_tsquery('simple', ${query})
-          ${filters.language ? prisma.$queryRaw`AND r.language = ${filters.language}` : prisma.$queryRaw``}
-          ${filters.difficulty ? prisma.$queryRaw`AND r.difficulty = ${filters.difficulty}::difficulty` : prisma.$queryRaw``}
-          ${filters.maxTime ? prisma.$queryRaw`AND r.total_time_minutes <= ${filters.maxTime}` : prisma.$queryRaw``}
-          ${filters.sourceId ? prisma.$queryRaw`AND r.source_id = ${filters.sourceId}::uuid` : prisma.$queryRaw``}
+      // Add optional filter conditions
+      if (filters.language) {
+        sqlFragments.push(Prisma.sql`AND r.language = ${filters.language}`);
+      }
+      
+      if (filters.difficulty) {
+        sqlFragments.push(Prisma.sql`AND r.difficulty = ${filters.difficulty}::difficulty`);
+      }
+      
+      if (filters.maxTime) {
+        sqlFragments.push(Prisma.sql`AND r.total_time_minutes <= ${filters.maxTime}`);
+      }
+      
+      if (filters.sourceId) {
+        sqlFragments.push(Prisma.sql`AND r.source_id = ${filters.sourceId}::uuid`);
+      }
+
+      // Add ORDER BY and LIMIT
+      sqlFragments.push(Prisma.sql`
         ORDER BY rank DESC, r.created_at DESC
         LIMIT ${limit}
         OFFSET ${offset}
-      `;
+      `);
+
+      // Join all fragments into one query
+      const sqlQuery = Prisma.join(sqlFragments, Prisma.raw(' '));
+      const recipes = await prisma.$queryRaw(sqlQuery);
 
       // Fetch full recipe data with relations
       const recipeIds = recipes.map(r => r.id);
@@ -216,26 +237,46 @@ class DatabaseRecipeSource extends IRecipeSource {
     const offset = filters.offset || 0;
 
     try {
-      // Build where clause for recipe filters
-      const recipeWhere = this._buildWhereClause(filters);
+      // Build conditional SQL fragments using Prisma.sql
+      const sqlFragments = [
+        Prisma.sql`
+          SELECT DISTINCT ON (r.id)
+            r.*,
+            ts_rank(to_tsvector('simple', ri.ingredient_name), plainto_tsquery('simple', ${ingredient})) as rank
+          FROM recipes r
+          INNER JOIN recipe_ingredients ri ON ri.recipe_id = r.id
+          WHERE 
+            to_tsvector('simple', ri.ingredient_name) @@ plainto_tsquery('simple', ${ingredient})
+        `,
+      ];
 
-      // Search for recipes with matching ingredients using full-text search
-      const recipes = await prisma.$queryRaw`
-        SELECT DISTINCT ON (r.id)
-          r.*,
-          ts_rank(to_tsvector('simple', ri.ingredient_name), plainto_tsquery('simple', ${ingredient})) as rank
-        FROM recipes r
-        INNER JOIN recipe_ingredients ri ON ri.recipe_id = r.id
-        WHERE 
-          to_tsvector('simple', ri.ingredient_name) @@ plainto_tsquery('simple', ${ingredient})
-          ${filters.language ? prisma.$queryRaw`AND r.language = ${filters.language}` : prisma.$queryRaw``}
-          ${filters.difficulty ? prisma.$queryRaw`AND r.difficulty = ${filters.difficulty}::difficulty` : prisma.$queryRaw``}
-          ${filters.maxTime ? prisma.$queryRaw`AND r.total_time_minutes <= ${filters.maxTime}` : prisma.$queryRaw``}
-          ${filters.sourceId ? prisma.$queryRaw`AND r.source_id = ${filters.sourceId}::uuid` : prisma.$queryRaw``}
+      // Add optional filter conditions
+      if (filters.language) {
+        sqlFragments.push(Prisma.sql`AND r.language = ${filters.language}`);
+      }
+      
+      if (filters.difficulty) {
+        sqlFragments.push(Prisma.sql`AND r.difficulty = ${filters.difficulty}::difficulty`);
+      }
+      
+      if (filters.maxTime) {
+        sqlFragments.push(Prisma.sql`AND r.total_time_minutes <= ${filters.maxTime}`);
+      }
+      
+      if (filters.sourceId) {
+        sqlFragments.push(Prisma.sql`AND r.source_id = ${filters.sourceId}::uuid`);
+      }
+
+      // Add ORDER BY and LIMIT
+      sqlFragments.push(Prisma.sql`
         ORDER BY r.id, rank DESC
         LIMIT ${limit}
         OFFSET ${offset}
-      `;
+      `);
+
+      // Join all fragments into one query
+      const sqlQuery = Prisma.join(sqlFragments, Prisma.raw(' '));
+      const recipes = await prisma.$queryRaw(sqlQuery);
 
       // Fetch full recipe data with relations
       const recipeIds = recipes.map(r => r.id);
