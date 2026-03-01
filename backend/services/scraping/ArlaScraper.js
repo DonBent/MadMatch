@@ -35,6 +35,7 @@ class ArlaScraper {
     this.verbose = options.verbose || false;
     this.sourceId = null;
     this.browser = null;
+    this.page = null;
     
     // Initialize Prisma with adapter (unless mock provided for tests)
     if (options.prisma) {
@@ -93,12 +94,36 @@ class ArlaScraper {
       // Launch browser
       this.log('info', 'Launching headless browser...');
       this.browser = await puppeteer.launch(this.puppeteerOptions);
+      this.page = await this.browser.newPage();
+      await this.page.setDefaultNavigationTimeout(30000);
       this.log('info', 'Browser launched successfully');
       
     } catch (error) {
       this.log('error', `Failed to initialize: ${error.message}`);
       throw error;
     }
+  }
+
+  /**
+   * Restart browser to prevent memory leaks and crashes
+   */
+  async restartBrowser() {
+    this.log('info', '🔄 Restarting browser (memory cleanup)...');
+    
+    if (this.page) {
+      await this.page.close().catch(() => {});
+    }
+    
+    if (this.browser) {
+      await this.browser.close().catch(() => {});
+    }
+    
+    // Reinitialize
+    this.browser = await puppeteer.launch(this.puppeteerOptions);
+    this.page = await this.browser.newPage();
+    await this.page.setDefaultNavigationTimeout(30000);
+    
+    this.log('info', '✅ Browser restarted successfully');
   }
 
   /**
@@ -143,6 +168,11 @@ class ArlaScraper {
         const url = recipeUrls[i];
         
         try {
+          // Restart browser every 50 recipes to prevent memory leaks
+          if (i > 0 && i % 50 === 0) {
+            await this.restartBrowser();
+          }
+
           // Rate limiting
           if (i > 0) {
             await this.sleep(this.rateLimit);
@@ -276,11 +306,10 @@ class ArlaScraper {
    * @returns {Promise<object>} Parsed recipe data
    */
   async scrapeRecipePage(url) {
-    const page = await this.browser.newPage();
+    const page = this.page;
     
     try {
       await page.setUserAgent(this.userAgent);
-      await page.setViewport({ width: 1920, height: 1080 });
       
       this.log('verbose', `Loading page: ${url}`);
       await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
@@ -503,8 +532,6 @@ class ArlaScraper {
     } catch (error) {
       this.log('error', `Failed to scrape ${url}: ${error.message}`);
       throw error;
-    } finally {
-      await page.close();
     }
   }
 
