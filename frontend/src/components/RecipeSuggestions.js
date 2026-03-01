@@ -90,12 +90,12 @@ const RecipeSuggestions = ({ productId, productName }) => {
               fetchedRecipes = legacyRecipes.map(recipe => ({
                 id: recipe.id,
                 title: recipe.title,
-                image: recipe.image,
-                sourceUrl: recipe.sourceUrl,
-                readyInMinutes: recipe.readyInMinutes,
+                image: recipe.imageUrl || recipe.image, // Epic 3.5: imageUrl from database
+                sourceUrl: recipe.url || recipe.sourceUrl, // Epic 3.5: url field
+                readyInMinutes: recipe.cookTimeMinutes || recipe.readyInMinutes,
                 servings: recipe.servings,
-                complexity: recipe.complexity,
-                source: recipe.source || { name: 'Spoonacular' },
+                complexity: mapDifficultyToComplexity(recipe.difficulty) || recipe.complexity,
+                source: { name: recipe.sourceName } || recipe.source || { name: 'Spoonacular' },
                 language: recipe.language || 'en'
               }));
             }
