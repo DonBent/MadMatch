@@ -2,13 +2,13 @@
 // Correlation ID: ZHC-MadMatch-20260301-004
 // Seeds initial recipe sources (Arla and Spoonacular)
 
-const { PrismaClient } = require('@prisma/client');
+const { getPrismaClient, disconnect } = require('../services/databaseService');
 require('dotenv/config');
-
-const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Seeding database...');
+
+  const prisma = getPrismaClient();
 
   // Seed recipe sources
   const arla = await prisma.recipeSource.upsert({
@@ -46,5 +46,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await disconnect();
   });
