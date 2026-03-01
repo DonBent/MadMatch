@@ -99,14 +99,20 @@ class ArlaScraper {
       this.log('info', 'Launching headless browser...');
       this.browser = await puppeteer.launch(this.puppeteerOptions);
       
+      // Runtime tracking for preemptive restart - ZHC-MadMatch-20260301-ChromeCrashFix
+      this.browserStartTime = Date.now();
+      this.maxBrowserUptimeMs = 25 * 60 * 1000; // 25 minutes (before 30-min crash)
+      
       // Add browser crash detection - ZHC-MadMatch-20260301-DebugScraper
       this.browser.on('disconnected', () => {
-        this.log('error', '❌ BROWSER DISCONNECTED EVENT - Chrome crashed or was killed!');
+        this.log('error', '❌ ❌ BROWSER DISCONNECTED EVENT - Chrome crashed or was killed!');
       });
       
       this.page = await this.browser.newPage();
       await this.page.setDefaultNavigationTimeout(30000);
-      this.log('info', 'Browser launched successfully');
+      
+      this.log('info', `✅ Browser initialized at ${new Date(this.browserStartTime).toISOString()}`);
+      this.log('info', `Will restart browser preemptively after ${this.maxBrowserUptimeMs / 60000} minutes`);
       
     } catch (error) {
       this.log('error', `Failed to initialize: ${error.message}`);
@@ -131,15 +137,18 @@ class ArlaScraper {
     // Reinitialize
     this.browser = await puppeteer.launch(this.puppeteerOptions);
     
+    // Runtime tracking for preemptive restart - ZHC-MadMatch-20260301-ChromeCrashFix
+    this.browserStartTime = Date.now();
+    
     // Re-attach browser crash detection - ZHC-MadMatch-20260301-DebugScraper
     this.browser.on('disconnected', () => {
-      this.log('error', '❌ BROWSER DISCONNECTED EVENT - Chrome crashed or was killed!');
+      this.log('error', '❌ ❌ BROWSER DISCONNECTED EVENT - Chrome crashed or was killed!');
     });
     
     this.page = await this.browser.newPage();
     await this.page.setDefaultNavigationTimeout(30000);
     
-    this.log('info', '✅ Browser restarted successfully');
+    this.log('info', `✅ Browser restarted successfully at ${new Date(this.browserStartTime).toISOString()}`);
   }
 
   /**
@@ -214,11 +223,6 @@ class ArlaScraper {
         const url = recipeUrls[i];
         
         try {
-          // Restart browser every 50 recipes to prevent memory leaks
-          if (i > 0 && i % 50 === 0) {
-            await this.restartBrowser();
-          }
-
           // Rate limiting
           if (i > 0) {
             await this.sleep(this.rateLimit);
@@ -230,7 +234,8 @@ class ArlaScraper {
 
           // Memory tracking per recipe - ZHC-MadMatch-20260301-DebugScraper
           const mem = process.memoryUsage();
-          this.log('debug', `Memory: heap=${Math.floor(mem.heapUsed/1024/1024)}MB, rss=${Math.floor(mem.rss/1024/1024)}MB`);
+          const browserUptime = Math.floor((Date.now() - this.browserStartTime) / 60000);
+          this.log('debug', `Memory: heap=${Math.floor(mem.heapUsed/1024/1024)}MB, rss=${Math.floor(mem.rss/1024/1024)}MB, browser_uptime=${browserUptime}min`);
 
           if (!this.dryRun) {
             const inserted = await this.saveRecipe(recipe);
@@ -392,6 +397,23 @@ class ArlaScraper {
    * @returns {Promise<object>} Parsed recipe data
    */
   async scrapeRecipePage(url) {
+    // Preemptive browser restart check - ZHC-MadMatch-20260301-ChromeCrashFix
+    const browserUptime = Date.now() - this.browserStartTime;
+    if (browserUptime > this.maxBrowserUptimeMs) {
+      this.log('info', `⏰ Browser uptime: ${Math.floor(browserUptime / 60000)} minutes - PREEMPTIVE RESTART (before 30-min crash)`);
+      
+      try {
+        await this.browser.close();
+        this.log('info', '🔄 Browser closed for preemptive restart');
+      } catch (error) {
+        this.log('warn', `Failed to close browser: ${error.message}`);
+      }
+      
+      // Reinitialize browser
+      await this.initialize();
+      this.log('info', `✅ Browser restarted preemptively (new start time: ${new Date(this.browserStartTime).toISOString()})`);
+    }
+    
     const page = this.page;
     
     try {
