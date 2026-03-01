@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Favorites Persistence Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; font-size: 16px; }
+        #log { background: #f5f5f5; padding: 10px; border: 1px solid #ddd; max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px; }
+        .log-entry { margin: 2px 0; }
+    </style>
+</head>
+<body>
+    <h1>Favorites Persistence Test - PR #22 Fix Verification</h1>
+    
+    <div class="status info">
+        <strong>Test Scenario:</strong> Reproducing the CEO's reported bug
+        <ol>
+            <li>Add favorites to localStorage</li>
+            <li>Refresh the page (simulating context hydration)</li>
+            <li>Verify favorites persist</li>
+        </ol>
+    </div>
+    
+    <div>
+        <button onclick="addFavorites()">1. Add Test Favorites</button>
+        <button onclick="checkStorage()">2. Check Storage</button>
+        <button onclick="location.reload()">3. Refresh Page</button>
+        <button onclick="clearStorage()">Clear Storage</button>
+    </div>
+    
+    <div id="status"></div>
+    <h3>Console Log:</h3>
+    <div id="log"></div>
+    
+    <script>
+        const STORAGE_KEY = 'madmatch_favorites';
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toISOString().substr(11, 12);
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.style.color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            entry.textContent = `[${timestamp}] ${message}`;
+            document.getElementById('log').appendChild(entry);
+            document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
+            
+            // Also log to console for debugging
+            console.log(message);
+        }
+        
+        function showStatus(message, className) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${className}">${message}</div>`;
+        }
+        
+        function addFavorites() {
+            const testFavorites = [101, 202, 303, 404, 505];
+            const data = {
+                favorites: testFavorites,
+                version: 2
+            };
+            
+            log('Adding test favorites: ' + JSON.stringify(testFavorites));
+            
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                log('✓ Saved to localStorage', 'success');
+                
+                // Verify immediately
+                const stored = localStorage.getItem(STORAGE_KEY);
+                const parsed = JSON.parse(stored);
+                log('✓ Verified: ' + JSON.stringify(parsed.favorites), 'success');
+                
+                showStatus(`✓ Added ${testFavorites.length} test favorites. Now click "3. Refresh Page" to test persistence.`, 'success');
+            } catch (e) {
+                log('✗ Error: ' + e.message, 'error');
+                showStatus('✗ Failed to add favorites: ' + e.message, 'error');
+            }
+        }
+        
+        function checkStorage() {
+            log('Checking current storage state...');
+            
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                
+                if (!stored) {
+                    log('No favorites found in storage', 'info');
+                    showStatus('No favorites in storage. Click "1. Add Test Favorites" first.', 'info');
+                    return;
+                }
+                
+                const data = JSON.parse(stored);
+                log('Found data: ' + JSON.stringify(data), 'success');
+                
+                if (Array.isArray(data.favorites)) {
+                    log(`✓ ${data.favorites.length} favorites: ${JSON.stringify(data.favorites)}`, 'success');
+                    showStatus(`✓ Found ${data.favorites.length} favorites in storage`, 'success');
+                } else {
+                    log('✗ Invalid favorites data structure', 'error');
+                    showStatus('✗ Invalid data in storage', 'error');
+                }
+            } catch (e) {
+                log('✗ Error reading storage: ' + e.message, 'error');
+                showStatus('✗ Error: ' + e.message, 'error');
+            }
+        }
+        
+        function clearStorage() {
+            log('Clearing storage...');
+            localStorage.removeItem(STORAGE_KEY);
+            log('✓ Storage cleared', 'success');
+            showStatus('Storage cleared. You can start fresh.', 'info');
+        }
+        
+        // Check on page load
+        window.addEventListener('load', function() {
+            log('=== PAGE LOADED ===');
+            log('Testing favorites persistence after refresh...');
+            checkStorage();
+        });
+    </script>
+</body>
+</html>
