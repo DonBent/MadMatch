@@ -4,8 +4,10 @@ require('dotenv').config();
 
 const { TilbudDataService } = require('./services/tilbudDataService');
 const { NutritionService } = require('./services/nutritionService');
-const { RecipeService } = require('./services/recipeService');
+const { RecipeService: RecipeServiceOld } = require('./services/recipeService');
+const { RecipeService } = require('./services/recipeServiceNew'); // Epic 3.5: New multi-source service
 const { SustainabilityService } = require('./services/sustainabilityService');
+const { initializeRecipeRoutes } = require('./routes/recipes'); // Epic 3.5: Recipe API routes
 
 const app = express();
 const PORT = process.env.PORT || 4001;
@@ -25,10 +27,17 @@ nutritionService.initialize().catch(err => {
   console.error('[ERROR] Failed to initialize NutritionService:', err);
 });
 
-// Initialize Recipe Service
-const recipeService = new RecipeService();
-recipeService.initialize().catch(err => {
-  console.error('[ERROR] Failed to initialize RecipeService:', err);
+// Initialize Recipe Service (New multi-source version - Epic 3.5)
+const recipeService = new RecipeService({
+  cacheTTL: 10 * 60 * 1000, // 10 minutes
+  fallbackStrategy: 'priority',
+  minResultsBeforeFallback: 3
+});
+
+// Initialize old RecipeService for backward compatibility (Epic 2)
+const recipeServiceOld = new RecipeServiceOld();
+recipeServiceOld.initialize().catch(err => {
+  console.error('[ERROR] Failed to initialize legacy RecipeService:', err);
 });
 
 // Initialize Sustainability Service
@@ -47,6 +56,9 @@ app.use((req, res, next) => {
   console.log(`[${timestamp}] ${req.method} ${req.path}`);
   next();
 });
+
+// Epic 3.5: Mount recipe API routes
+app.use('/api/recipes', initializeRecipeRoutes(recipeService));
 
 // GET /api/tilbud - Hent alle tilbud med filtrering
 app.get('/api/tilbud', async (req, res) => {
@@ -177,7 +189,8 @@ app.get('/api/produkt/:id/nutrition', async (req, res) => {
   }
 });
 
-// GET /api/produkt/:id/recipes - Hent opskriftsforslag fra Spoonacular
+// GET /api/produkt/:id/recipes - Hent opskriftsforslag (Epic 2 backward compatibility)
+// Epic 3.5: Now uses RecipeServiceNew with database + Spoonacular fallback
 app.get('/api/produkt/:id/recipes', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -192,8 +205,9 @@ app.get('/api/produkt/:id/recipes', async (req, res) => {
       });
     }
     
-    // Fetch recipe suggestions using product name
-    const recipes = await recipeService.getRecipes(product.navn);
+    // Epic 3.5: Use new RecipeService (searches database first, Spoonacular fallback)
+    // Backward compatible - getRecipes() maps to getRecipesByIngredient()
+    const recipes = await recipeService.getRecipesByIngredient(product.navn, { limit: 3 });
     
     res.json({
       success: true,
@@ -282,11 +296,16 @@ if (process.env.NODE_ENV !== 'test') {
     console.log(`  GET  /api/tilbud`);
     console.log(`  GET  /api/tilbud/:id`);
     console.log(`  GET  /api/produkt/:id/nutrition`);
-    console.log(`  GET  /api/produkt/:id/recipes`);
+    console.log(`  GET  /api/produkt/:id/recipes (Epic 2 + Epic 3.5)`);
     console.log(`  GET  /api/produkt/:id/sustainability`);
     console.log(`  GET  /api/butikker`);
     console.log(`  GET  /api/kategorier`);
-    console.log(`  GET  /health\n`);
+    console.log(`  GET  /health`);
+    console.log(`\n  Epic 3.5 Recipe API:`);
+    console.log(`  GET  /api/recipes/search?q=<query>`);
+    console.log(`  GET  /api/recipes/:id`);
+    console.log(`  GET  /api/recipes/by-ingredient?ingredient=<name>`);
+    console.log(`  GET  /api/recipes/sources\n`);
   });
 }
 
