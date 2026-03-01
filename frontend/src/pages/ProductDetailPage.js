@@ -18,8 +18,6 @@ const ProductDetailPage = () => {
   const [error, setError] = useState(null);
   const [nutrition, setNutrition] = useState(null);
   const [nutritionLoading, setNutritionLoading] = useState(false);
-  const [recipes, setRecipes] = useState([]);
-  const [recipesLoading, setRecipesLoading] = useState(false);
   const [sustainability, setSustainability] = useState(null);
   const [sustainabilityLoading, setSustainabilityLoading] = useState(false);
 
@@ -30,7 +28,6 @@ const ProductDetailPage = () => {
   useEffect(() => {
     if (product) {
       loadNutrition();
-      loadRecipes();
       loadSustainability();
     }
   }, [product]);
@@ -65,25 +62,6 @@ const ProductDetailPage = () => {
       // Silently fail - nutrition data is optional
     } finally {
       setNutritionLoading(false);
-    }
-  };
-
-  const loadRecipes = async () => {
-    try {
-      setRecipesLoading(true);
-      const response = await fetch(`/api/produkt/${id}/recipes`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setRecipes(data.recipes || []);
-      } else if (response.status !== 404) {
-        console.warn('Failed to load recipe data:', response.status);
-      }
-    } catch (err) {
-      console.warn('Could not fetch recipe data:', err);
-      // Silently fail - recipe data is optional
-    } finally {
-      setRecipesLoading(false);
     }
   };
 
@@ -228,11 +206,8 @@ const ProductDetailPage = () => {
               <NutritionCard nutrition={nutrition} loading={nutritionLoading} />
             )}
 
-            {recipesLoading ? (
-              <LoadingSkeleton type="recipes" />
-            ) : (
-              <RecipeSuggestions recipes={recipes} loading={recipesLoading} />
-            )}
+            {/* RecipeSuggestions now handles its own loading/fetching via Epic 3.5 API */}
+            <RecipeSuggestions productId={id} productName={product.navn} />
 
             {sustainabilityLoading ? (
               <LoadingSkeleton type="sustainability" />
