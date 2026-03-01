@@ -2,9 +2,13 @@
 // Correlation ID: ZHC-MadMatch-20260301-004
 // Scrapes Danish recipes from Arla.dk and stores in PostgreSQL database
 
+require('dotenv').config();
+
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { PrismaClient } = require('@prisma/client');
+const { PrismaPg } = require('@prisma/adapter-pg');
+const { Pool } = require('pg');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -30,7 +34,28 @@ class ArlaScraper {
     this.dryRun = options.dryRun || false;
     this.verbose = options.verbose || false;
     this.sourceId = null;
-    this.prisma = options.prisma || new PrismaClient();
+    
+    // Initialize Prisma with adapter (unless mock provided for tests)
+    if (options.prisma) {
+      this.prisma = options.prisma;
+      this.pool = null;
+    } else {
+      // Create connection pool
+      this.pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        max: 10,
+      });
+      
+      // Create Prisma adapter
+      const adapter = new PrismaPg(this.pool);
+      
+      // Initialize Prisma Client with adapter
+      this.prisma = new PrismaClient({
+        adapter,
+        log: this.verbose ? ['query', 'error', 'warn'] : ['error'],
+      });
+    }
+    
     this.userAgent = 'MadMatch/1.4.0 (contact@madmatch.dk)';
     this.maxRetries = 3;
     this.retryDelay = 1000;
@@ -722,6 +747,9 @@ class ArlaScraper {
    */
   async close() {
     await this.prisma.$disconnect();
+    if (this.pool) {
+      await this.pool.end();
+    }
   }
 }
 

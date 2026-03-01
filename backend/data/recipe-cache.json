@@ -1,1 +1,57 @@
-{}
+{
+  "coca_cola_1,5l": {
+    "data": [],
+    "cachedAt": "2026-02-28T09:42:03.219Z",
+    "expiresAt": "2026-03-01T09:42:03.219Z"
+  },
+  "hakket_oksekød_8-12%": {
+    "data": [],
+    "cachedAt": "2026-02-28T09:45:14.326Z",
+    "expiresAt": "2026-03-01T09:45:14.326Z"
+  },
+  "æg_10_stk": {
+    "data": [],
+    "cachedAt": "2026-02-28T09:47:13.043Z",
+    "expiresAt": "2026-03-01T09:47:13.043Z"
+  },
+  "wienerpølser_øgo": {
+    "data": [],
+    "cachedAt": "2026-02-28T13:54:00.083Z",
+    "expiresAt": "2026-03-01T13:54:00.083Z"
+  },
+  "kødpølse_3-stjernet": {
+    "data": [],
+    "cachedAt": "2026-02-28T13:54:22.432Z",
+    "expiresAt": "2026-03-01T13:54:22.432Z"
+  },
+  "spicy_hummus_la_campagna": {
+    "data": [],
+    "cachedAt": "2026-02-28T13:54:31.494Z",
+    "expiresAt": "2026-03-01T13:54:31.494Z"
+  },
+  "flæskesteg_velsmag": {
+    "data": [],
+    "cachedAt": "2026-02-28T13:54:47.804Z",
+    "expiresAt": "2026-03-01T13:54:47.804Z"
+  },
+  "nakkefilet_velsmag": {
+    "data": [],
+    "cachedAt": "2026-02-28T13:55:11.515Z",
+    "expiresAt": "2026-03-01T13:55:11.515Z"
+  },
+  "hamburgerryg_den_grønne_slagter": {
+    "data": [],
+    "cachedAt": "2026-02-28T15:22:05.591Z",
+    "expiresAt": "2026-03-01T15:22:05.591Z"
+  },
+  "creme_fraiche_18%_500_g_-_karoline's": {
+    "data": [],
+    "cachedAt": "2026-02-28T16:14:47.892Z",
+    "expiresAt": "2026-03-01T16:14:47.892Z"
+  },
+  "yoghurt_peach_melba_egelykke": {
+    "data": [],
+    "cachedAt": "2026-02-28T22:56:59.918Z",
+    "expiresAt": "2026-03-01T22:56:59.918Z"
+  }
+}
