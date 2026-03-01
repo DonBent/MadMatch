@@ -1,0 +1,122 @@
+// Epic 3.5: Database Infrastructure & Recipe Source System
+// Correlation ID: ZHC-MadMatch-20260301-004
+// Created: 2026-03-01
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// Recipe Sources
+// ============================================
+
+model RecipeSource {
+  id              String    @id @default(uuid()) @db.Uuid
+  name            String    @unique @db.VarChar(255)
+  baseUrl         String?   @map("base_url") @db.VarChar(500)
+  scrapingEnabled Boolean   @default(true) @map("scraping_enabled")
+  priority        Int       @default(1)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
+  
+  recipes         Recipe[]
+  scrapingJobs    ScrapingJob[]
+  
+  @@index([priority])
+  @@map("recipe_sources")
+}
+
+// ============================================
+// Recipes
+// ============================================
+
+model Recipe {
+  id                String       @id @default(uuid()) @db.Uuid
+  sourceId          String       @map("source_id") @db.Uuid
+  externalId        String?      @map("external_id") @db.VarChar(255)
+  title             String       @db.VarChar(255)
+  slug              String       @unique @db.VarChar(255)
+  description       String?      @db.Text
+  imageUrl          String?      @map("image_url") @db.VarChar(500)
+  prepTimeMinutes   Int?         @map("prep_time_minutes")
+  cookTimeMinutes   Int?         @map("cook_time_minutes")
+  totalTimeMinutes  Int?         @map("total_time_minutes")
+  servings          Int?
+  difficulty        Difficulty?
+  instructions      String?      @db.Text
+  language          String       @default("da") @db.VarChar(2)
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamp(6)
+  
+  source            RecipeSource @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  ingredients       RecipeIngredient[]
+  
+  @@index([sourceId])
+  @@index([slug])
+  @@index([language])
+  @@index([difficulty])
+  @@index([language, sourceId])
+  @@map("recipes")
+}
+
+// ============================================
+// Recipe Ingredients
+// ============================================
+
+model RecipeIngredient {
+  id             String   @id @default(uuid()) @db.Uuid
+  recipeId       String   @map("recipe_id") @db.Uuid
+  ingredientName String   @map("ingredient_name") @db.VarChar(255)
+  quantity       String?  @db.VarChar(100)
+  order          Int
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  
+  recipe         Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  
+  @@index([recipeId])
+  @@index([recipeId, order])
+  @@map("recipe_ingredients")
+}
+
+// ============================================
+// Scraping Jobs
+// ============================================
+
+model ScrapingJob {
+  id              String         @id @default(uuid()) @db.Uuid
+  sourceId        String         @map("source_id") @db.Uuid
+  status          ScrapingStatus @default(PENDING)
+  startedAt       DateTime?      @map("started_at") @db.Timestamp(6)
+  completedAt     DateTime?      @map("completed_at") @db.Timestamp(6)
+  recipesScraped  Int            @default(0) @map("recipes_scraped")
+  errorMessage    String?        @map("error_message") @db.Text
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  
+  source          RecipeSource   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  
+  @@index([sourceId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("scraping_jobs")
+}
+
+// ============================================
+// Enums
+// ============================================
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum ScrapingStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
