@@ -77,3 +77,4 @@ public/
 
 # Stores VSCode versions
 .vscode-test
+backend/logs/

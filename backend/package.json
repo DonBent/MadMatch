@@ -31,7 +31,8 @@
     "node-cache": "^5.1.2",
     "node-fetch": "^2.7.0",
     "pg": "^8.19.0",
-    "prisma": "^7.4.2"
+    "prisma": "^7.4.2",
+    "puppeteer": "^24.37.5"
   },
   "devDependencies": {
     "jest": "^29.7.0",
