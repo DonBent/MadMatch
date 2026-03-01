@@ -1,5 +1,17 @@
 // Epic 3.5 Slice 2: DatabaseRecipeSource Tests
 // Correlation ID: ZHC-MadMatch-20260301-004
+//
+// UNIT TESTS: Mock-based tests for business logic
+// 
+// IMPORTANT: These tests use mocks and do NOT catch SQL syntax errors!
+// 
+// WHY MOCKS MISSED THE BUG:
+// - Mock $queryRaw accepts any template literal without executing it
+// - Real PostgreSQL rejects nested $queryRaw`${prisma.$queryRaw``}` syntax
+// - Mocks test the happy path but not SQL compilation/execution
+// 
+// LESSON LEARNED: Database code requires integration tests with real database
+// See: DatabaseRecipeSource.integration.test.js
 
 const { DatabaseRecipeSource } = require('../recipe-sources/DatabaseRecipeSource');
 const { getPrismaClient } = require('../services/databaseService');
