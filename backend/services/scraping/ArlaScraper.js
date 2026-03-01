@@ -215,94 +215,59 @@ class ArlaScraper {
   }
 
   /**
-   * Fetch recipe URLs from category pages using Puppeteer
-   * @param {string|null} category - Category filter
+   * Fetch recipe URLs from sitemap.xml (fast and reliable)
+   * @param {string|null} category - Category filter (not used with sitemap)
    * @param {number} limit - Max URLs to fetch
    * @returns {Promise<string[]>} Array of recipe URLs
    */
   async fetchRecipeUrls(category = null, limit = 1000) {
-    const urls = new Set();
-    const page = await this.browser.newPage();
+    const https = require('https');
+    const { parseStringPromise } = require('xml2js');
     
     try {
-      await page.setUserAgent(this.userAgent);
-      await page.setViewport({ width: 1920, height: 1080 });
+      this.log('info', 'Fetching recipe URLs from sitemap.xml...');
       
-      const baseUrl = category 
-        ? `${this.baseUrl}${category}` 
-        : this.baseUrl;
+      const sitemapUrl = 'https://www.arla.dk/sitemap.xml?type=Modules.Recipes.Business.SitemapUrlWriter.RecipeSitemapUrlWriter';
       
-      this.log('verbose', `Navigating to: ${baseUrl}`);
-      await page.goto(baseUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+      // Fetch sitemap XML
+      const xmlData = await new Promise((resolve, reject) => {
+        https.get(sitemapUrl, (res) => {
+          let data = '';
+          res.on('data', (chunk) => { data += chunk; });
+          res.on('end', () => resolve(data));
+          res.on('error', reject);
+        }).on('error', reject);
+      });
       
-      // Wait for Vue.js to render the content
-      await page.waitForSelector('a[href*="/opskrifter/"]', { timeout: 10000 });
+      // Parse XML
+      const parsed = await parseStringPromise(xmlData);
       
-      // Scroll to load more recipes (Vue.js lazy loading)
-      let previousCount = 0;
-      let scrollAttempts = 0;
-      const maxScrolls = 20;
-      
-      while (urls.size < limit && scrollAttempts < maxScrolls) {
-        // Extract recipe links
-        const newUrls = await page.evaluate(() => {
-          const links = Array.from(document.querySelectorAll('a[href*="/opskrifter/"]'));
-          return links
-            .map(a => a.href)
-            .filter(href => {
-              // Filter only actual recipe pages (not category/index pages)
-              const parts = href.split('/opskrifter/')[1];
-              return parts && !parts.includes('?') && parts.split('/').length === 1 && parts.length > 0;
-            });
-        });
-        
-        newUrls.forEach(url => urls.add(url));
-        
-        this.log('verbose', `Found ${urls.size} recipe URLs after scroll ${scrollAttempts + 1}`);
-        
-        // Check if we got new URLs
-        if (urls.size === previousCount) {
-          // Try clicking "Load More" button if it exists
-          const loadMoreClicked = await page.evaluate(() => {
-            const buttons = Array.from(document.querySelectorAll('button, a'));
-            const loadMoreBtn = buttons.find(btn => 
-              btn.textContent.toLowerCase().includes('mere') ||
-              btn.textContent.toLowerCase().includes('flere') ||
-              btn.textContent.toLowerCase().includes('load')
-            );
-            if (loadMoreBtn) {
-              loadMoreBtn.click();
-              return true;
+      // Extract URLs from <url><loc> elements
+      const urls = [];
+      if (parsed.urlset && parsed.urlset.url) {
+        for (const urlEntry of parsed.urlset.url) {
+          if (urlEntry.loc && urlEntry.loc[0]) {
+            const url = urlEntry.loc[0];
+            // Filter only recipe URLs
+            if (url.includes('/opskrifter/') && !url.match(/\/opskrifter\/$/)) {
+              urls.push(url);
             }
-            return false;
-          });
-          
-          if (loadMoreClicked) {
-            await this.sleep(2000); // Wait for new content to load
-          } else {
-            break; // No more content to load
           }
         }
-        
-        previousCount = urls.size;
-        
-        // Scroll down to trigger lazy loading
-        await page.evaluate(() => window.scrollBy(0, window.innerHeight));
-        await this.sleep(1000);
-        
-        scrollAttempts++;
       }
       
+      this.log('info', `Sitemap contains ${urls.length} recipe URLs`);
+      
+      // Apply limit
+      const limitedUrls = urls.slice(0, limit);
+      this.log('info', `Returning ${limitedUrls.length} URLs (limit: ${limit})`);
+      
+      return limitedUrls;
+      
     } catch (error) {
-      this.log('error', `Failed to fetch recipe URLs: ${error.message}`);
+      this.log('error', `Failed to fetch recipe URLs from sitemap: ${error.message}`);
       throw error;
-    } finally {
-      await page.close();
     }
-    
-    const urlArray = Array.from(urls).slice(0, limit);
-    this.log('info', `Collected ${urlArray.length} unique recipe URLs`);
-    return urlArray;
   }
 
   /**

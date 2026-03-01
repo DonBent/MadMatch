@@ -32,7 +32,8 @@
     "node-fetch": "^2.7.0",
     "pg": "^8.19.0",
     "prisma": "^7.4.2",
-    "puppeteer": "^24.37.5"
+    "puppeteer": "^24.37.5",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "jest": "^29.7.0",
