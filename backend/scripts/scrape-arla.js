@@ -4,6 +4,9 @@
 // Correlation ID: ZHC-MadMatch-20260301-004
 // Command-line interface for scraping Arla.dk recipes
 
+// Load environment variables from .env file
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+
 const { program } = require('commander');
 const { ArlaScraper } = require('../services/scraping/ArlaScraper');
 const path = require('path');
