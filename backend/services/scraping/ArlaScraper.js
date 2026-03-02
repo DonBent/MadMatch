@@ -37,6 +37,10 @@ class ArlaScraper {
     this.browser = null;
     this.page = null;
     
+    // Recipe-count based browser restart - ZHC-MadMatch-20260302-FixBrowserRestart
+    this.recipeCount = 0;
+    this.maxRecipesPerBrowser = 100; // Restart every 100 recipes to prevent memory accumulation
+    
     // Initialize Prisma with adapter (unless mock provided for tests)
     if (options.prisma) {
       this.prisma = options.prisma;
@@ -99,10 +103,6 @@ class ArlaScraper {
       this.log('info', 'Launching headless browser...');
       this.browser = await puppeteer.launch(this.puppeteerOptions);
       
-      // Runtime tracking for preemptive restart - ZHC-MadMatch-20260301-ChromeCrashFix
-      this.browserStartTime = Date.now();
-      this.maxBrowserUptimeMs = 25 * 60 * 1000; // 25 minutes (before 30-min crash)
-      
       // Add browser crash detection - ZHC-MadMatch-20260301-DebugScraper
       this.browser.on('disconnected', () => {
         this.log('error', '❌ ❌ BROWSER DISCONNECTED EVENT - Chrome crashed or was killed!');
@@ -111,8 +111,8 @@ class ArlaScraper {
       this.page = await this.browser.newPage();
       await this.page.setDefaultNavigationTimeout(30000);
       
-      this.log('info', `✅ Browser initialized at ${new Date(this.browserStartTime).toISOString()}`);
-      this.log('info', `Will restart browser preemptively after ${this.maxBrowserUptimeMs / 60000} minutes`);
+      this.log('info', `✅ Browser initialized`);
+      this.log('info', `Will restart browser every ${this.maxRecipesPerBrowser} recipes`);
       
     } catch (error) {
       this.log('error', `Failed to initialize: ${error.message}`);
@@ -124,7 +124,7 @@ class ArlaScraper {
    * Restart browser to prevent memory leaks and crashes
    */
   async restartBrowser() {
-    this.log('info', '🔄 Restarting browser (memory cleanup)...');
+    this.log('info', `🔄 Restarting browser (${this.recipeCount} recipes scraped, memory cleanup)...`);
     
     if (this.page) {
       await this.page.close().catch(() => {});
@@ -137,9 +137,6 @@ class ArlaScraper {
     // Reinitialize
     this.browser = await puppeteer.launch(this.puppeteerOptions);
     
-    // Runtime tracking for preemptive restart - ZHC-MadMatch-20260301-ChromeCrashFix
-    this.browserStartTime = Date.now();
-    
     // Re-attach browser crash detection - ZHC-MadMatch-20260301-DebugScraper
     this.browser.on('disconnected', () => {
       this.log('error', '❌ ❌ BROWSER DISCONNECTED EVENT - Chrome crashed or was killed!');
@@ -148,7 +145,10 @@ class ArlaScraper {
     this.page = await this.browser.newPage();
     await this.page.setDefaultNavigationTimeout(30000);
     
-    this.log('info', `✅ Browser restarted successfully at ${new Date(this.browserStartTime).toISOString()}`);
+    // Reset recipe counter - ZHC-MadMatch-20260302-FixBrowserRestart
+    this.recipeCount = 0;
+    
+    this.log('info', `✅ Browser restarted successfully (counter reset to 0)`);
   }
 
   /**
@@ -234,8 +234,7 @@ class ArlaScraper {
 
           // Memory tracking per recipe - ZHC-MadMatch-20260301-DebugScraper
           const mem = process.memoryUsage();
-          const browserUptime = Math.floor((Date.now() - this.browserStartTime) / 60000);
-          this.log('debug', `Memory: heap=${Math.floor(mem.heapUsed/1024/1024)}MB, rss=${Math.floor(mem.rss/1024/1024)}MB, browser_uptime=${browserUptime}min`);
+          this.log('debug', `Memory: heap=${Math.floor(mem.heapUsed/1024/1024)}MB, rss=${Math.floor(mem.rss/1024/1024)}MB, recipe_count=${this.recipeCount}/${this.maxRecipesPerBrowser}`);
 
           if (!this.dryRun) {
             const inserted = await this.saveRecipe(recipe);
@@ -397,21 +396,13 @@ class ArlaScraper {
    * @returns {Promise<object>} Parsed recipe data
    */
   async scrapeRecipePage(url) {
-    // Preemptive browser restart check - ZHC-MadMatch-20260301-ChromeCrashFix
-    const browserUptime = Date.now() - this.browserStartTime;
-    if (browserUptime > this.maxBrowserUptimeMs) {
-      this.log('info', `⏰ Browser uptime: ${Math.floor(browserUptime / 60000)} minutes - PREEMPTIVE RESTART (before 30-min crash)`);
-      
-      try {
-        await this.browser.close();
-        this.log('info', '🔄 Browser closed for preemptive restart');
-      } catch (error) {
-        this.log('warn', `Failed to close browser: ${error.message}`);
-      }
-      
-      // Reinitialize browser
-      await this.initialize();
-      this.log('info', `✅ Browser restarted preemptively (new start time: ${new Date(this.browserStartTime).toISOString()})`);
+    // Recipe-count based browser restart - ZHC-MadMatch-20260302-FixBrowserRestart
+    // FIX BUG #1: Use restartBrowser() instead of initialize()
+    // FIX BUG #2: Use recipe count instead of time-based check
+    this.recipeCount++;
+    if (this.recipeCount > this.maxRecipesPerBrowser) {
+      this.log('info', `🔄 Recipe count: ${this.recipeCount} - RESTARTING BROWSER (every ${this.maxRecipesPerBrowser} recipes)`);
+      await this.restartBrowser();  // ✅ CORRECT - only restarts browser, doesn't reinit DB connection
     }
     
     const page = this.page;
