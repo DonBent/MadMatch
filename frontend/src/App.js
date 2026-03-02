@@ -6,6 +6,7 @@ import FilterBar from './components/FilterBar';
 import ProductDetailPage from './pages/ProductDetailPage';
 import RecipeBrowse from './pages/RecipeBrowse';
 import RecipeFavorites from './pages/RecipeFavorites';
+import RecipeDetail from './pages/RecipeDetail';
 import { RecipeFavoriteProvider, useRecipeFavorites } from './contexts/RecipeFavoriteContext';
 import { tilbudService } from './services/tilbudService';
 
@@ -43,23 +44,37 @@ function Navigation() {
 }
 
 function TilbudOversigt() {
+  const location = useLocation();
   const [tilbud, setTilbud] = useState([]);
+  const [filteredTilbud, setFilteredTilbud] = useState([]);
   const [butikker, setButikker] = useState([]);
   const [kategorier, setKategorier] = useState([]);
   const [selectedButik, setSelectedButik] = useState('');
   const [selectedKategori, setSelectedKategori] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Extract search query from URL params
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const search = params.get('search');
+    if (search) {
+      setSearchQuery(search);
+    } else {
+      setSearchQuery('');
+    }
+  }, [location.search]);
 
   // Load initial data
   useEffect(() => {
     loadInitialData();
   }, []);
 
-  // Load tilbud when filters change
+  // Filter tilbud when filters or search change
   useEffect(() => {
-    loadTilbud();
-  }, [selectedButik, selectedKategori]);
+    filterTilbud();
+  }, [tilbud, selectedButik, selectedKategori, searchQuery]);
 
   const loadInitialData = async () => {
     try {
@@ -82,24 +97,35 @@ function TilbudOversigt() {
     }
   };
 
-  const loadTilbud = async () => {
-    try {
-      const filters = {};
-      if (selectedButik) filters.butik = selectedButik;
-      if (selectedKategori) filters.kategori = selectedKategori;
-      
-      const data = await tilbudService.getAllTilbud(filters);
-      setTilbud(data);
-      setError(null);
-    } catch (err) {
-      console.error('Failed to load tilbud:', err);
-      setError('Kunne ikke indlæse tilbud.');
+  const filterTilbud = () => {
+    let filtered = [...tilbud];
+
+    // Apply butik filter
+    if (selectedButik) {
+      filtered = filtered.filter(item => item.butik === selectedButik);
     }
+
+    // Apply kategori filter
+    if (selectedKategori) {
+      filtered = filtered.filter(item => item.kategori === selectedKategori);
+    }
+
+    // Apply search filter
+    if (searchQuery) {
+      const searchTerms = searchQuery.toLowerCase().split(',').map(term => term.trim());
+      filtered = filtered.filter(item => {
+        const productName = (item.produktnavn || '').toLowerCase();
+        return searchTerms.some(term => productName.includes(term));
+      });
+    }
+
+    setFilteredTilbud(filtered);
   };
 
   const handleReset = () => {
     setSelectedButik('');
     setSelectedKategori('');
+    setSearchQuery('');
   };
 
   if (loading) {
@@ -122,6 +148,9 @@ function TilbudOversigt() {
     );
   }
 
+  const displayedTilbud = filteredTilbud;
+  const hasSearchQuery = searchQuery && searchQuery.length > 0;
+
   return (
     <main className="app-main">
       <FilterBar
@@ -134,19 +163,38 @@ function TilbudOversigt() {
         onReset={handleReset}
       />
 
+      {hasSearchQuery && (
+        <div className="search-info">
+          Søger efter: <strong>{searchQuery.split(',').join(', ')}</strong>
+        </div>
+      )}
+
       <div className="tilbud-count">
-        Viser {tilbud?.length || 0} tilbud
+        Viser {displayedTilbud?.length || 0} tilbud
       </div>
 
-      {(tilbud?.length || 0) === 0 ? (
+      {(displayedTilbud?.length || 0) === 0 ? (
         <div className="no-results">
-          <p>Ingen tilbud matcher dine filtre.</p>
-          <button onClick={handleReset}>Nulstil filtre</button>
+          {hasSearchQuery ? (
+            <>
+              <p>Ingen tilbud matcher disse ingredienser</p>
+              <button onClick={handleReset}>Nulstil søgning</button>
+            </>
+          ) : (
+            <>
+              <p>Ingen tilbud matcher dine filtre.</p>
+              <button onClick={handleReset}>Nulstil filtre</button>
+            </>
+          )}
         </div>
       ) : (
         <div className="tilbud-grid">
-          {tilbud?.map(item => (
-            <TilbudCard key={item.id} tilbud={item} />
+          {displayedTilbud?.map(item => (
+            <TilbudCard 
+              key={item.id} 
+              tilbud={item}
+              highlighted={hasSearchQuery}
+            />
           ))}
         </div>
       )}
@@ -179,10 +227,11 @@ function App() {
         <AppLayout>
           <Routes>
             <Route path="/" element={<TilbudOversigt />} />
+            <Route path="/tilbud" element={<TilbudOversigt />} />
             <Route path="/opskrifter" element={<RecipeBrowse />} />
             <Route path="/opskrifter/favoritter" element={<RecipeFavorites />} />
             <Route path="/produkt/:id" element={<ProductDetailPage />} />
-            <Route path="/opskrift/:id" element={<div>Recipe Detail (Coming Soon)</div>} />
+            <Route path="/opskrift/:id" element={<RecipeDetail />} />
           </Routes>
         </AppLayout>
       </RecipeFavoriteProvider>

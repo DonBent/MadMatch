@@ -21,7 +21,10 @@
 .skeleton-product-name,
 .skeleton-product-image,
 .skeleton-recipe-image,
-.skeleton-back-button {
+.skeleton-back-button,
+.skeleton-breadcrumb,
+.skeleton-button,
+.skeleton-meta-grid {
   background: linear-gradient(
     90deg,
     #f0f0f0 25%,
@@ -152,6 +155,27 @@
   padding: 1rem;
   background-color: #f9f9f9;
   border-radius: 8px;
+}
+
+.skeleton-breadcrumb {
+  height: 1.5rem;
+  width: 300px;
+}
+
+.skeleton-meta-grid {
+  height: 100px;
+  width: 100%;
+}
+
+.skeleton-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.skeleton-button {
+  height: 2.5rem;
+  flex: 1;
+  min-width: 150px;
 }
 
 /* Responsive design */
