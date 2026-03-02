@@ -22,7 +22,7 @@ body {
 .app-header {
   background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
   color: white;
-  padding: 32px 20px;
+  padding: 24px 20px 0;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -36,6 +36,50 @@ body {
 .tagline {
   font-size: 1.1rem;
   opacity: 0.9;
+  margin-bottom: 24px;
+}
+
+/* Navigation */
+.main-nav {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: 20px;
+}
+
+.nav-tab {
+  flex: 1;
+  max-width: 200px;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.nav-tab:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-tab.active {
+  background: white;
+  color: #2E7D32;
+}
+
+.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #2E7D32;
 }
 
 .app-main {
@@ -132,6 +176,11 @@ body {
   
   .tagline {
     font-size: 1rem;
+  }
+
+  .nav-tab {
+    padding: 14px 16px;
+    font-size: 0.95rem;
   }
   
   .tilbud-grid {
