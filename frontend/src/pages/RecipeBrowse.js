@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { recipeService } from '../services/recipeService';
 import RecipeCard from '../components/RecipeCard';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 import './RecipeBrowse.css';
 
 const RecipeBrowse = () => {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecipes, setTotalRecipes] = useState(0);
@@ -22,9 +24,14 @@ const RecipeBrowse = () => {
       clearTimeout(debounceTimeout.current);
     }
 
+    if (searchQuery !== debouncedQuery) {
+      setSearching(true);
+    }
+
     debounceTimeout.current = setTimeout(() => {
       setDebouncedQuery(searchQuery);
       setCurrentPage(1); // Reset to first page on new search
+      setSearching(false);
     }, 500);
 
     return () => {
@@ -116,9 +123,14 @@ const RecipeBrowse = () => {
   if (loading) {
     return (
       <div className="recipe-browse">
-        <div className="loading" data-testid="loading-spinner">
-          <div className="spinner"></div>
-          <p>Indlæser opskrifter...</p>
+        <header className="recipe-browse-header">
+          <h1>Opskrifter</h1>
+        </header>
+        <div className="recipe-grid-loading">
+          <LoadingSkeleton type="recipe-card" />
+          <LoadingSkeleton type="recipe-card" />
+          <LoadingSkeleton type="recipe-card" />
+          <LoadingSkeleton type="recipe-card" />
         </div>
       </div>
     );
@@ -145,6 +157,7 @@ const RecipeBrowse = () => {
         
         {/* Search Bar */}
         <div className="search-container">
+          <label htmlFor="recipe-search" className="sr-only">Søg efter opskrifter</label>
           <div className="search-input-wrapper">
             <svg 
               className="search-icon" 
@@ -159,6 +172,7 @@ const RecipeBrowse = () => {
               <path d="m21 21-4.35-4.35" />
             </svg>
             <input
+              id="recipe-search"
               type="text"
               className="search-input"
               placeholder="Søg efter opskrifter..."
@@ -167,7 +181,12 @@ const RecipeBrowse = () => {
               data-testid="recipe-search-input"
               aria-label="Søg efter opskrifter"
             />
-            {searchQuery && (
+            {searching && (
+              <div className="search-loading-indicator" data-testid="search-loading" aria-label="Søger...">
+                <div className="mini-spinner"></div>
+              </div>
+            )}
+            {searchQuery && !searching && (
               <button
                 className="clear-search-button"
                 onClick={handleClearSearch}
@@ -180,6 +199,7 @@ const RecipeBrowse = () => {
                   fill="none" 
                   stroke="currentColor" 
                   strokeWidth="2"
+                  aria-hidden="true"
                 >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
@@ -189,14 +209,14 @@ const RecipeBrowse = () => {
           </div>
         </div>
 
-        <p className="recipe-count">
+        <p className="recipe-count" aria-live="polite" aria-atomic="true">
           Viser {recipes.length} af {totalRecipes.toLocaleString('da-DK')} opskrifter
           {debouncedQuery && ` for "${debouncedQuery}"`}
         </p>
       </header>
 
       {recipes.length === 0 && !loading ? (
-        <div className="no-results" data-testid="no-results">
+        <div className="no-results" data-testid="no-results" role="status">
           <p>
             {debouncedQuery 
               ? 'Ingen opskrifter fundet. Prøv et andet søgeord.'
@@ -205,14 +225,16 @@ const RecipeBrowse = () => {
         </div>
       ) : (
         <>
-          <div className="recipe-grid" data-testid="recipe-browse-grid">
+          <div className="recipe-grid" data-testid="recipe-browse-grid" role="list">
             {recipes.map(recipe => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
+              <div key={recipe.id} role="listitem">
+                <RecipeCard recipe={recipe} />
+              </div>
             ))}
           </div>
 
           {totalPages > 1 && (
-            <div className="pagination" data-testid="pagination">
+            <nav className="pagination" data-testid="pagination" aria-label="Paginering">
               <button
                 onClick={handlePreviousPage}
                 disabled={currentPage === 1}
@@ -230,10 +252,11 @@ const RecipeBrowse = () => {
                       onClick={() => handlePageClick(1)}
                       className="pagination-number"
                       data-testid="pagination-page-1"
+                      aria-label="Gå til side 1"
                     >
                       1
                     </button>
-                    {currentPage > 4 && <span className="pagination-ellipsis">...</span>}
+                    {currentPage > 4 && <span className="pagination-ellipsis" aria-hidden="true">...</span>}
                   </>
                 )}
 
@@ -244,6 +267,7 @@ const RecipeBrowse = () => {
                     className={`pagination-number ${pageNum === currentPage ? 'active' : ''}`}
                     data-testid={`pagination-page-${pageNum}`}
                     aria-current={pageNum === currentPage ? 'page' : undefined}
+                    aria-label={`Gå til side ${pageNum}`}
                   >
                     {pageNum}
                   </button>
@@ -251,11 +275,12 @@ const RecipeBrowse = () => {
 
                 {currentPage < totalPages - 2 && (
                   <>
-                    {currentPage < totalPages - 3 && <span className="pagination-ellipsis">...</span>}
+                    {currentPage < totalPages - 3 && <span className="pagination-ellipsis" aria-hidden="true">...</span>}
                     <button
                       onClick={() => handlePageClick(totalPages)}
                       className="pagination-number"
                       data-testid={`pagination-page-${totalPages}`}
+                      aria-label={`Gå til side ${totalPages}`}
                     >
                       {totalPages}
                     </button>
@@ -272,7 +297,7 @@ const RecipeBrowse = () => {
               >
                 Næste →
               </button>
-            </div>
+            </nav>
           )}
         </>
       )}

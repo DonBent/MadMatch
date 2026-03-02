@@ -24,13 +24,21 @@
   border: none;
   color: #2196F3;
   cursor: pointer;
-  padding: 0;
+  padding: 8px;
+  min-height: 44px;
   text-decoration: underline;
   font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
 }
 
 .breadcrumb-link:hover {
   color: #1976D2;
+}
+
+.breadcrumb-link:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
 }
 
 .breadcrumb-separator {
@@ -57,7 +65,8 @@
   background: #2196F3;
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
+  padding: 12px 24px;
+  min-height: 44px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 1rem;
@@ -66,6 +75,11 @@
 
 .btn-back:hover {
   background: #1976D2;
+}
+
+.btn-back:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
 }
 
 /* Main Container */
@@ -207,7 +221,8 @@
 .recipe-actions button {
   flex: 1;
   min-width: 180px;
-  padding: 0.75rem 1.5rem;
+  min-height: 44px;
+  padding: 12px 24px;
   border: none;
   border-radius: 8px;
   font-size: 1rem;
@@ -218,6 +233,11 @@
   justify-content: center;
   gap: 0.5rem;
   transition: all 0.2s;
+}
+
+.recipe-actions button:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
 }
 
 .btn-icon {

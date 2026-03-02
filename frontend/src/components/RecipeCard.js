@@ -23,20 +23,21 @@ const RecipeCard = ({ recipe }) => {
 
   return (
     <div className="recipe-card-link" data-testid="recipe-card-link">
-      <Link to={`/opskrift/${recipe.id}`}>
+      <Link to={`/opskrift/${recipe.id}`} aria-label={`Gå til opskrift: ${recipe.title}`}>
         <div className="recipe-card" data-testid="recipe-card">
           {recipe.imageUrl && (
             <div className="recipe-card-image">
               <img 
                 src={recipe.imageUrl} 
-                alt={recipe.title}
+                alt={`Billede af ${recipe.title}`}
                 loading="lazy"
               />
               <button
                 className={`recipe-favorite-button ${isRecipeFavorite ? 'favorited' : ''}`}
                 onClick={handleFavoriteClick}
                 data-testid="recipe-favorite-button"
-                aria-label={isRecipeFavorite ? 'Fjern fra favoritter' : 'Tilføj til favoritter'}
+                aria-label={isRecipeFavorite ? `Fjern ${recipe.title} fra favoritter` : `Tilføj ${recipe.title} til favoritter`}
+                tabIndex={0}
               >
                 {isRecipeFavorite ? '❤️' : '🤍'}
               </button>
@@ -49,7 +50,8 @@ const RecipeCard = ({ recipe }) => {
             <div className="recipe-meta">
               {recipe.cookTimeMinutes && (
                 <span className="recipe-meta-item" data-testid="recipe-prep-time">
-                  <span className="icon">⏱️</span>
+                  <span className="icon" aria-hidden="true">⏱️</span>
+                  <span className="sr-only">Tilberedningstid: </span>
                   {recipe.cookTimeMinutes} min
                 </span>
               )}
@@ -59,7 +61,8 @@ const RecipeCard = ({ recipe }) => {
                   className={`recipe-meta-item difficulty-${recipe.difficulty.toLowerCase()}`}
                   data-testid="recipe-difficulty"
                 >
-                  <span className="icon">👨‍🍳</span>
+                  <span className="icon" aria-hidden="true">👨‍🍳</span>
+                  <span className="sr-only">Sværhedsgrad: </span>
                   {difficultyLabel}
                 </span>
               )}
@@ -67,7 +70,8 @@ const RecipeCard = ({ recipe }) => {
 
             {recipe.servings && (
               <div className="recipe-servings" data-testid="recipe-servings">
-                <span className="icon">🍽️</span>
+                <span className="icon" aria-hidden="true">🍽️</span>
+                <span className="sr-only">Portioner: </span>
                 {recipe.servings} portioner
               </div>
             )}

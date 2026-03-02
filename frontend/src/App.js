@@ -7,6 +7,7 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import RecipeBrowse from './pages/RecipeBrowse';
 import RecipeFavorites from './pages/RecipeFavorites';
 import RecipeDetail from './pages/RecipeDetail';
+import ErrorBoundary from './components/ErrorBoundary';
 import { RecipeFavoriteProvider, useRecipeFavorites } from './contexts/RecipeFavoriteContext';
 import { tilbudService } from './services/tilbudService';
 
@@ -228,10 +229,31 @@ function App() {
           <Routes>
             <Route path="/" element={<TilbudOversigt />} />
             <Route path="/tilbud" element={<TilbudOversigt />} />
-            <Route path="/opskrifter" element={<RecipeBrowse />} />
-            <Route path="/opskrifter/favoritter" element={<RecipeFavorites />} />
+            <Route 
+              path="/opskrifter" 
+              element={
+                <ErrorBoundary>
+                  <RecipeBrowse />
+                </ErrorBoundary>
+              } 
+            />
+            <Route 
+              path="/opskrifter/favoritter" 
+              element={
+                <ErrorBoundary>
+                  <RecipeFavorites />
+                </ErrorBoundary>
+              } 
+            />
             <Route path="/produkt/:id" element={<ProductDetailPage />} />
-            <Route path="/opskrift/:id" element={<RecipeDetail />} />
+            <Route 
+              path="/opskrift/:id" 
+              element={
+                <ErrorBoundary>
+                  <RecipeDetail />
+                </ErrorBoundary>
+              } 
+            />
           </Routes>
         </AppLayout>
       </RecipeFavoriteProvider>
