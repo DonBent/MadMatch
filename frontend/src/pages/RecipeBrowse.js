@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { recipeService } from '../services/recipeService';
 import RecipeCard from '../components/RecipeCard';
 import './RecipeBrowse.css';
@@ -10,12 +10,33 @@ const RecipeBrowse = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecipes, setTotalRecipes] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   
   const recipesPerPage = 20;
+  const debounceTimeout = useRef(null);
+
+  // Debounce search input (500ms delay)
+  useEffect(() => {
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+
+    debounceTimeout.current = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+      setCurrentPage(1); // Reset to first page on new search
+    }, 500);
+
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, [searchQuery]);
 
   useEffect(() => {
     loadRecipes();
-  }, [currentPage]);
+  }, [currentPage, debouncedQuery]);
 
   const loadRecipes = async () => {
     try {
@@ -24,7 +45,7 @@ const RecipeBrowse = () => {
       
       const offset = (currentPage - 1) * recipesPerPage;
       const data = await recipeService.searchRecipes({
-        query: '', // Empty query to get all recipes
+        query: debouncedQuery,
         language: 'da',
         limit: recipesPerPage,
         offset: offset
@@ -39,6 +60,16 @@ const RecipeBrowse = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setDebouncedQuery('');
+    setCurrentPage(1);
   };
 
   const handlePreviousPage = () => {
@@ -111,14 +142,66 @@ const RecipeBrowse = () => {
     <div className="recipe-browse">
       <header className="recipe-browse-header">
         <h1>Opskrifter</h1>
+        
+        {/* Search Bar */}
+        <div className="search-container">
+          <div className="search-input-wrapper">
+            <svg 
+              className="search-icon" 
+              xmlns="http://www.w3.org/2000/svg" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Søg efter opskrifter..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              data-testid="recipe-search-input"
+              aria-label="Søg efter opskrifter"
+            />
+            {searchQuery && (
+              <button
+                className="clear-search-button"
+                onClick={handleClearSearch}
+                data-testid="clear-search-button"
+                aria-label="Ryd søgning"
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
         <p className="recipe-count">
           Viser {recipes.length} af {totalRecipes.toLocaleString('da-DK')} opskrifter
+          {debouncedQuery && ` for "${debouncedQuery}"`}
         </p>
       </header>
 
-      {recipes.length === 0 ? (
+      {recipes.length === 0 && !loading ? (
         <div className="no-results" data-testid="no-results">
-          <p>Ingen opskrifter fundet.</p>
+          <p>
+            {debouncedQuery 
+              ? 'Ingen opskrifter fundet. Prøv et andet søgeord.'
+              : 'Ingen opskrifter fundet.'}
+          </p>
         </div>
       ) : (
         <>

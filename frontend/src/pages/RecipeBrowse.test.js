@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import RecipeBrowse from './RecipeBrowse';
 import { recipeService } from '../services/recipeService';
@@ -266,5 +266,268 @@ describe('RecipeBrowse', () => {
     fireEvent.click(nextButton);
 
     expect(scrollToMock).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+  });
+
+  // Search functionality tests
+  test('displays search input with correct data-testid', async () => {
+    recipeService.searchRecipes.mockResolvedValue(mockSearchResponse);
+    
+    renderWithRouter(<RecipeBrowse />);
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('recipe-search-input')).toBeInTheDocument();
+    });
+  });
+
+  test('search input has correct placeholder', async () => {
+    recipeService.searchRecipes.mockResolvedValue(mockSearchResponse);
+    
+    renderWithRouter(<RecipeBrowse />);
+    
+    const searchInput = await screen.findByTestId('recipe-search-input');
+    expect(searchInput).toHaveAttribute('placeholder', 'Søg efter opskrifter...');
+  });
+
+  test('typing in search input updates the value', async () => {
+    recipeService.searchRecipes.mockResolvedValue(mockSearchResponse);
+    
+    renderWithRouter(<RecipeBrowse />);
+    
+    const searchInput = await screen.findByTestId('recipe-search-input');
+    fireEvent.change(searchInput, { target: { value: 'kylling' } });
+    
+    expect(searchInput.value).toBe('kylling');
+  });
+
+  test('search is debounced with 500ms delay', async () => {
+    jest.useFakeTimers();
+    recipeService.searchRecipes.mockResolvedValue(mockSearchResponse);
+    
+    renderWithRouter(<RecipeBrowse />);
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('recipe-search-input')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByTestId('recipe-search-input');
+    
+    // Type in search
+    fireEvent.change(searchInput, { target: { value: 'k' } });
+    fireEvent.change(searchInput, { target: { value: 'ky' } });
+    fireEvent.change(searchInput, { target: { value: 'kyl' } });
+    fireEvent.change(searchInput, { target: { value: 'kylling' } });
+    
+    // Should not have called searchRecipes yet (except initial load)
+    expect(recipeService.searchRecipes).toHaveBeenCalledTimes(1);
+    
+    // Fast-forward 500ms
+    jest.advanceTimersByTime(500);
+    
+    await waitFor(() => {
+      expect(recipeService.searchRecipes).toHaveBeenCalledWith({
+        query: 'kylling',
+        language: 'da',
+        limit: 20,
+        offset: 0
+      });
+    });
+
+    jest.useRealTimers();
+  });
+
+  test('search calls API with query parameter', async () => {
+    jest.useFakeTimers();
+    recipeService.searchRecipes.mockResolvedValue(mockSearchResponse);
+    
+    renderWithRouter(<RecipeBrowse />);
+    
+    const searchInput = await screen.findByTestId('recipe-search-input');
+    fireEvent.change(searchInput, { target: { value: 'pasta' } });
+    
+    jest.advanceTimersByTime(500);
+    
+    await waitFor(() => {
+      expect(recipeService.searchRecipes).toHaveBeenCalledWith({
+        query: 'pasta',
+        language: 'da',
+        limit: 20,
+        offset: 0
+      });
+    });
+
+    jest.useRealTimers();
+  });
+
+  test('clear button appears when search query is entered', async () => {
+    recipeService.searchRecipes.mockResolvedValue(mockSearchResponse);
+    
+    renderWithRouter(<RecipeBrowse />);
+    
+    const searchInput = await screen.findByTestId('recipe-search-input');
+    
+    // Clear button should not be visible initially
+    expect(screen.queryByTestId('clear-search-button')).not.toBeInTheDocument();
+    
+    // Type in search
+    fireEvent.change(searchInput, { target: { value: 'kylling' } });
+    
+    // Clear button should now be visible
+    expect(screen.getByTestId('clear-search-button')).toBeInTheDocument();
+  });
+
+  test('clicking clear button resets search', async () => {
+    jest.useFakeTimers();
+    recipeService.searchRecipes.mockResolvedValue(mockSearchResponse);
+    
+    renderWithRouter(<RecipeBrowse />);
+    
+    const searchInput = await screen.findByTestId('recipe-search-input');
+    
+    // Enter search query
+    fireEvent.change(searchInput, { target: { value: 'kylling' } });
+    jest.advanceTimersByTime(500);
+    
+    await waitFor(() => {
+      expect(searchInput.value).toBe('kylling');
+    });
+    
+    // Click clear button
+    const clearButton = screen.getByTestId('clear-search-button');
+    fireEvent.click(clearButton);
+    
+    // Search input should be cleared
+    expect(searchInput.value).toBe('');
+    
+    // Should trigger search with empty query
+    jest.advanceTimersByTime(500);
+    
+    await waitFor(() => {
+      expect(recipeService.searchRecipes).toHaveBeenCalledWith({
+        query: '',
+        language: 'da',
+        limit: 20,
+        offset: 0
+      });
+    });
+
+    jest.useRealTimers();
+  });
+
+  test('displays empty state with search-specific message when no results found', async () => {
+    jest.useFakeTimers();
+    recipeService.searchRecipes
+      .mockResolvedValueOnce(mockSearchResponse)
+      .mockResolvedValueOnce({
+        recipes: [],
+        total: 0,
+        limit: 20,
+        offset: 0,
+        hasMore: false
+      });
+    
+    renderWithRouter(<RecipeBrowse />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Recipe 1')).toBeInTheDocument();
+    });
+    
+    const searchInput = screen.getByTestId('recipe-search-input');
+    fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
+    
+    jest.advanceTimersByTime(500);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Ingen opskrifter fundet. Prøv et andet søgeord.')).toBeInTheDocument();
+    });
+
+    jest.useRealTimers();
+  });
+
+  test('search resets to page 1 when query changes', async () => {
+    jest.useFakeTimers();
+    recipeService.searchRecipes.mockResolvedValue(mockSearchResponse);
+    
+    renderWithRouter(<RecipeBrowse />);
+    
+    // Wait for initial load
+    await waitFor(() => {
+      expect(screen.getByText('Recipe 1')).toBeInTheDocument();
+    });
+    
+    const searchInput = screen.getByTestId('recipe-search-input');
+    
+    // Type search query first
+    fireEvent.change(searchInput, { target: { value: 'kylling' } });
+    
+    // Advance timers to trigger debounce
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+    
+    // Wait for search to trigger with offset 0
+    await waitFor(() => {
+      expect(recipeService.searchRecipes).toHaveBeenCalledWith({
+        query: 'kylling',
+        language: 'da',
+        limit: 20,
+        offset: 0
+      });
+    });
+
+    jest.useRealTimers();
+  });
+
+  test('pagination works with search query', async () => {
+    jest.useFakeTimers();
+    recipeService.searchRecipes.mockResolvedValue(mockSearchResponse);
+    
+    renderWithRouter(<RecipeBrowse />);
+    
+    const searchInput = await screen.findByTestId('recipe-search-input');
+    fireEvent.change(searchInput, { target: { value: 'pasta' } });
+    
+    jest.advanceTimersByTime(500);
+    
+    await waitFor(() => {
+      expect(recipeService.searchRecipes).toHaveBeenCalledWith({
+        query: 'pasta',
+        language: 'da',
+        limit: 20,
+        offset: 0
+      });
+    });
+    
+    // Click next page
+    const nextButton = screen.getByTestId('pagination-next');
+    fireEvent.click(nextButton);
+    
+    await waitFor(() => {
+      expect(recipeService.searchRecipes).toHaveBeenCalledWith({
+        query: 'pasta',
+        language: 'da',
+        limit: 20,
+        offset: 20
+      });
+    });
+
+    jest.useRealTimers();
+  });
+
+  test('recipe count shows search query when searching', async () => {
+    jest.useFakeTimers();
+    recipeService.searchRecipes.mockResolvedValue(mockSearchResponse);
+    
+    renderWithRouter(<RecipeBrowse />);
+    
+    const searchInput = await screen.findByTestId('recipe-search-input');
+    fireEvent.change(searchInput, { target: { value: 'kylling' } });
+    
+    jest.advanceTimersByTime(500);
+    
+    await waitFor(() => {
+      expect(screen.getByText(/Viser 3 af 50 opskrifter for "kylling"/)).toBeInTheDocument();
+    });
+
+    jest.useRealTimers();
   });
 });
