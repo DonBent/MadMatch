@@ -5,11 +5,15 @@ import TilbudCard from './components/TilbudCard';
 import FilterBar from './components/FilterBar';
 import ProductDetailPage from './pages/ProductDetailPage';
 import RecipeBrowse from './pages/RecipeBrowse';
+import RecipeFavorites from './pages/RecipeFavorites';
+import { RecipeFavoriteProvider, useRecipeFavorites } from './contexts/RecipeFavoriteContext';
 import { tilbudService } from './services/tilbudService';
 
 function Navigation() {
   const location = useLocation();
   const pathname = location?.pathname || '/';
+  const { getFavoriteCount } = useRecipeFavorites();
+  const favoriteCount = getFavoriteCount();
   
   return (
     <nav className="main-nav" data-testid="main-navigation">
@@ -26,6 +30,13 @@ function Navigation() {
         data-testid="nav-opskrifter"
       >
         Opskrifter
+      </Link>
+      <Link 
+        to="/opskrifter/favoritter" 
+        className={`nav-tab ${pathname === '/opskrifter/favoritter' ? 'active' : ''}`}
+        data-testid="nav-favoritter"
+      >
+        Mine favoritter {favoriteCount > 0 && `(${favoriteCount})`}
       </Link>
     </nav>
   );
@@ -164,14 +175,17 @@ function AppLayout({ children }) {
 function App() {
   return (
     <Router>
-      <AppLayout>
-        <Routes>
-          <Route path="/" element={<TilbudOversigt />} />
-          <Route path="/opskrifter" element={<RecipeBrowse />} />
-          <Route path="/produkt/:id" element={<ProductDetailPage />} />
-          <Route path="/opskrift/:id" element={<div>Recipe Detail (Coming Soon)</div>} />
-        </Routes>
-      </AppLayout>
+      <RecipeFavoriteProvider>
+        <AppLayout>
+          <Routes>
+            <Route path="/" element={<TilbudOversigt />} />
+            <Route path="/opskrifter" element={<RecipeBrowse />} />
+            <Route path="/opskrifter/favoritter" element={<RecipeFavorites />} />
+            <Route path="/produkt/:id" element={<ProductDetailPage />} />
+            <Route path="/opskrift/:id" element={<div>Recipe Detail (Coming Soon)</div>} />
+          </Routes>
+        </AppLayout>
+      </RecipeFavoriteProvider>
     </Router>
   );
 }

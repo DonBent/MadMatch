@@ -1,8 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useRecipeFavorites } from '../contexts/RecipeFavoriteContext';
 import './RecipeCard.css';
 
 const RecipeCard = ({ recipe }) => {
+  const { isFavorite, toggleFavorite } = useRecipeFavorites();
+  const isRecipeFavorite = isFavorite(recipe.id);
+
   const difficultyLabels = {
     EASY: 'Let',
     MEDIUM: 'Middel',
@@ -10,6 +14,12 @@ const RecipeCard = ({ recipe }) => {
   };
 
   const difficultyLabel = difficultyLabels[recipe.difficulty] || recipe.difficulty;
+
+  const handleFavoriteClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite(recipe.id);
+  };
 
   return (
     <div className="recipe-card-link" data-testid="recipe-card-link">
@@ -22,6 +32,14 @@ const RecipeCard = ({ recipe }) => {
                 alt={recipe.title}
                 loading="lazy"
               />
+              <button
+                className={`recipe-favorite-button ${isRecipeFavorite ? 'favorited' : ''}`}
+                onClick={handleFavoriteClick}
+                data-testid="recipe-favorite-button"
+                aria-label={isRecipeFavorite ? 'Fjern fra favoritter' : 'Tilføj til favoritter'}
+              >
+                {isRecipeFavorite ? '❤️' : '🤍'}
+              </button>
             </div>
           )}
           

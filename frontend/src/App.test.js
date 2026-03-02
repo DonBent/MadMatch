@@ -32,7 +32,8 @@ jest.mock('./services/recipeService', () => ({
       limit: 20,
       offset: 0,
       hasMore: false
-    }))
+    })),
+    getAllRecipes: jest.fn(() => Promise.resolve([]))
   }
 }));
 
@@ -40,4 +41,14 @@ test('renders MadMatch header', async () => {
   render(<App />);
   const headerElement = await screen.findByRole('heading', { name: /MadMatch/i });
   expect(headerElement).toBeInTheDocument();
+});
+
+test('renders navigation with favorites tab', async () => {
+  render(<App />);
+  const navElement = await screen.findByTestId('main-navigation');
+  expect(navElement).toBeInTheDocument();
+  
+  // Check for favorites link
+  const favoritesLink = await screen.findByTestId('nav-favoritter');
+  expect(favoritesLink).toBeInTheDocument();
 });
