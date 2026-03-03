@@ -21,10 +21,12 @@ const mockRecipe = {
   id: 'recipe-123',
   title: 'Lækker lasagne',
   imageUrl: 'https://example.com/lasagne.jpg',
+  description: 'En dejlig klassisk lasagne med oksekød og bechamelsauce.',
   source: {
     id: 'source-arla-001',
     name: 'arla'
   },
+  sourceUrl: 'https://www.arla.dk/opskrifter/laekker-lasagne',
   prepTimeMinutes: 20,
   cookTimeMinutes: 45,
   totalTimeMinutes: 65,
@@ -50,6 +52,9 @@ describe('RecipeDetail Component', () => {
     
     jest.clearAllMocks();
     localStorage.clear();
+    
+    // Mock window.open
+    global.open = jest.fn();
   });
 
   const renderComponent = () => {
@@ -78,7 +83,7 @@ describe('RecipeDetail Component', () => {
       recipeService.getRecipe.mockResolvedValue(mockRecipe);
     });
 
-    test('loads and displays full recipe from API', async () => {
+    test('loads and displays recipe from API', async () => {
       renderComponent();
 
       const title = await screen.findByTestId('recipe-detail-title', {}, { timeout: 3000 });
@@ -86,12 +91,12 @@ describe('RecipeDetail Component', () => {
       expect(recipeService.getRecipe).toHaveBeenCalledWith('recipe-123');
     });
 
-    test('displays all recipe fields correctly', async () => {
+    test('displays recipe metadata correctly', async () => {
       renderComponent();
 
       await screen.findByTestId('recipe-detail-title');
 
-      // Meta information - check that time labels exist with values
+      // Meta information
       expect(screen.getByText('Forberedelse:')).toBeInTheDocument();
       expect(screen.getByText('Tilberedningstid:')).toBeInTheDocument();
       expect(screen.getByText('Total tid:')).toBeInTheDocument();
@@ -108,36 +113,83 @@ describe('RecipeDetail Component', () => {
       expect(metaInfo).toHaveTextContent('4');
     });
 
-    test('formats ingredients as bullet list with quantities', async () => {
+    test('displays description when available', async () => {
       renderComponent();
 
-      await screen.findByText('Ingredienser');
+      await screen.findByTestId('recipe-detail-title');
 
-      // Check ingredients section exists
-      const ingredientsSection = screen.getByRole('region', { name: /ingredienser/i });
-      expect(ingredientsSection).toBeInTheDocument();
-      
-      // Check ingredients are displayed
-      expect(screen.getByText('Hakket oksekød')).toBeInTheDocument();
-      expect(screen.getByText('Løg')).toBeInTheDocument();
-      expect(screen.getByText('Mælk')).toBeInTheDocument();
+      expect(screen.getByText('En dejlig klassisk lasagne med oksekød og bechamelsauce.')).toBeInTheDocument();
     });
 
-    test('formats instructions as numbered steps', async () => {
+    test('does NOT display ingredients list', async () => {
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText('Fremgangsmåde')).toBeInTheDocument();
-      });
+      await screen.findByTestId('recipe-detail-title');
 
-      expect(screen.getByText('Steg kødet og løget.')).toBeInTheDocument();
-      expect(screen.getByText('Tilsæt tomatpuré og krydderier.')).toBeInTheDocument();
-      expect(screen.getByText('Skift med lasagneplader og bechamelsauce.')).toBeInTheDocument();
-      expect(screen.getByText('Bag i ovnen ved 200 grader i 45 minutter.')).toBeInTheDocument();
+      // Should not show ingredients section
+      expect(screen.queryByText('Ingredienser')).not.toBeInTheDocument();
+      expect(screen.queryByRole('region', { name: /ingredienser/i })).not.toBeInTheDocument();
+      
+      // Should not show specific ingredients
+      expect(screen.queryByText('Hakket oksekød')).not.toBeInTheDocument();
+      expect(screen.queryByText('Løg')).not.toBeInTheDocument();
+      expect(screen.queryByText('Mælk')).not.toBeInTheDocument();
+    });
 
-      // Check step numbers are present
-      const steps = screen.getAllByLabelText(/Trin \d+/);
-      expect(steps).toHaveLength(4);
+    test('does NOT display instructions', async () => {
+      renderComponent();
+
+      await screen.findByTestId('recipe-detail-title');
+
+      // Should not show instructions section
+      expect(screen.queryByText('Fremgangsmåde')).not.toBeInTheDocument();
+      expect(screen.queryByRole('region', { name: /fremgangsmåde/i })).not.toBeInTheDocument();
+      
+      // Should not show specific instructions
+      expect(screen.queryByText('Steg kødet og løget.')).not.toBeInTheDocument();
+      expect(screen.queryByText('Tilsæt tomatpuré og krydderier.')).not.toBeInTheDocument();
+    });
+
+    test('displays copyright-friendly source CTA section', async () => {
+      renderComponent();
+
+      await screen.findByTestId('recipe-detail-title');
+
+      // Check CTA heading
+      expect(screen.getByText('Se den fulde opskrift')).toBeInTheDocument();
+      
+      // Check copyright message
+      expect(screen.getByText(/for den fulde opskrift med ingredienser og fremgangsmåde/i)).toBeInTheDocument();
+      
+      // Check that source name appears in the message
+      const ctaSection = screen.getByRole('region', { name: /se den fulde opskrift/i });
+      expect(ctaSection).toHaveTextContent('Arla');
+    });
+
+    test('displays "Se fuld opskrift" button with correct link', async () => {
+      renderComponent();
+
+      await screen.findByTestId('recipe-detail-title');
+
+      const viewRecipeButton = screen.getByTestId('view-full-recipe-button');
+      expect(viewRecipeButton).toBeInTheDocument();
+      expect(viewRecipeButton).toHaveTextContent('Se fuld opskrift');
+      expect(viewRecipeButton).toHaveTextContent('📖');
+    });
+
+    test('clicking "Se fuld opskrift" opens source URL in new tab', async () => {
+      renderComponent();
+
+      await screen.findByTestId('recipe-detail-title');
+
+      const viewRecipeButton = screen.getByTestId('view-full-recipe-button');
+      fireEvent.click(viewRecipeButton);
+
+      expect(global.open).toHaveBeenCalledWith(
+        'https://www.arla.dk/opskrifter/laekker-lasagne',
+        '_blank',
+        'noopener,noreferrer'
+      );
     });
 
     test('displays breadcrumb navigation', async () => {
@@ -166,12 +218,17 @@ describe('RecipeDetail Component', () => {
     test('displays source badge for Arla recipes', async () => {
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText('Arla')).toBeInTheDocument();
-      });
+      await screen.findByTestId('recipe-detail-title');
 
-      const arlaBadge = screen.getByText('Arla');
-      expect(arlaBadge).toBeInTheDocument();
+      // Find the source badge specifically (not in the CTA section)
+      const sourceBadges = screen.getAllByText('Arla');
+      expect(sourceBadges.length).toBeGreaterThan(0);
+      
+      // Verify at least one is in the source badge area
+      const sourceBadge = sourceBadges.find(el => 
+        el.closest('.recipe-source-badge')
+      );
+      expect(sourceBadge).toBeTruthy();
     });
   });
 
@@ -320,6 +377,45 @@ describe('RecipeDetail Component', () => {
     });
   });
 
+  describe('Source URL Handling', () => {
+    test('handles recipe without sourceUrl gracefully', async () => {
+      const recipeNoUrl = {
+        ...mockRecipe,
+        sourceUrl: null
+      };
+      recipeService.getRecipe.mockResolvedValue(recipeNoUrl);
+
+      renderComponent();
+
+      await screen.findByTestId('recipe-detail-title');
+
+      // Should show message that link is unavailable
+      expect(screen.getByText(/link til opskrift er ikke tilgængelig/i)).toBeInTheDocument();
+      
+      // Should not show the button
+      expect(screen.queryByTestId('view-full-recipe-button')).not.toBeInTheDocument();
+    });
+
+    test('displays correct source name for different sources', async () => {
+      const recipeOtherSource = {
+        ...mockRecipe,
+        source: {
+          id: 'source-valdemarsro-001',
+          name: 'valdemarsro'
+        }
+      };
+      recipeService.getRecipe.mockResolvedValue(recipeOtherSource);
+
+      renderComponent();
+
+      await screen.findByTestId('recipe-detail-title');
+
+      // Check that Valdemarsro appears in the CTA section
+      const ctaSection = screen.getByRole('region', { name: /se den fulde opskrift/i });
+      expect(ctaSection).toHaveTextContent('Valdemarsro');
+    });
+  });
+
   describe('Error Handling', () => {
     test('displays 404 error page for invalid recipe ID', async () => {
       recipeService.getRecipe.mockRejectedValue({ 
@@ -384,6 +480,21 @@ describe('RecipeDetail Component', () => {
       expect(screen.getByText(/intet billede tilgængeligt/i)).toBeInTheDocument();
     });
 
+    test('handles recipe without description gracefully', async () => {
+      const recipeNoDescription = {
+        ...mockRecipe,
+        description: null
+      };
+      recipeService.getRecipe.mockResolvedValue(recipeNoDescription);
+
+      renderComponent();
+
+      await screen.findByTestId('recipe-detail-title');
+
+      // Description section should not be rendered
+      expect(screen.queryByText('En dejlig klassisk lasagne')).not.toBeInTheDocument();
+    });
+
     test('handles recipe without prep time', async () => {
       const recipeNoPrepTime = {
         ...mockRecipe,
@@ -416,6 +527,17 @@ describe('RecipeDetail Component', () => {
         expect(title).toHaveTextContent('Lækker lasagne');
       });
     });
+
+    test('view full recipe button has data-testid', async () => {
+      recipeService.getRecipe.mockResolvedValue(mockRecipe);
+
+      renderComponent();
+
+      await screen.findByTestId('recipe-detail-title');
+
+      const button = screen.getByTestId('view-full-recipe-button');
+      expect(button).toBeInTheDocument();
+    });
   });
 
   describe('Accessibility', () => {
@@ -429,8 +551,7 @@ describe('RecipeDetail Component', () => {
       await screen.findByTestId('recipe-detail-title');
 
       expect(screen.getByRole('region', { name: /opskriftsinformation/i })).toBeInTheDocument();
-      expect(screen.getByRole('region', { name: /ingredienser/i })).toBeInTheDocument();
-      expect(screen.getByRole('region', { name: /fremgangsmåde/i })).toBeInTheDocument();
+      expect(screen.getByRole('region', { name: /se den fulde opskrift/i })).toBeInTheDocument();
     });
 
     test('buttons have descriptive aria-labels', async () => {
@@ -441,6 +562,7 @@ describe('RecipeDetail Component', () => {
       expect(screen.getByRole('button', { name: /tilbage til opskrifter/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /tilføj til favoritter/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /find matchende tilbud/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /se fuld opskrift hos arla/i })).toBeInTheDocument();
     });
   });
 });

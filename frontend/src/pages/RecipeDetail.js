@@ -68,10 +68,29 @@ const RecipeDetail = () => {
     navigate(`/tilbud?search=${encodeURIComponent(searchQuery)}`);
   };
 
+  const handleViewFullRecipe = () => {
+    if (recipe?.sourceUrl) {
+      window.open(recipe.sourceUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   const difficultyLabels = {
     EASY: 'Let',
     MEDIUM: 'Middel',
     HARD: 'Svær'
+  };
+
+  const getSourceDisplayName = () => {
+    if (!recipe?.source) return null;
+    
+    const sourceNameMap = {
+      'arla': 'Arla',
+      'valdemarsro': 'Valdemarsro',
+      // Add more source mappings as needed
+    };
+    
+    return sourceNameMap[recipe.source.name.toLowerCase()] || 
+           recipe.source.name.charAt(0).toUpperCase() + recipe.source.name.slice(1);
   };
 
   if (loading) {
@@ -111,6 +130,8 @@ const RecipeDetail = () => {
       </div>
     );
   }
+
+  const sourceDisplayName = getSourceDisplayName();
 
   return (
     <ErrorBoundary onReset={loadRecipe}>
@@ -159,7 +180,7 @@ const RecipeDetail = () => {
                   </>
                 )}
                 {recipe.source.name !== 'arla' && (
-                  <span className="source-text">{recipe.source.name}</span>
+                  <span className="source-text">{sourceDisplayName}</span>
                 )}
               </div>
             )}
@@ -169,6 +190,12 @@ const RecipeDetail = () => {
             <h1 className="recipe-title" data-testid="recipe-detail-title">
               {recipe.title}
             </h1>
+
+            {recipe.description && (
+              <div className="recipe-description">
+                <p>{recipe.description}</p>
+              </div>
+            )}
 
             <div className="recipe-meta-info" role="region" aria-label="Opskriftsinformation">
               {recipe.prepTimeMinutes && (
@@ -245,40 +272,37 @@ const RecipeDetail = () => {
               </button>
             </div>
 
-            {recipe.ingredients && recipe.ingredients.length > 0 && (
-              <section className="recipe-ingredients" role="region" aria-labelledby="ingredients-heading">
-                <h2 id="ingredients-heading">Ingredienser</h2>
-                <ul className="ingredients-list">
-                  {recipe.ingredients.map((ingredient, index) => (
-                    <li key={index} className="ingredient-item">
-                      {ingredient.quantity && (
-                        <span className="ingredient-quantity">{ingredient.quantity}</span>
-                      )}
-                      {ingredient.unit && (
-                        <span className="ingredient-unit">{ingredient.unit}</span>
-                      )}
-                      <span className="ingredient-name">{ingredient.name}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {recipe.instructions && recipe.instructions.length > 0 && (
-              <section className="recipe-instructions" role="region" aria-labelledby="instructions-heading">
-                <h2 id="instructions-heading">Fremgangsmåde</h2>
-                <ol className="instructions-list">
-                  {recipe.instructions.map((instruction, index) => (
-                    <li key={index} className="instruction-step">
-                      <div className="step-number" aria-label={`Trin ${index + 1}`}>
-                        {index + 1}
-                      </div>
-                      <div className="step-text">{instruction}</div>
-                    </li>
-                  ))}
-                </ol>
-              </section>
-            )}
+            {/* Copyright-friendly call-to-action */}
+            <section className="recipe-source-cta" role="region" aria-labelledby="source-cta-heading">
+              <div className="source-cta-content">
+                <h2 id="source-cta-heading" className="source-cta-title">
+                  Se den fulde opskrift
+                </h2>
+                <p className="source-cta-description">
+                  {sourceDisplayName ? (
+                    <>For den fulde opskrift med ingredienser og fremgangsmåde, besøg <strong>{sourceDisplayName}</strong>.</>
+                  ) : (
+                    <>For den fulde opskrift med ingredienser og fremgangsmåde, besøg den originale kilde.</>
+                  )}
+                </p>
+                {recipe.sourceUrl ? (
+                  <button
+                    className="btn-view-full-recipe"
+                    onClick={handleViewFullRecipe}
+                    aria-label={`Se fuld opskrift hos ${sourceDisplayName || 'kilden'}`}
+                    data-testid="view-full-recipe-button"
+                  >
+                    <span className="btn-icon">📖</span>
+                    Se fuld opskrift
+                    <span className="external-link-icon" aria-hidden="true">↗</span>
+                  </button>
+                ) : (
+                  <p className="source-cta-unavailable">
+                    Link til opskrift er ikke tilgængelig i øjeblikket.
+                  </p>
+                )}
+              </div>
+            </section>
           </div>
         </div>
       </div>
