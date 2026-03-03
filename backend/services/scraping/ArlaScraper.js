@@ -35,6 +35,11 @@ class ArlaScraper {
     this.verbose = options.verbose || false;
     this.sourceId = null;
     this.browser = null;
+    this.page = null;
+    
+    // Recipe-count based browser restart - ZHC-MadMatch-20260302-FixBrowserRestart
+    this.recipeCount = 0;
+    this.maxRecipesPerBrowser = 100; // Restart every 100 recipes to prevent memory accumulation
     
     // Initialize Prisma with adapter (unless mock provided for tests)
     if (options.prisma) {
@@ -61,15 +66,19 @@ class ArlaScraper {
     this.maxRetries = 3;
     this.retryDelay = 1000;
     
-    // Puppeteer configuration
+    // Puppeteer configuration - ZHC-MadMatch-20260301-DebugScraper
     this.puppeteerOptions = {
       headless: 'new',
+      protocolTimeout: 0, // Disable Chrome DevTools Protocol timeout to prevent ~30min crashes
+      dumpio: true, // Log Chrome stdout/stderr for crash detection
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-accelerated-2d-canvas',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--enable-logging',
+        '--v=1' // Verbose logging
       ]
     };
   }
@@ -93,12 +102,53 @@ class ArlaScraper {
       // Launch browser
       this.log('info', 'Launching headless browser...');
       this.browser = await puppeteer.launch(this.puppeteerOptions);
-      this.log('info', 'Browser launched successfully');
+      
+      // Add browser crash detection - ZHC-MadMatch-20260301-DebugScraper
+      this.browser.on('disconnected', () => {
+        this.log('error', '❌ ❌ BROWSER DISCONNECTED EVENT - Chrome crashed or was killed!');
+      });
+      
+      this.page = await this.browser.newPage();
+      await this.page.setDefaultNavigationTimeout(30000);
+      
+      this.log('info', `✅ Browser initialized`);
+      this.log('info', `Will restart browser every ${this.maxRecipesPerBrowser} recipes`);
       
     } catch (error) {
       this.log('error', `Failed to initialize: ${error.message}`);
       throw error;
     }
+  }
+
+  /**
+   * Restart browser to prevent memory leaks and crashes
+   */
+  async restartBrowser() {
+    this.log('info', `🔄 Restarting browser (${this.recipeCount} recipes scraped, memory cleanup)...`);
+    
+    if (this.page) {
+      await this.page.close().catch(() => {});
+    }
+    
+    if (this.browser) {
+      await this.browser.close().catch(() => {});
+    }
+    
+    // Reinitialize
+    this.browser = await puppeteer.launch(this.puppeteerOptions);
+    
+    // Re-attach browser crash detection - ZHC-MadMatch-20260301-DebugScraper
+    this.browser.on('disconnected', () => {
+      this.log('error', '❌ ❌ BROWSER DISCONNECTED EVENT - Chrome crashed or was killed!');
+    });
+    
+    this.page = await this.browser.newPage();
+    await this.page.setDefaultNavigationTimeout(30000);
+    
+    // Reset recipe counter - ZHC-MadMatch-20260302-FixBrowserRestart
+    this.recipeCount = 0;
+    
+    this.log('info', `✅ Browser restarted successfully (counter reset to 0)`);
   }
 
   /**
@@ -115,7 +165,9 @@ class ArlaScraper {
     if (!this.dryRun) {
       job = await this.prisma.scrapingJob.create({
         data: {
-          sourceId: this.sourceId,
+          source: {
+            connect: { id: this.sourceId }
+          },
           status: 'RUNNING',
           startedAt: new Date()
         }
@@ -136,8 +188,38 @@ class ArlaScraper {
       const recipeUrls = await this.fetchRecipeUrls(category, limit);
       this.log('info', `Found ${recipeUrls.length} recipe URLs`);
 
-      // Step 2: Scrape each recipe
-      for (let i = 0; i < recipeUrls.length; i++) {
+      // Step 1.5: Check for existing recipes to determine resume point
+      this.log('info', 'Checking for existing recipes in database...');
+      const existingRecipes = await this.getExistingRecipeUrls();
+      this.log('info', `Database contains ${existingRecipes.length} existing recipes from this source`);
+
+      // Find resume point
+      let startIndex = 0;
+      if (existingRecipes.length > 0) {
+        // Convert to Set for O(1) lookup
+        const existingSet = new Set(existingRecipes);
+        
+        // Find last URL that exists in our current URL list
+        for (let i = recipeUrls.length - 1; i >= 0; i--) {
+          if (existingSet.has(recipeUrls[i])) {
+            startIndex = i + 1;
+            if (startIndex < recipeUrls.length) {
+              this.log('info', `✅ RESUME MODE: Starting from recipe #${startIndex + 1} (${recipeUrls[startIndex]})`);
+              this.log('info', `Skipping ${startIndex} recipes already in database`);
+            } else {
+              this.log('info', `✅ All recipes already scraped! Nothing to do.`);
+            }
+            break;
+          }
+        }
+        
+        if (startIndex === 0 && existingRecipes.length > 0) {
+          this.log('info', `⚠️  Found ${existingRecipes.length} existing recipes, but none match current URL list. Starting from beginning.`);
+        }
+      }
+
+      // Step 2: Scrape each recipe (starting from resume point)
+      for (let i = startIndex; i < recipeUrls.length; i++) {
         const url = recipeUrls[i];
         
         try {
@@ -149,6 +231,10 @@ class ArlaScraper {
           this.log('verbose', `[${i + 1}/${recipeUrls.length}] Fetching: ${url}`);
           
           const recipe = await this.scrapeRecipePage(url);
+
+          // Memory tracking per recipe - ZHC-MadMatch-20260301-DebugScraper
+          const mem = process.memoryUsage();
+          this.log('debug', `Memory: heap=${Math.floor(mem.heapUsed/1024/1024)}MB, rss=${Math.floor(mem.rss/1024/1024)}MB, recipe_count=${this.recipeCount}/${this.maxRecipesPerBrowser}`);
 
           if (!this.dryRun) {
             const inserted = await this.saveRecipe(recipe);
@@ -164,10 +250,20 @@ class ArlaScraper {
             this.log('info', `[DRY RUN] Would insert: ${recipe.title}`);
           }
 
-          // Progress update
+          // Progress update with enhanced logging
           const total = stats.scraped + stats.duplicates + stats.failed;
-          if (total % 50 === 0) {
-            this.log('info', `Progress: ${total}/${recipeUrls.length} (${Math.round(total / recipeUrls.length * 100)}%) - Scraped: ${stats.scraped}, Duplicates: ${stats.duplicates}, Failed: ${stats.failed}`);
+          if (total % 50 === 0 && total > 0) {
+            const processed = i + 1;
+            const remaining = recipeUrls.length - processed;
+            const percentComplete = Math.floor((processed / recipeUrls.length) * 100);
+            const avgTimePerRecipe = 5; // ~5 seconds per recipe (2s rate limit + processing)
+            const etaMinutes = Math.floor((remaining * avgTimePerRecipe) / 60);
+            
+            this.log('info', `\n📊 PROGRESS UPDATE:`);
+            this.log('info', `   Processed: ${processed}/${recipeUrls.length} (${percentComplete}%)`);
+            this.log('info', `   Scraped: ${stats.scraped} | Duplicates: ${stats.duplicates} | Failed: ${stats.failed}`);
+            this.log('info', `   Remaining: ${remaining} recipes`);
+            this.log('info', `   ETA: ~${etaMinutes} minutes\n`);
           }
 
         } catch (error) {
@@ -209,98 +305,89 @@ class ArlaScraper {
     }
 
     this.printSummary(stats);
-    return stats;
+    
+    // Return stats with aliases for backward compatibility
+    return {
+      ...stats,
+      successCount: stats.scraped,
+      failedCount: stats.failed
+    };
   }
 
   /**
-   * Fetch recipe URLs from category pages using Puppeteer
-   * @param {string|null} category - Category filter
+   * Get list of URLs for all recipes from this source already in database
+   * Used for resume functionality
+   * @returns {Promise<string[]>} Array of recipe URLs
+   */
+  async getExistingRecipeUrls() {
+    try {
+      const recipes = await this.prisma.recipe.findMany({
+        where: { sourceId: this.sourceId },
+        select: { externalId: true }
+      });
+      
+      // externalId stores the full URL
+      return recipes.map(r => r.externalId).filter(Boolean);
+    } catch (error) {
+      this.log('error', `Failed to fetch existing recipe URLs: ${error.message}`);
+      return []; // Fail safe: return empty array to start from beginning
+    }
+  }
+
+  /**
+   * Fetch recipe URLs from sitemap.xml (fast and reliable)
+   * @param {string|null} category - Category filter (not used with sitemap)
    * @param {number} limit - Max URLs to fetch
    * @returns {Promise<string[]>} Array of recipe URLs
    */
   async fetchRecipeUrls(category = null, limit = 1000) {
-    const urls = new Set();
-    const page = await this.browser.newPage();
+    const https = require('https');
+    const { parseStringPromise } = require('xml2js');
     
     try {
-      await page.setUserAgent(this.userAgent);
-      await page.setViewport({ width: 1920, height: 1080 });
+      this.log('info', 'Fetching recipe URLs from sitemap.xml...');
       
-      const baseUrl = category 
-        ? `${this.baseUrl}${category}` 
-        : this.baseUrl;
+      const sitemapUrl = 'https://www.arla.dk/sitemap.xml?type=Modules.Recipes.Business.SitemapUrlWriter.RecipeSitemapUrlWriter';
       
-      this.log('verbose', `Navigating to: ${baseUrl}`);
-      await page.goto(baseUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+      // Fetch sitemap XML
+      const xmlData = await new Promise((resolve, reject) => {
+        https.get(sitemapUrl, (res) => {
+          let data = '';
+          res.on('data', (chunk) => { data += chunk; });
+          res.on('end', () => resolve(data));
+          res.on('error', reject);
+        }).on('error', reject);
+      });
       
-      // Wait for Vue.js to render the content
-      await page.waitForSelector('a[href*="/opskrifter/"]', { timeout: 10000 });
+      // Parse XML
+      const parsed = await parseStringPromise(xmlData);
       
-      // Scroll to load more recipes (Vue.js lazy loading)
-      let previousCount = 0;
-      let scrollAttempts = 0;
-      const maxScrolls = 20;
-      
-      while (urls.size < limit && scrollAttempts < maxScrolls) {
-        // Extract recipe links
-        const newUrls = await page.evaluate(() => {
-          const links = Array.from(document.querySelectorAll('a[href*="/opskrifter/"]'));
-          return links
-            .map(a => a.href)
-            .filter(href => {
-              // Filter only actual recipe pages (not category/index pages)
-              const parts = href.split('/opskrifter/')[1];
-              return parts && !parts.includes('?') && parts.split('/').length === 1 && parts.length > 0;
-            });
-        });
-        
-        newUrls.forEach(url => urls.add(url));
-        
-        this.log('verbose', `Found ${urls.size} recipe URLs after scroll ${scrollAttempts + 1}`);
-        
-        // Check if we got new URLs
-        if (urls.size === previousCount) {
-          // Try clicking "Load More" button if it exists
-          const loadMoreClicked = await page.evaluate(() => {
-            const buttons = Array.from(document.querySelectorAll('button, a'));
-            const loadMoreBtn = buttons.find(btn => 
-              btn.textContent.toLowerCase().includes('mere') ||
-              btn.textContent.toLowerCase().includes('flere') ||
-              btn.textContent.toLowerCase().includes('load')
-            );
-            if (loadMoreBtn) {
-              loadMoreBtn.click();
-              return true;
+      // Extract URLs from <url><loc> elements
+      const urls = [];
+      if (parsed.urlset && parsed.urlset.url) {
+        for (const urlEntry of parsed.urlset.url) {
+          if (urlEntry.loc && urlEntry.loc[0]) {
+            const url = urlEntry.loc[0];
+            // Filter only recipe URLs
+            if (url.includes('/opskrifter/') && !url.match(/\/opskrifter\/$/)) {
+              urls.push(url);
             }
-            return false;
-          });
-          
-          if (loadMoreClicked) {
-            await this.sleep(2000); // Wait for new content to load
-          } else {
-            break; // No more content to load
           }
         }
-        
-        previousCount = urls.size;
-        
-        // Scroll down to trigger lazy loading
-        await page.evaluate(() => window.scrollBy(0, window.innerHeight));
-        await this.sleep(1000);
-        
-        scrollAttempts++;
       }
       
+      this.log('info', `Sitemap contains ${urls.length} recipe URLs`);
+      
+      // Apply limit
+      const limitedUrls = urls.slice(0, limit);
+      this.log('info', `Returning ${limitedUrls.length} URLs (limit: ${limit})`);
+      
+      return limitedUrls;
+      
     } catch (error) {
-      this.log('error', `Failed to fetch recipe URLs: ${error.message}`);
+      this.log('error', `Failed to fetch recipe URLs from sitemap: ${error.message}`);
       throw error;
-    } finally {
-      await page.close();
     }
-    
-    const urlArray = Array.from(urls).slice(0, limit);
-    this.log('info', `Collected ${urlArray.length} unique recipe URLs`);
-    return urlArray;
   }
 
   /**
@@ -309,14 +396,29 @@ class ArlaScraper {
    * @returns {Promise<object>} Parsed recipe data
    */
   async scrapeRecipePage(url) {
-    const page = await this.browser.newPage();
+    // Recipe-count based browser restart - ZHC-MadMatch-20260302-FixBrowserRestart
+    // FIX BUG #1: Use restartBrowser() instead of initialize()
+    // FIX BUG #2: Use recipe count instead of time-based check
+    this.recipeCount++;
+    if (this.recipeCount > this.maxRecipesPerBrowser) {
+      this.log('info', `🔄 Recipe count: ${this.recipeCount} - RESTARTING BROWSER (every ${this.maxRecipesPerBrowser} recipes)`);
+      await this.restartBrowser();  // ✅ CORRECT - only restarts browser, doesn't reinit DB connection
+    }
+    
+    const page = this.page;
     
     try {
       await page.setUserAgent(this.userAgent);
-      await page.setViewport({ width: 1920, height: 1080 });
       
+      // Enhanced error handling for page navigation - ZHC-MadMatch-20260301-DebugScraper
       this.log('verbose', `Loading page: ${url}`);
-      await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+      try {
+        await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+      } catch (error) {
+        this.log('error', `❌ PAGE GOTO FAILED: ${error.message}`);
+        this.log('error', `Stack: ${error.stack}`);
+        throw error;
+      }
       
       // Wait for Vue.js to render recipe content
       await page.waitForSelector('h1, [class*="title"], [class*="recipe"]', { timeout: 10000 });
@@ -536,8 +638,6 @@ class ArlaScraper {
     } catch (error) {
       this.log('error', `Failed to scrape ${url}: ${error.message}`);
       throw error;
-    } finally {
-      await page.close();
     }
   }
 
@@ -576,11 +676,18 @@ class ArlaScraper {
    */
   async saveRecipe(recipeData) {
     try {
-      // Check for duplicate
+      // Check for duplicate (by title OR slug to handle unique constraint)
       const existing = await this.prisma.recipe.findFirst({
         where: {
-          title: recipeData.title,
-          sourceId: this.sourceId
+          AND: [
+            { sourceId: this.sourceId },
+            {
+              OR: [
+                { title: recipeData.title },
+                { slug: recipeData.slug }
+              ]
+            }
+          ]
         }
       });
 
@@ -605,7 +712,7 @@ class ArlaScraper {
             difficulty: recipeData.difficulty,
             instructions: recipeData.instructions,
             language: recipeData.language,
-            externalId: null
+            externalId: recipeData.sourceUrl // Store URL for resume functionality
           }
         });
 
@@ -661,18 +768,20 @@ class ArlaScraper {
 
   /**
    * Log message
-   * @param {string} level - Log level (info, warn, error, verbose)
+   * @param {string} level - Log level (info, warn, error, verbose, debug)
    * @param {string} message - Log message
    */
   log(level, message) {
     if (level === 'verbose' && !this.verbose) return;
+    if (level === 'debug' && !this.verbose) return; // Debug messages also require verbose mode
     
     const timestamp = new Date().toISOString();
     const prefix = {
       error: '❌',
       warn: '⚠️',
       info: 'ℹ️',
-      verbose: '🔍'
+      verbose: '🔍',
+      debug: '🐛'
     }[level] || '';
     
     console.log(`[${timestamp}] ${prefix} ${message}`);

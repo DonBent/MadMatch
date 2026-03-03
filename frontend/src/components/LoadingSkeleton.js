@@ -6,6 +6,57 @@ import './LoadingSkeleton.css';
  * Provides visual feedback during data loading
  */
 const LoadingSkeleton = ({ type = 'product' }) => {
+  if (type === 'recipe-card') {
+    return (
+      <div className="skeleton-recipe-card" data-testid="skeleton-recipe-card" aria-label="Indlæser opskrift">
+        <div className="skeleton-recipe-image"></div>
+        <div className="skeleton-recipe-body">
+          <div className="skeleton-line"></div>
+          <div className="skeleton-line short"></div>
+          <div className="skeleton-line shorter"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'recipe') {
+    return (
+      <div className="skeleton-product-page" data-testid="skeleton-recipe" aria-label="Indlæser opskrift">
+        <div className="skeleton-header">
+          <div className="skeleton-breadcrumb"></div>
+        </div>
+        
+        <div className="skeleton-content">
+          <div className="skeleton-image-section">
+            <div className="skeleton-product-image"></div>
+          </div>
+          
+          <div className="skeleton-info-section">
+            <div className="skeleton-product-name"></div>
+            
+            <div className="skeleton-meta-grid">
+              <div className="skeleton-line"></div>
+              <div className="skeleton-line"></div>
+              <div className="skeleton-line"></div>
+            </div>
+            
+            <div className="skeleton-actions">
+              <div className="skeleton-button"></div>
+              <div className="skeleton-button"></div>
+            </div>
+            
+            <div className="skeleton-card">
+              <div className="skeleton-title"></div>
+              <div className="skeleton-line"></div>
+              <div className="skeleton-line"></div>
+              <div className="skeleton-line"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (type === 'nutrition') {
     return (
       <div className="skeleton-card" data-testid="skeleton-nutrition" aria-label="Indlæser næringsdata">

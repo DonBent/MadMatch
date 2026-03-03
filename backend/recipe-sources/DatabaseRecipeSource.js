@@ -139,8 +139,9 @@ class DatabaseRecipeSource extends IRecipeSource {
    * Search recipes by query string using full-text search
    * 
    * Uses PostgreSQL to_tsvector and plainto_tsquery for efficient full-text search
+   * When query is empty or whitespace, returns all recipes (browse all mode)
    * 
-   * @param {string} query - Search query
+   * @param {string} query - Search query (empty string = browse all)
    * @param {RecipeFilters} [filters] - Optional filters
    * @returns {Promise<Recipe[]>}
    */
@@ -150,6 +151,30 @@ class DatabaseRecipeSource extends IRecipeSource {
     const offset = filters.offset || 0;
 
     try {
+      // Empty query = browse all recipes
+      const isEmptyQuery = !query || query.trim() === '';
+      
+      if (isEmptyQuery) {
+        // Browse all recipes with optional filters
+        const where = this._buildWhereClause(filters);
+        
+        const recipes = await prisma.recipe.findMany({
+          where,
+          include: {
+            source: true,
+            ingredients: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: limit,
+          skip: offset,
+        });
+        
+        return recipes.map(r => this._toStandardFormat(r));
+      }
+
+      // Full-text search with query
       // Build conditional SQL fragments using Prisma.sql
       // CRITICAL FIX: Cannot nest $queryRaw templates - must use Prisma.sql for fragments
       const sqlFragments = [

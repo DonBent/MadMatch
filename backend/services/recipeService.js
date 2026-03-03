@@ -1,11 +1,13 @@
 const fs = require('fs').promises;
 const path = require('path');
+const { TranslationService } = require('./translationService');
 
 /**
  * RecipeService - Integrates with Spoonacular API for recipe suggestions
  * 
  * Features:
  * - Search recipes by ingredient (product name)
+ * - Danish→English translation for Spoonacular API compatibility
  * - 24-hour caching to conserve API quota
  * - Limit to 3 recipes per product
  * - Graceful error handling
@@ -22,6 +24,7 @@ class RecipeService {
     this.cacheTTL = options.cacheTTL || 24 * 60 * 60 * 1000; // 24 hours in milliseconds
     this.maxRecipes = options.maxRecipes || 3;
     this.cache = {};
+    this.translationService = new TranslationService();
   }
 
   /**
@@ -83,10 +86,12 @@ class RecipeService {
   }
 
   /**
-   * Get cache key for a product
+   * Get cache key for a product (use English name for consistency)
    */
   getCacheKey(productName) {
-    return productName.toLowerCase().trim().replace(/\s+/g, '_');
+    // Translate to English first to ensure cache consistency
+    const englishName = this.translationService.translateProductName(productName);
+    return englishName.toLowerCase().trim().replace(/\s+/g, '_');
   }
 
   /**
@@ -174,10 +179,14 @@ class RecipeService {
       return [];
     }
     
-    const ingredient = this.extractIngredient(productName);
+    // Translate Danish product name to English
+    const englishName = this.translationService.translateProductName(productName);
+    console.log(`[RecipeService] Translation: "${productName}" → "${englishName}"`);
+    
+    const ingredient = this.extractIngredient(englishName);
     
     if (!ingredient) {
-      console.warn('[RecipeService] Could not extract ingredient from:', productName);
+      console.warn('[RecipeService] Could not extract ingredient from:', englishName);
       return [];
     }
     

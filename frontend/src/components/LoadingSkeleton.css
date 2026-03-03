@@ -1,6 +1,7 @@
 /* Base skeleton styles */
 .skeleton-card,
-.skeleton-product-page {
+.skeleton-product-page,
+.skeleton-recipe-card {
   animation: pulse 1.5s ease-in-out infinite;
 }
 
@@ -21,7 +22,11 @@
 .skeleton-product-name,
 .skeleton-product-image,
 .skeleton-recipe-image,
-.skeleton-back-button {
+.skeleton-back-button,
+.skeleton-breadcrumb,
+.skeleton-button,
+.skeleton-meta-grid,
+.skeleton-recipe-body {
   background: linear-gradient(
     90deg,
     #f0f0f0 25%,
@@ -40,6 +45,41 @@
   100% {
     background-position: 200% 0;
   }
+}
+
+/* Recipe card skeleton (for grid) */
+.skeleton-recipe-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.skeleton-recipe-card .skeleton-recipe-image {
+  height: 200px;
+  width: 100%;
+}
+
+.skeleton-recipe-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-recipe-body .skeleton-line {
+  height: 1rem;
+  width: 100%;
+}
+
+.skeleton-recipe-body .skeleton-line.short {
+  width: 60%;
+}
+
+.skeleton-recipe-body .skeleton-line.shorter {
+  width: 40%;
 }
 
 /* Skeleton card (for nutrition, recipes, sustainability) */
@@ -154,6 +194,27 @@
   border-radius: 8px;
 }
 
+.skeleton-breadcrumb {
+  height: 1.5rem;
+  width: 300px;
+}
+
+.skeleton-meta-grid {
+  height: 100px;
+  width: 100%;
+}
+
+.skeleton-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.skeleton-button {
+  height: 2.5rem;
+  flex: 1;
+  min-width: 150px;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .skeleton-content {
@@ -162,5 +223,9 @@
   
   .skeleton-recipe-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .skeleton-recipe-card .skeleton-recipe-image {
+    height: 180px;
   }
 }

@@ -194,8 +194,9 @@ describe('RecipeService', () => {
       const recipes = await recipeService.fetchFromAPI('Hakket Oksekød');
       
       expect(fetch).toHaveBeenCalledTimes(1);
+      // Should translate "Hakket Oksekød" to "ground beef"
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('ingredients=hakket%20oksek%C3%B8d'),
+        expect.stringContaining('ingredients=ground%20beef'),
         expect.any(Object)
       );
       
@@ -374,8 +375,9 @@ describe('RecipeService', () => {
     it('should handle Danish meat products', async () => {
       await recipeService.getRecipes('Hakket Oksekød 8-12%');
       
+      // Should translate "Hakket Oksekød" to "ground beef"
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('hakket%20oksek%C3%B8d'),
+        expect.stringContaining('ground%20beef'),
         expect.any(Object)
       );
     });
@@ -383,8 +385,9 @@ describe('RecipeService', () => {
     it('should handle dairy products', async () => {
       await recipeService.getRecipes('Økologisk Mælk 3,5%');
       
+      // Should translate "Mælk" to "milk"
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('m%C3%A6lk'),
+        expect.stringContaining('milk'),
         expect.any(Object)
       );
     });
@@ -392,8 +395,9 @@ describe('RecipeService', () => {
     it('should handle vegetables', async () => {
       await recipeService.getRecipes('Tomater - Cherry');
       
+      // Should translate "Tomater" to "tomatoes"
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('tomater'),
+        expect.stringContaining('tomatoes'),
         expect.any(Object)
       );
     });

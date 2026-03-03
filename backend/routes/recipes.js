@@ -10,9 +10,8 @@ const express = require('express');
 function validateSearchParams(req) {
   const errors = [];
   
-  if (!req.query.q || req.query.q.trim() === '') {
-    errors.push("Query parameter 'q' is required and cannot be empty");
-  }
+  // Allow wildcard '*' or empty query for "browse all" functionality
+  // Don't validate query emptiness - let sanitizeQuery handle it
   
   if (req.query.limit && (isNaN(req.query.limit) || parseInt(req.query.limit) < 1 || parseInt(req.query.limit) > 50)) {
     errors.push("Query parameter 'limit' must be a number between 1 and 50");
@@ -53,9 +52,12 @@ function validateIngredientParams(req) {
 
 /**
  * Sanitize search query
+ * Treats wildcard '*' or empty/whitespace as "browse all" (empty string)
  */
 function sanitizeQuery(query) {
-  if (!query) return '';
+  if (!query || query.trim() === '' || query.trim() === '*') {
+    return ''; // Empty string = browse all recipes
+  }
   
   // Remove potentially harmful characters but keep Danish characters
   return query

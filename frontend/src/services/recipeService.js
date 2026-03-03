@@ -3,7 +3,7 @@
  * Provides caching, error handling, and fallback logic
  */
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4001/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 // In-memory cache with TTL
