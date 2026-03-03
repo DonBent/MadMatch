@@ -29,7 +29,8 @@ const RecipeFavorites = () => {
       }
 
       // Fetch all recipes and filter by favorites
-      const allRecipes = await searchRecipes('', { limit: 1000 });
+      const result = await searchRecipes('', { limit: 1000 });
+      const allRecipes = result.recipes || [];
       const favoriteRecipes = allRecipes.filter(recipe => 
         favorites.includes(recipe.id)
       );

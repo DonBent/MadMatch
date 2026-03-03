@@ -50,7 +50,7 @@ describe('RecipeCard', () => {
   test('renders image with correct src and alt', () => {
     renderWithRouter(<RecipeCard recipe={mockRecipe} />);
     
-    const img = screen.getByAltText('Test Recipe');
+    const img = screen.getByAltText('Billede af Test Recipe');
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute('src', 'https://example.com/image.jpg');
   });
@@ -166,7 +166,7 @@ describe('RecipeCard', () => {
     renderWithRouter(<RecipeCard recipe={mockRecipe} />);
     
     const favoriteButton = screen.getByTestId('recipe-favorite-button');
-    expect(favoriteButton).toHaveAttribute('aria-label', 'Tilføj til favoritter');
+    expect(favoriteButton).toHaveAttribute('aria-label', 'Tilføj Test Recipe til favoritter');
   });
 
   test('favorite button aria-label changes when favorited', () => {
@@ -176,7 +176,7 @@ describe('RecipeCard', () => {
     
     fireEvent.click(favoriteButton);
     
-    expect(favoriteButton).toHaveAttribute('aria-label', 'Fjern fra favoritter');
+    expect(favoriteButton).toHaveAttribute('aria-label', 'Fjern Test Recipe fra favoritter');
   });
 
   test('clicking favorite button does not navigate to recipe detail', () => {

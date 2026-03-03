@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import RecipeDetail from './RecipeDetail';
 import { RecipeFavoriteProvider } from '../contexts/RecipeFavoriteContext';
-import { recipeService } from '../services/recipeService';
+import * as recipeService from '../services/recipeService';
 
 // Mock dependencies
 jest.mock('../services/recipeService');
@@ -59,7 +59,7 @@ describe('RecipeDetail Component', () => {
 
   describe('Loading State', () => {
     test('shows loading skeleton while fetching recipe', () => {
-      recipeService.getRecipeById.mockImplementation(() => 
+      recipeService.getRecipe.mockImplementation(() => 
         new Promise(resolve => setTimeout(() => resolve(mockRecipe), 100))
       );
 
@@ -72,7 +72,7 @@ describe('RecipeDetail Component', () => {
 
   describe('Successful Recipe Load', () => {
     beforeEach(() => {
-      recipeService.getRecipeById.mockResolvedValue(mockRecipe);
+      recipeService.getRecipe.mockResolvedValue(mockRecipe);
     });
 
     test('loads and displays full recipe from API', async () => {
@@ -80,7 +80,7 @@ describe('RecipeDetail Component', () => {
 
       const title = await screen.findByTestId('recipe-detail-title', {}, { timeout: 3000 });
       expect(title).toHaveTextContent('Lækker lasagne');
-      expect(recipeService.getRecipeById).toHaveBeenCalledWith('recipe-123');
+      expect(recipeService.getRecipe).toHaveBeenCalledWith('recipe-123');
     });
 
     test('displays all recipe fields correctly', async () => {
@@ -174,7 +174,7 @@ describe('RecipeDetail Component', () => {
 
   describe('Favorite Button', () => {
     beforeEach(() => {
-      recipeService.getRecipeById.mockResolvedValue(mockRecipe);
+      recipeService.getRecipe.mockResolvedValue(mockRecipe);
     });
 
     test('favorite button is functional and synced with context', async () => {
@@ -225,7 +225,7 @@ describe('RecipeDetail Component', () => {
 
   describe('Action Buttons', () => {
     beforeEach(() => {
-      recipeService.getRecipeById.mockResolvedValue(mockRecipe);
+      recipeService.getRecipe.mockResolvedValue(mockRecipe);
     });
 
     test('"Tilføj til ugeplan" button is DISABLED with tooltip', async () => {
@@ -303,7 +303,7 @@ describe('RecipeDetail Component', () => {
         ...mockRecipe,
         ingredients: []
       };
-      recipeService.getRecipeById.mockResolvedValue(recipeNoIngredients);
+      recipeService.getRecipe.mockResolvedValue(recipeNoIngredients);
 
       renderComponent();
 
@@ -319,7 +319,7 @@ describe('RecipeDetail Component', () => {
 
   describe('Error Handling', () => {
     test('displays 404 error page for invalid recipe ID', async () => {
-      recipeService.getRecipeById.mockRejectedValue({ 
+      recipeService.getRecipe.mockRejectedValue({ 
         response: { status: 404 } 
       });
 
@@ -336,7 +336,7 @@ describe('RecipeDetail Component', () => {
     });
 
     test('displays generic error for network failures', async () => {
-      recipeService.getRecipeById.mockRejectedValue(new Error('Network error'));
+      recipeService.getRecipe.mockRejectedValue(new Error('Network error'));
 
       renderComponent();
 
@@ -348,7 +348,7 @@ describe('RecipeDetail Component', () => {
     });
 
     test('error back button navigates to recipe browse', async () => {
-      recipeService.getRecipeById.mockRejectedValue({ 
+      recipeService.getRecipe.mockRejectedValue({ 
         response: { status: 404 } 
       });
 
@@ -371,7 +371,7 @@ describe('RecipeDetail Component', () => {
         ...mockRecipe,
         imageUrl: null
       };
-      recipeService.getRecipeById.mockResolvedValue(recipeWithoutImage);
+      recipeService.getRecipe.mockResolvedValue(recipeWithoutImage);
 
       renderComponent();
 
@@ -386,7 +386,7 @@ describe('RecipeDetail Component', () => {
         ...mockRecipe,
         prepTimeMinutes: null
       };
-      recipeService.getRecipeById.mockResolvedValue(recipeNoPrepTime);
+      recipeService.getRecipe.mockResolvedValue(recipeNoPrepTime);
 
       renderComponent();
 
@@ -403,7 +403,7 @@ describe('RecipeDetail Component', () => {
 
   describe('data-testid Requirements', () => {
     test('recipe title has data-testid="recipe-detail-title"', async () => {
-      recipeService.getRecipeById.mockResolvedValue(mockRecipe);
+      recipeService.getRecipe.mockResolvedValue(mockRecipe);
 
       renderComponent();
 
@@ -417,7 +417,7 @@ describe('RecipeDetail Component', () => {
 
   describe('Accessibility', () => {
     beforeEach(() => {
-      recipeService.getRecipeById.mockResolvedValue(mockRecipe);
+      recipeService.getRecipe.mockResolvedValue(mockRecipe);
     });
 
     test('has proper ARIA labels', async () => {

@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import RecipeFavorites from './RecipeFavorites';
 import { RecipeFavoriteProvider } from '../contexts/RecipeFavoriteContext';
-import { recipeService } from '../services/recipeService';
+import * as recipeService from '../services/recipeService';
 
 jest.mock('../services/recipeService');
 
@@ -48,7 +48,12 @@ describe('RecipeFavorites', () => {
   beforeEach(() => {
     localStorage.clear();
     jest.clearAllMocks();
-    recipeService.getAllRecipes = jest.fn().mockResolvedValue(mockRecipes);
+    // Mock searchRecipes to return recipes (RecipeFavorites uses searchRecipes('', {limit: 1000}))
+    recipeService.searchRecipes = jest.fn().mockResolvedValue({
+      recipes: mockRecipes,
+      total: mockRecipes.length,
+      hasMore: false
+    });
   });
 
   test('renders page header', async () => {
@@ -128,7 +133,7 @@ describe('RecipeFavorites', () => {
   });
 
   test('handles API error gracefully', async () => {
-    recipeService.getAllRecipes = jest.fn().mockRejectedValueOnce(new Error('API Error'));
+    recipeService.searchRecipes = jest.fn().mockRejectedValueOnce(new Error('API Error'));
     
     const mockData = {
       version: 1,
@@ -156,7 +161,7 @@ describe('RecipeFavorites', () => {
     renderWithProviders(<RecipeFavorites />);
     
     await waitFor(() => {
-      expect(recipeService.getAllRecipes).toHaveBeenCalledTimes(1);
+      expect(recipeService.searchRecipes).toHaveBeenCalledTimes(1);
     });
   });
 

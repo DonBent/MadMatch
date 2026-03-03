@@ -65,6 +65,7 @@ describe('RecipeBrowse', () => {
     
     const skeletons = screen.getAllByTestId('skeleton-recipe-card');
     expect(skeletons).toHaveLength(4); // RecipeBrowse shows 4 loading skeletons
+    expect(screen.getByText('Indlæser opskrifter...')).toBeInTheDocument();
   });
 
   test('renders recipes after successful fetch', async () => {
@@ -207,7 +208,8 @@ describe('RecipeBrowse', () => {
     fireEvent.click(nextButton);
 
     await waitFor(() => {
-      expect(recipeService.searchRecipes).toHaveBeenCalledWith('', {
+      expect(recipeService.searchRecipes).toHaveBeenCalledWith({
+        query: '',
         language: 'da',
         limit: 20,
         offset: 20
@@ -228,7 +230,8 @@ describe('RecipeBrowse', () => {
     fireEvent.click(page2Button);
 
     await waitFor(() => {
-      expect(recipeService.searchRecipes).toHaveBeenCalledWith('', {
+      expect(recipeService.searchRecipes).toHaveBeenCalledWith({
+        query: '',
         language: 'da',
         limit: 20,
         offset: 20
@@ -324,7 +327,8 @@ describe('RecipeBrowse', () => {
     jest.advanceTimersByTime(500);
     
     await waitFor(() => {
-      expect(recipeService.searchRecipes).toHaveBeenCalledWith('kylling', {
+      expect(recipeService.searchRecipes).toHaveBeenCalledWith({
+        query: 'kylling',
         language: 'da',
         limit: 20,
         offset: 0
@@ -346,7 +350,8 @@ describe('RecipeBrowse', () => {
     jest.advanceTimersByTime(500);
     
     await waitFor(() => {
-      expect(recipeService.searchRecipes).toHaveBeenCalledWith('pasta', {
+      expect(recipeService.searchRecipes).toHaveBeenCalledWith({
+        query: 'pasta',
         language: 'da',
         limit: 20,
         offset: 0
@@ -357,7 +362,6 @@ describe('RecipeBrowse', () => {
   });
 
   test('clear button appears when search query is entered', async () => {
-    jest.useFakeTimers();
     recipeService.searchRecipes.mockResolvedValue(mockSearchResponse);
     
     renderWithRouter(<RecipeBrowse />);
@@ -368,55 +372,46 @@ describe('RecipeBrowse', () => {
     expect(screen.queryByTestId('clear-search-button')).not.toBeInTheDocument();
     
     // Type in search
-    await act(async () => {
-      fireEvent.change(searchInput, { target: { value: 'kylling' } });
-      jest.advanceTimersByTime(500); // Debounce delay
-    });
-    
-    // Wait for search to complete
-    await waitFor(() => {
-      expect(recipeService.searchRecipes).toHaveBeenCalled();
-    });
+    fireEvent.change(searchInput, { target: { value: 'kylling' } });
     
     // Clear button should now be visible
     expect(screen.getByTestId('clear-search-button')).toBeInTheDocument();
-    
-    jest.useRealTimers();
   });
 
-  test.skip('clicking clear button resets search', async () => {
-    // TODO: Fix this test - clear button click not properly clearing input value in test environment
-    // The functionality works in the browser, but the test needs adjustment for controlled input behavior
+  test('clicking clear button resets search', async () => {
     jest.useFakeTimers();
     recipeService.searchRecipes.mockResolvedValue(mockSearchResponse);
     
     renderWithRouter(<RecipeBrowse />);
     
-    // Wait for initial load
-    await act(async () => {
-      jest.runAllTimers();
-    });
-    
     const searchInput = await screen.findByTestId('recipe-search-input');
     
     // Enter search query
-    await act(async () => {
-      fireEvent.change(searchInput, { target: { value: 'kylling' } });
-      jest.advanceTimersByTime(500);
-      await Promise.resolve();
+    fireEvent.change(searchInput, { target: { value: 'kylling' } });
+    jest.advanceTimersByTime(500);
+    
+    await waitFor(() => {
+      expect(searchInput.value).toBe('kylling');
     });
     
-    // Wait for clear button to appear
-    const clearButton = await screen.findByTestId('clear-search-button');
-    
-    // Verify we have the search text
-    expect(searchInput.value).toBe('kylling');
-    
-    // Click clear button  
+    // Click clear button
+    const clearButton = screen.getByTestId('clear-search-button');
     fireEvent.click(clearButton);
     
-    // Search input should be cleared immediately
+    // Search input should be cleared
     expect(searchInput.value).toBe('');
+    
+    // Should trigger search with empty query
+    jest.advanceTimersByTime(500);
+    
+    await waitFor(() => {
+      expect(recipeService.searchRecipes).toHaveBeenCalledWith({
+        query: '',
+        language: 'da',
+        limit: 20,
+        offset: 0
+      });
+    });
 
     jest.useRealTimers();
   });
@@ -474,7 +469,8 @@ describe('RecipeBrowse', () => {
     
     // Wait for search to trigger with offset 0
     await waitFor(() => {
-      expect(recipeService.searchRecipes).toHaveBeenCalledWith('kylling', {
+      expect(recipeService.searchRecipes).toHaveBeenCalledWith({
+        query: 'kylling',
         language: 'da',
         limit: 20,
         offset: 0
@@ -496,7 +492,8 @@ describe('RecipeBrowse', () => {
     jest.advanceTimersByTime(500);
     
     await waitFor(() => {
-      expect(recipeService.searchRecipes).toHaveBeenCalledWith('pasta', {
+      expect(recipeService.searchRecipes).toHaveBeenCalledWith({
+        query: 'pasta',
         language: 'da',
         limit: 20,
         offset: 0
@@ -508,7 +505,8 @@ describe('RecipeBrowse', () => {
     fireEvent.click(nextButton);
     
     await waitFor(() => {
-      expect(recipeService.searchRecipes).toHaveBeenCalledWith('pasta', {
+      expect(recipeService.searchRecipes).toHaveBeenCalledWith({
+        query: 'pasta',
         language: 'da',
         limit: 20,
         offset: 20
