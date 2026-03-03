@@ -51,7 +51,7 @@ const RecipeBrowse = () => {
       setError(null);
       
       const offset = (currentPage - 1) * recipesPerPage;
-      const data = await searchRecipes(debouncedQuery, {
+      const data = await searchRecipes(debouncedQuery || '*', {
         language: 'da',
         limit: recipesPerPage,
         offset: offset
