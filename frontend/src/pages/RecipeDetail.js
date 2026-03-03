@@ -147,7 +147,7 @@ const RecipeDetail = () => {
 
             {recipe.source && (
               <div className="recipe-source-badge">
-                {recipe.source === 'arla' && (
+                {recipe.source.name === 'arla' && (
                   <>
                     <img 
                       src="/arla-logo.png" 
@@ -158,8 +158,8 @@ const RecipeDetail = () => {
                     <span className="source-text">Arla</span>
                   </>
                 )}
-                {recipe.source !== 'arla' && (
-                  <span className="source-text">{recipe.source}</span>
+                {recipe.source.name !== 'arla' && (
+                  <span className="source-text">{recipe.source.name}</span>
                 )}
               </div>
             )}

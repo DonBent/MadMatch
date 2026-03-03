@@ -21,7 +21,10 @@ const mockRecipe = {
   id: 'recipe-123',
   title: 'Lækker lasagne',
   imageUrl: 'https://example.com/lasagne.jpg',
-  source: 'arla',
+  source: {
+    id: 'source-arla-001',
+    name: 'arla'
+  },
   prepTimeMinutes: 20,
   cookTimeMinutes: 45,
   totalTimeMinutes: 65,

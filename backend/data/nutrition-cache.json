@@ -1,5 +1,5 @@
 {
-  "test-1": {
+  "1": {
     "data": {
       "energyKcal": 80.6,
       "energyKj": 337,
@@ -12,9 +12,9 @@
       "salt": 0,
       "servingSize": "100g",
       "source": "openfoodfacts",
-      "lastUpdated": "2026-02-28T09:34:32.208Z"
+      "lastUpdated": "2026-03-03T21:58:42.932Z"
     },
-    "cachedAt": "2026-02-28T09:34:32.208Z",
-    "expiresAt": "2026-02-28T10:34:32.208Z"
+    "cachedAt": "2026-03-03T21:58:42.932Z",
+    "expiresAt": "2026-03-03T22:58:42.932Z"
   }
 }
