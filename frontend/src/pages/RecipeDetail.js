@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRecipeFavorites } from '../contexts/RecipeFavoriteContext';
-import { recipeService } from '../services/recipeService';
+import { getRecipe } from '../services/recipeService';
 import { extractKeyIngredients, formatIngredientsForQuery } from '../utils/ingredientExtractor';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -25,7 +25,7 @@ const RecipeDetail = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await recipeService.getRecipeById(id);
+      const data = await getRecipe(id);
       setRecipe(data);
     } catch (err) {
       console.error('Failed to load recipe:', err);

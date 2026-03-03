@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRecipeFavorites } from '../contexts/RecipeFavoriteContext';
-import { recipeService } from '../services/recipeService';
+import { searchRecipes } from '../services/recipeService';
 import RecipeCard from '../components/RecipeCard';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import './RecipeFavorites.css';
@@ -29,7 +29,7 @@ const RecipeFavorites = () => {
       }
 
       // Fetch all recipes and filter by favorites
-      const allRecipes = await recipeService.getAllRecipes();
+      const allRecipes = await searchRecipes('', { limit: 1000 });
       const favoriteRecipes = allRecipes.filter(recipe => 
         favorites.includes(recipe.id)
       );

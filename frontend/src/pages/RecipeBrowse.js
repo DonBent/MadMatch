@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { recipeService } from '../services/recipeService';
+import { searchRecipes } from '../services/recipeService';
 import RecipeCard from '../components/RecipeCard';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import './RecipeBrowse.css';
@@ -51,8 +51,7 @@ const RecipeBrowse = () => {
       setError(null);
       
       const offset = (currentPage - 1) * recipesPerPage;
-      const data = await recipeService.searchRecipes({
-        query: debouncedQuery,
+      const data = await searchRecipes(debouncedQuery, {
         language: 'da',
         limit: recipesPerPage,
         offset: offset
