@@ -185,6 +185,52 @@ export const getRecipesByIngredient = async (ingredient, options = {}) => {
 };
 
 /**
+ * Get multiple recipes by their IDs (batch request)
+ * Optimized for favorites page - fetches only requested recipes
+ * @param {string[]} ids - Array of recipe UUIDs
+ * @returns {Promise<Object>} - { recipes: Array }
+ */
+export const getRecipesByIds = async (ids) => {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return { recipes: [] };
+  }
+
+  // Create cache key based on sorted IDs
+  const sortedIds = [...ids].sort();
+  const cacheKey = getCacheKey('/recipes/batch', { ids: sortedIds.join(',') });
+  
+  // Check cache first
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/recipes/batch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ ids })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    // Cache successful response
+    cache.set(cacheKey, data);
+    
+    return data;
+  } catch (error) {
+    logFallback('getRecipesByIds failed', { count: ids.length, error: error.message });
+    throw error;
+  }
+};
+
+/**
  * Get recipe sources with health status
  * @returns {Promise<Object>} - { sources, total }
  */
@@ -282,6 +328,7 @@ export default {
   searchRecipes,
   getRecipe,
   getRecipesByIngredient,
+  getRecipesByIds,
   getRecipeSources,
   getRecipesForProduct,
   clearCache,

@@ -289,6 +289,98 @@ function initializeRecipeRoutes(recipeService) {
   });
 
   /**
+   * POST /api/recipes/batch
+   * Get multiple recipes by their IDs
+   * 
+   * Body: { "ids": ["id1", "id2", ...] }
+   * Returns: { "recipes": [...] }
+   * 
+   * For RecipeFavorites copyright compliance - fetch only favorited recipes
+   * NOTE: Must be defined before /:id route to avoid path conflicts
+   */
+  router.post('/batch', express.json(), async (req, res) => {
+    const correlationId = getCorrelationId(req);
+    
+    try {
+      const { ids } = req.body;
+      
+      if (!ids || !Array.isArray(ids)) {
+        return res.status(400).json({
+          error: 'Invalid request body',
+          message: 'Body must contain an "ids" array',
+          correlationId,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      if (ids.length === 0) {
+        return res.json({ recipes: [] });
+      }
+      
+      if (ids.length > 100) {
+        return res.status(400).json({
+          error: 'Too many IDs',
+          message: 'Maximum 100 recipe IDs allowed per batch request',
+          correlationId,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      console.log(`[${correlationId}] Fetching ${ids.length} recipes by IDs`);
+      
+      // Fetch recipes by IDs
+      const recipes = await recipeService.getRecipesByIds(ids);
+      
+      console.log(`[${correlationId}] Found ${recipes.length}/${ids.length} recipes`);
+      
+      // Format response
+      res.json({
+        recipes: recipes.map(recipe => ({
+          id: recipe.id,
+          source: {
+            id: recipe.sourceId || recipe.source?.id,
+            name: recipe.source || recipe.sourceName || 'Unknown'
+          },
+          title: recipe.title,
+          slug: recipe.slug,
+          description: recipe.description,
+          imageUrl: recipe.imageUrl,
+          prepTimeMinutes: recipe.prepTimeMinutes,
+          cookTimeMinutes: recipe.cookTimeMinutes,
+          totalTimeMinutes: recipe.totalTimeMinutes,
+          servings: recipe.servings,
+          difficulty: recipe.difficulty,
+          language: recipe.language,
+          ingredients: recipe.ingredients || [],
+          instructions: recipe.instructions,
+          sourceUrl: recipe.sourceUrl || recipe.url,
+          createdAt: recipe.createdAt,
+          updatedAt: recipe.updatedAt
+        }))
+      });
+      
+    } catch (error) {
+      console.error(`[${correlationId}] Error fetching batch recipes:`, error);
+      
+      if (error.message && error.message.includes('database')) {
+        return res.status(503).json({
+          error: 'Service unavailable',
+          message: 'Unable to connect to database. Please try again later.',
+          correlationId,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'An unexpected error occurred while fetching recipes',
+        correlationId,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  /**
    * GET /api/recipes/sources
    * Get all recipe sources with health status
    * 

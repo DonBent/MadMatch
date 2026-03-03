@@ -184,6 +184,26 @@ class RecipeService {
   }
 
   /**
+   * Get multiple recipes by their IDs
+   * Optimized for batch fetching (e.g., favorites page)
+   * 
+   * @param {string[]} ids - Array of recipe identifiers
+   * @returns {Promise<Recipe[]>}
+   */
+  async getRecipesByIds(ids) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return [];
+    }
+
+    // Fetch all recipes in parallel
+    const promises = ids.map(id => this.getRecipe(id));
+    const results = await Promise.all(promises);
+    
+    // Filter out null results (recipes not found)
+    return results.filter(recipe => recipe !== null);
+  }
+
+  /**
    * Search recipes by query string
    * 
    * Strategy:

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRecipeFavorites } from '../contexts/RecipeFavoriteContext';
-import { searchRecipes } from '../services/recipeService';
+import { getRecipesByIds } from '../services/recipeService';
 import RecipeCard from '../components/RecipeCard';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import './RecipeFavorites.css';
@@ -28,14 +28,9 @@ const RecipeFavorites = () => {
         return;
       }
 
-      // Fetch all recipes and filter by favorites
-      const result = await searchRecipes('', { limit: 1000 });
-      const allRecipes = result.recipes || [];
-      const favoriteRecipes = allRecipes.filter(recipe => 
-        favorites.includes(recipe.id)
-      );
-      
-      setRecipes(favoriteRecipes);
+      // Use batch endpoint to fetch only favorited recipes
+      const result = await getRecipesByIds(favorites);
+      setRecipes(result.recipes || []);
     } catch (err) {
       console.error('Failed to load favorite recipes:', err);
       setError('Kunne ikke indlæse favoritter.');
