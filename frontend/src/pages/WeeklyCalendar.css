@@ -1,0 +1,96 @@
+/* WeeklyCalendar.css - Epic 5 Slice 1: Weekly Calendar View */
+
+.weekly-calendar {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+.weekly-calendar__header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.weekly-calendar__title {
+  margin: 0 0 8px 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.weekly-calendar__subtitle {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #666;
+}
+
+/* Mobile-first: single column stack */
+.weekly-calendar__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Tablet and desktop: grid layout */
+@media (min-width: 768px) {
+  .weekly-calendar__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+  }
+}
+
+/* Large desktop: optimize for 7-column week view */
+@media (min-width: 1024px) {
+  .weekly-calendar__grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 20px;
+  }
+
+  .weekly-calendar__title {
+    font-size: 2.5rem;
+  }
+
+  .weekly-calendar__subtitle {
+    font-size: 1.2rem;
+  }
+}
+
+/* Very large screens: 2-row layout with better spacing */
+@media (min-width: 1400px) {
+  .weekly-calendar {
+    padding: 40px 20px;
+  }
+
+  .weekly-calendar__header {
+    margin-bottom: 40px;
+  }
+
+  .weekly-calendar__grid {
+    gap: 24px;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .weekly-calendar {
+    padding: 20px 16px;
+  }
+
+  .weekly-calendar__header {
+    margin-bottom: 24px;
+  }
+
+  .weekly-calendar__title {
+    font-size: 1.75rem;
+  }
+
+  .weekly-calendar__subtitle {
+    font-size: 1rem;
+  }
+
+  .weekly-calendar__grid {
+    gap: 12px;
+  }
+}

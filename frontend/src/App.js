@@ -7,6 +7,7 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import RecipeBrowse from './pages/RecipeBrowse';
 import RecipeFavorites from './pages/RecipeFavorites';
 import RecipeDetail from './pages/RecipeDetail';
+import WeeklyCalendar from './pages/WeeklyCalendar';
 import ErrorBoundary from './components/ErrorBoundary';
 import { RecipeFavoriteProvider, useRecipeFavorites } from './contexts/RecipeFavoriteContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
@@ -34,6 +35,13 @@ function Navigation() {
         data-testid="nav-opskrifter"
       >
         Opskrifter
+      </Link>
+      <Link 
+        to="/ugeplan" 
+        className={`nav-tab ${pathname === '/ugeplan' ? 'active' : ''}`}
+        data-testid="nav-ugeplan"
+      >
+        Ugeplan
       </Link>
       <Link 
         to="/opskrifter/favoritter" 
@@ -238,6 +246,14 @@ function App() {
                   element={
                     <ErrorBoundary>
                       <RecipeBrowse />
+                    </ErrorBoundary>
+                  } 
+                />
+                <Route 
+                  path="/ugeplan" 
+                  element={
+                    <ErrorBoundary>
+                      <WeeklyCalendar />
                     </ErrorBoundary>
                   } 
                 />
