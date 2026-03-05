@@ -1,0 +1,71 @@
+.savings-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  z-index: 10;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: help;
+}
+
+.savings-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.savings-badge__icon {
+  font-size: 1rem;
+  line-height: 1;
+  font-weight: bold;
+}
+
+.savings-badge__amount {
+  font-size: 0.875rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .savings-badge {
+    padding: 4px 10px;
+    font-size: 0.8125rem;
+    top: 6px;
+    right: 6px;
+  }
+  
+  .savings-badge__icon {
+    font-size: 0.875rem;
+  }
+  
+  .savings-badge__amount {
+    font-size: 0.8125rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .savings-badge {
+    border: 2px solid white;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .savings-badge {
+    transition: none;
+  }
+  
+  .savings-badge:hover {
+    transform: none;
+  }
+}

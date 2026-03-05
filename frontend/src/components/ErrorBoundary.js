@@ -47,7 +47,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       // Fallback UI
       return (
-        <div className="error-boundary" role="alert">
+        <div className="error-boundary" role="alert" data-testid="error-boundary">
           <div className="error-boundary__container">
             <div className="error-boundary__icon" aria-hidden="true">⚠️</div>
             <h1 className="error-boundary__title">Noget gik galt</h1>
@@ -69,8 +69,10 @@ class ErrorBoundary extends React.Component {
               <button 
                 onClick={this.handleReset}
                 className="error-boundary__button error-boundary__button--primary"
+                data-testid="error-boundary-retry-button"
+                aria-label="Genindlæs siden"
               >
-                Prøv igen
+                Genindlæs
               </button>
               <button 
                 onClick={() => window.location.href = '/'}

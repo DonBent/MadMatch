@@ -1,0 +1,353 @@
+/* WeeklyCalendar.css - Epic 5 Weekly Calendar View */
+/* Epic 5 Slice 6: Enhanced with accessibility, drag-and-drop, and mobile UX */
+
+.weekly-calendar {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 20px;
+  position: relative;
+}
+
+/* Screen reader only content (Epic 5 Slice 6: Accessibility) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.weekly-calendar__header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.weekly-calendar__title {
+  margin: 0 0 8px 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.weekly-calendar__subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Week Navigation (Epic 5 Slice 6) */
+.weekly-calendar__nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.weekly-calendar__nav-button {
+  padding: 12px 20px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px; /* Touch-friendly */
+  min-width: 140px;
+}
+
+.weekly-calendar__nav-button:hover {
+  background: #f5f5f5;
+  border-color: #667eea;
+  color: #667eea;
+  transform: translateY(-1px);
+}
+
+.weekly-calendar__nav-button:active {
+  transform: translateY(0);
+}
+
+.weekly-calendar__nav-button:focus {
+  outline: 3px solid rgba(102, 126, 234, 0.5);
+  outline-offset: 2px;
+}
+
+/* Shopping List Section (Epic 5 Slice 5) */
+.weekly-calendar__shopping-list-section {
+  margin: 24px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.weekly-calendar__shopping-list-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  font-family: inherit;
+  min-height: 48px; /* Touch-friendly (Epic 5 Slice 6) */
+  min-width: 220px;
+}
+
+.weekly-calendar__shopping-list-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.weekly-calendar__shopping-list-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.weekly-calendar__shopping-list-button:disabled {
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+.weekly-calendar__shopping-list-button:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+.shopping-list-button__icon {
+  font-size: 20px;
+}
+
+.shopping-list-button__spinner {
+  font-size: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile-first: single column stack */
+.weekly-calendar__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: opacity 0.3s ease; /* Smooth transition for week changes */
+}
+
+/* Drag-and-drop styles (Epic 5 Slice 6) */
+.drag-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  max-width: 300px;
+  cursor: grabbing;
+}
+
+.drag-preview__image {
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.drag-preview__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Remove Confirmation Dialog (Epic 5 Slice 3) */
+.remove-dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 20px;
+}
+
+.remove-dialog {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.remove-dialog__title {
+  margin: 0 0 12px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #d32f2f;
+}
+
+.remove-dialog__message {
+  margin: 0 0 24px 0;
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+.remove-dialog__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.remove-dialog__button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 44px; /* Touch-friendly (Epic 5 Slice 6) */
+  min-width: 100px;
+}
+
+.remove-dialog__button--cancel {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.remove-dialog__button--cancel:hover {
+  background-color: #e0e0e0;
+}
+
+.remove-dialog__button--confirm {
+  background-color: #d32f2f;
+  color: white;
+}
+
+.remove-dialog__button--confirm:hover {
+  background-color: #c62828;
+}
+
+.remove-dialog__button:focus {
+  outline: 3px solid rgba(102, 126, 234, 0.5);
+  outline-offset: 2px;
+}
+
+/* Tablet and desktop: grid layout */
+@media (min-width: 768px) {
+  .weekly-calendar__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+  }
+}
+
+/* Large desktop: optimize for 7-column week view */
+@media (min-width: 1024px) {
+  .weekly-calendar__grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 20px;
+  }
+
+  .weekly-calendar__title {
+    font-size: 2.5rem;
+  }
+
+  .weekly-calendar__subtitle {
+    font-size: 1.2rem;
+  }
+}
+
+/* Very large screens: 2-row layout with better spacing */
+@media (min-width: 1400px) {
+  .weekly-calendar {
+    padding: 40px 20px;
+  }
+
+  .weekly-calendar__header {
+    margin-bottom: 40px;
+  }
+
+  .weekly-calendar__grid {
+    gap: 24px;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .weekly-calendar {
+    padding: 20px 16px;
+  }
+
+  .weekly-calendar__header {
+    margin-bottom: 24px;
+  }
+
+  .weekly-calendar__title {
+    font-size: 1.75rem;
+  }
+
+  .weekly-calendar__subtitle {
+    font-size: 1rem;
+  }
+
+  .weekly-calendar__grid {
+    gap: 12px;
+  }
+
+  .remove-dialog {
+    padding: 20px;
+  }
+
+  .remove-dialog__title {
+    font-size: 1.1rem;
+  }
+
+  .remove-dialog__message {
+    font-size: 0.95rem;
+  }
+}
