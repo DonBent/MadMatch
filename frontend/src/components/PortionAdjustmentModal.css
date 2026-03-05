@@ -219,6 +219,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  min-height: 48px; /* Touch-friendly (Epic 5 Slice 6) */
 }
 
 .portion-modal__button--cancel {

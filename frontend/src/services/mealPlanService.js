@@ -10,10 +10,11 @@ const SCHEMA_VERSION = 1;
 
 /**
  * Get Monday of the current week (ISO week, Monday = start)
+ * @param {Date} referenceDate - Optional reference date (defaults to today)
  * @returns {Date} Monday at 00:00:00
  */
-const getCurrentWeekMonday = () => {
-  const today = new Date();
+const getCurrentWeekMonday = (referenceDate = new Date()) => {
+  const today = new Date(referenceDate);
   const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
   
   // Calculate days from Monday
@@ -76,12 +77,14 @@ const generateEmptyWeek = (monday) => {
 
 /**
  * Load weekly plan from localStorage or create empty week
+ * Epic 5 Slice 6: Support for custom week start date
+ * @param {Date} weekStart - Optional Monday date for the week (defaults to current week)
  * @returns {Object} Weekly plan object
  */
-export const getWeeklyPlan = () => {
+export const getWeeklyPlan = (weekStart) => {
   try {
-    const monday = getCurrentWeekMonday();
-    const currentWeekStart = formatDateISO(monday);
+    const monday = weekStart ? getCurrentWeekMonday(weekStart) : getCurrentWeekMonday();
+    const targetWeekStart = formatDateISO(monday);
     
     const stored = localStorage.getItem(STORAGE_KEY);
     
@@ -98,16 +101,17 @@ export const getWeeklyPlan = () => {
       return generateEmptyWeek(monday);
     }
     
-    // Check if stored plan is for current week
-    if (plan.weekStart !== currentWeekStart) {
-      // Stored plan is for a different week, reset
+    // Check if stored plan is for target week
+    if (plan.weekStart !== targetWeekStart) {
+      // Stored plan is for a different week, return empty for this week
       return generateEmptyWeek(monday);
     }
     
     return plan;
   } catch (error) {
     console.error('Failed to load meal plan from localStorage:', error);
-    return generateEmptyWeek(getCurrentWeekMonday());
+    const monday = weekStart ? getCurrentWeekMonday(weekStart) : getCurrentWeekMonday();
+    return generateEmptyWeek(monday);
   }
 };
 

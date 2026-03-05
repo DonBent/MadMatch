@@ -77,14 +77,18 @@ function RecipeContextMenu({ isOpen, onClose, position, onEditPortions, onMove, 
         top: `${position.y}px`,
         left: `${position.x}px`,
       }}
+      role="menu"
+      aria-label="Opskrift handlinger"
       data-testid="recipe-context-menu"
     >
       <button
         className="recipe-context-menu__item"
         onClick={handleEditPortions}
         data-testid="context-menu-edit-portions"
+        role="menuitem"
+        aria-label="Rediger portioner"
       >
-        <span className="recipe-context-menu__icon">✏️</span>
+        <span className="recipe-context-menu__icon" aria-hidden="true">✏️</span>
         <span className="recipe-context-menu__text">Rediger portioner</span>
       </button>
 
@@ -92,8 +96,10 @@ function RecipeContextMenu({ isOpen, onClose, position, onEditPortions, onMove, 
         className="recipe-context-menu__item"
         onClick={handleMove}
         data-testid="context-menu-move"
+        role="menuitem"
+        aria-label="Flyt til anden dag"
       >
-        <span className="recipe-context-menu__icon">➡️</span>
+        <span className="recipe-context-menu__icon" aria-hidden="true">➡️</span>
         <span className="recipe-context-menu__text">Flyt til anden dag</span>
       </button>
 
@@ -101,8 +107,10 @@ function RecipeContextMenu({ isOpen, onClose, position, onEditPortions, onMove, 
         className="recipe-context-menu__item recipe-context-menu__item--danger"
         onClick={handleRemove}
         data-testid="context-menu-remove"
+        role="menuitem"
+        aria-label="Fjern fra plan"
       >
-        <span className="recipe-context-menu__icon">🗑️</span>
+        <span className="recipe-context-menu__icon" aria-hidden="true">🗑️</span>
         <span className="recipe-context-menu__text">Fjern fra plan</span>
       </button>
     </div>

@@ -1,0 +1,101 @@
+/* EmptyState.css - Epic 5 Slice 6: Empty state component styles */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 16px;
+  border: 2px dashed #e0e0e0;
+  margin: 20px 0;
+  min-height: 400px;
+}
+
+.empty-state__illustration {
+  font-size: 80px;
+  margin-bottom: 24px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.empty-state__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 12px;
+  margin-top: 0;
+}
+
+.empty-state__description {
+  font-size: 16px;
+  color: #718096;
+  margin-bottom: 32px;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+.empty-state__cta {
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  min-width: 200px;
+  min-height: 48px; /* Touch-friendly */
+}
+
+.empty-state__cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.empty-state__cta:active {
+  transform: translateY(0);
+}
+
+.empty-state__cta:focus {
+  outline: 3px solid rgba(102, 126, 234, 0.5);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .empty-state {
+    padding: 40px 16px;
+    min-height: 300px;
+  }
+
+  .empty-state__illustration {
+    font-size: 64px;
+    margin-bottom: 20px;
+  }
+
+  .empty-state__title {
+    font-size: 24px;
+  }
+
+  .empty-state__description {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .empty-state__cta {
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+}

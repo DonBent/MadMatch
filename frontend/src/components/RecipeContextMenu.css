@@ -35,6 +35,7 @@
   transition: background-color 0.15s;
   font-size: 0.95rem;
   color: #333;
+  min-height: 44px; /* Touch-friendly (Epic 5 Slice 6) */
 }
 
 .recipe-context-menu__item:hover {

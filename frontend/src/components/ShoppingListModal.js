@@ -1,5 +1,6 @@
 /**
  * ShoppingListModal - Epic 5 Slice 5: Shopping List Modal
+ * Epic 5 Slice 6: Added loading skeleton
  * 
  * Displays aggregated shopping list from weekly meal plan.
  * Groups ingredients by category, highlights tilbud items, shows total cost and savings.
@@ -11,6 +12,7 @@
  */
 
 import React from 'react';
+import LoadingSkeleton from './LoadingSkeleton';
 import './ShoppingListModal.css';
 
 const CATEGORY_ICONS = {
@@ -152,7 +154,12 @@ function ShoppingListModal({ isOpen, onClose, shoppingList }) {
         </div>
 
         <div className="shopping-list-modal__content">
-          {!hasItems ? (
+          {!shoppingList ? (
+            /* Loading skeleton while shopping list is being generated */
+            <div className="shopping-list-modal__loading">
+              <LoadingSkeleton type="list-item" count={12} />
+            </div>
+          ) : !hasItems ? (
             <div className="shopping-list-modal__empty">
               <p>Ingen ingredienser at vise.</p>
               <p className="shopping-list-modal__empty-hint">

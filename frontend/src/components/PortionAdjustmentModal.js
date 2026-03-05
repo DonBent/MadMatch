@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import './PortionAdjustmentModal.css';
 
 /**
@@ -16,6 +16,7 @@ import './PortionAdjustmentModal.css';
  */
 function PortionAdjustmentModal({ isOpen, onClose, onSave, recipe, currentServings = 4 }) {
   const [servings, setServings] = useState(currentServings);
+  const modalRef = useRef(null);
 
   // Reset servings when modal opens
   React.useEffect(() => {
@@ -23,6 +24,47 @@ function PortionAdjustmentModal({ isOpen, onClose, onSave, recipe, currentServin
       setServings(currentServings);
     }
   }, [isOpen, currentServings]);
+
+  // Focus trap (Epic 5 Slice 6: Accessibility)
+  React.useEffect(() => {
+    if (!isOpen || !modalRef.current) return;
+
+    const focusableElements = modalRef.current.querySelectorAll(
+      'button, input, [tabindex]:not([tabindex="-1"])'
+    );
+    
+    if (focusableElements.length === 0) return;
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    const handleTabKey = (e) => {
+      if (e.key !== 'Tab') return;
+
+      if (e.shiftKey) {
+        // Shift + Tab
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        // Tab
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleTabKey);
+    
+    // Focus first element when modal opens
+    firstElement.focus();
+
+    return () => {
+      document.removeEventListener('keydown', handleTabKey);
+    };
+  }, [isOpen]);
 
   const handleSave = () => {
     onSave(servings);
@@ -67,7 +109,7 @@ function PortionAdjustmentModal({ isOpen, onClose, onSave, recipe, currentServin
       onClick={handleBackdropClick}
       data-testid="portion-adjustment-modal"
     >
-      <div className="portion-modal" role="dialog" aria-modal="true" aria-labelledby="portion-modal-title">
+      <div className="portion-modal" ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="portion-modal-title">
         <div className="portion-modal__header">
           <h2 id="portion-modal-title" className="portion-modal__title">
             Rediger portioner

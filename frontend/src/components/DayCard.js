@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import SavingsBadge from './SavingsBadge';
 import './DayCard.css';
 
@@ -6,6 +7,7 @@ import './DayCard.css';
  * DayCard - Reusable component for displaying a single day in the weekly calendar
  * Epic 5 Slice 3: Added context menu support for recipe management
  * Epic 5 Slice 4: Added savings badge for recipes with tilbud matches
+ * Epic 5 Slice 6: Added drag-and-drop support and accessibility enhancements
  * 
  * @param {Object} props
  * @param {string} props.dayName - Name of the day (e.g., "Mandag")
@@ -16,11 +18,48 @@ import './DayCard.css';
  * @param {Object|null} props.recipe - Assigned recipe { id, title, imageUrl, servings, savings, matchedCount }
  * @param {Function} props.onContextMenu - Callback for context menu (position, recipe, dayDate)
  * @param {string} props.dayDate - ISO date string (YYYY-MM-DD) for the day
+ * @param {boolean} props.isDraggable - Whether the card can be dragged (desktop only)
+ * @param {boolean} props.isDroppable - Whether the card can receive drops (desktop only)
  */
-function DayCard({ dayName, dayNameShort, date, isToday, dataTestId, recipe, onContextMenu, dayDate }) {
+function DayCard({ 
+  dayName, 
+  dayNameShort, 
+  date, 
+  isToday, 
+  dataTestId, 
+  recipe, 
+  onContextMenu, 
+  dayDate,
+  isDraggable = false,
+  isDroppable = false
+}) {
   const cardRef = useRef(null);
   const longPressTimer = useRef(null);
   const [isLongPressing, setIsLongPressing] = useState(false);
+
+  // Drag-and-drop hooks (Epic 5 Slice 6)
+  const { attributes: dragAttributes, listeners: dragListeners, setNodeRef: setDragRef, isDragging } = useDraggable({
+    id: dayDate,
+    disabled: !isDraggable,
+  });
+
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: dayDate,
+    disabled: !isDroppable,
+  });
+
+  /**
+   * Combine drag and drop refs
+   */
+  const setRefs = (element) => {
+    cardRef.current = element;
+    if (isDraggable && recipe) {
+      setDragRef(element);
+    }
+    if (isDroppable) {
+      setDropRef(element);
+    }
+  };
 
   /**
    * Handle right-click (desktop)
@@ -71,18 +110,31 @@ function DayCard({ dayName, dayNameShort, date, isToday, dataTestId, recipe, onC
 
   return (
     <div 
-      ref={cardRef}
-      className={`day-card ${isToday ? 'day-card--today' : ''} ${recipe ? 'day-card--has-recipe' : ''} ${isLongPressing ? 'day-card--pressing' : ''}`}
+      ref={setRefs}
+      className={`
+        day-card 
+        ${isToday ? 'day-card--today' : ''} 
+        ${recipe ? 'day-card--has-recipe' : ''} 
+        ${isLongPressing ? 'day-card--pressing' : ''}
+        ${isDragging ? 'day-card--dragging' : ''}
+        ${isOver ? 'day-card--drag-over' : ''}
+      `.trim()}
       data-testid={dataTestId}
       onContextMenu={handleContextMenu}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
+      {...(isDraggable && recipe ? dragAttributes : {})}
+      {...(isDraggable && recipe ? dragListeners : {})}
+      role="article"
+      aria-label={`${dayName}, ${date}${recipe ? `, ${recipe.title}` : ', ingen måltid planlagt'}`}
+      tabIndex={0}
     >
       {isToday && (
         <div 
           className="day-card__today-badge" 
           data-testid="current-day-indicator"
+          aria-label="I dag"
         >
           I dag
         </div>
@@ -105,6 +157,7 @@ function DayCard({ dayName, dayNameShort, date, isToday, dataTestId, recipe, onC
                   src={recipe.imageUrl} 
                   alt={recipe.title}
                   className="day-card__recipe-image"
+                  loading="lazy"
                 />
                 {/* Savings Badge - Epic 5 Slice 4 */}
                 <SavingsBadge 
