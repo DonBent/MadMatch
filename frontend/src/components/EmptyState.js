@@ -15,7 +15,7 @@ function EmptyState({ onAddRecipe }) {
     if (onAddRecipe) {
       onAddRecipe();
     } else {
-      navigate('/recipes');
+      navigate('/opskrifter');
     }
   };
 
