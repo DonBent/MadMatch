@@ -25,6 +25,69 @@
   color: #666;
 }
 
+/* Shopping List Section (Epic 5 Slice 5) */
+.weekly-calendar__shopping-list-section {
+  margin: 24px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.weekly-calendar__shopping-list-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  font-family: inherit;
+}
+
+.weekly-calendar__shopping-list-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.weekly-calendar__shopping-list-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.weekly-calendar__shopping-list-button:disabled {
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+.weekly-calendar__shopping-list-button:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+.shopping-list-button__icon {
+  font-size: 20px;
+}
+
+.shopping-list-button__spinner {
+  font-size: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Mobile-first: single column stack */
 .weekly-calendar__grid {
   display: flex;

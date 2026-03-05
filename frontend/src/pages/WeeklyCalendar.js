@@ -4,8 +4,10 @@ import RecipeContextMenu from '../components/RecipeContextMenu';
 import PortionAdjustmentModal from '../components/PortionAdjustmentModal';
 import RecipeMoveModal from '../components/RecipeMoveModal';
 import WeeklySavingsSummary from '../components/WeeklySavingsSummary';
+import ShoppingListModal from '../components/ShoppingListModal';
 import { getWeeklyPlan, updateRecipe, removeRecipe, addRecipe } from '../services/mealPlanService';
 import { calculateRecipeSavings } from '../services/savingsService';
+import { generateShoppingList } from '../services/shoppingListService';
 import { getRecipe } from '../services/recipeService';
 import './WeeklyCalendar.css';
 
@@ -15,6 +17,7 @@ import './WeeklyCalendar.css';
  * Slice 2: Displays weekly calendar, loads assigned recipes
  * Slice 3: Context menu (right-click/long-press), adjust portions, move recipes, remove recipes
  * Slice 4: Tilbud savings calculator - shows savings badges and weekly total
+ * Slice 5: Shopping list generation - aggregate ingredients from planned recipes
  */
 function WeeklyCalendar() {
   const [weekDays, setWeekDays] = useState([]);
@@ -48,6 +51,13 @@ function WeeklyCalendar() {
     isOpen: false,
     dayDate: null,
     dayName: null
+  });
+
+  // Shopping list modal state (Epic 5 Slice 5)
+  const [shoppingListModal, setShoppingListModal] = useState({
+    isOpen: false,
+    shoppingList: null,
+    isLoading: false
   });
 
   useEffect(() => {
@@ -314,6 +324,52 @@ function WeeklyCalendar() {
     setRemoveDialog({ isOpen: false, dayDate: null, dayName: null });
   };
 
+  /**
+   * Handle "Generate Shopping List" button click (Epic 5 Slice 5)
+   */
+  const handleGenerateShoppingList = async () => {
+    try {
+      setShoppingListModal({
+        isOpen: true,
+        shoppingList: null,
+        isLoading: true
+      });
+
+      const plan = getWeeklyPlan();
+      const shoppingList = await generateShoppingList(plan);
+
+      setShoppingListModal({
+        isOpen: true,
+        shoppingList,
+        isLoading: false
+      });
+    } catch (error) {
+      console.error('Failed to generate shopping list:', error);
+      alert('Der opstod en fejl ved generering af indkøbsliste. Prøv igen.');
+      setShoppingListModal({
+        isOpen: false,
+        shoppingList: null,
+        isLoading: false
+      });
+    }
+  };
+
+  /**
+   * Close shopping list modal (Epic 5 Slice 5)
+   */
+  const handleCloseShoppingList = () => {
+    setShoppingListModal({
+      isOpen: false,
+      shoppingList: null,
+      isLoading: false
+    });
+  };
+
+  /**
+   * Check if weekly plan has any recipes assigned (Epic 5 Slice 5)
+   */
+  const hasRecipesInPlan = weekDays.some(day => day.recipe !== null);
+
   return (
     <main className="weekly-calendar" data-testid="weekly-calendar">
       <div className="weekly-calendar__header">
@@ -325,6 +381,28 @@ function WeeklyCalendar() {
 
       {/* Epic 5 Slice 4: Weekly Savings Summary */}
       <WeeklySavingsSummary totalSavings={weeklySavings} />
+
+      {/* Epic 5 Slice 5: Generate Shopping List Button */}
+      <div className="weekly-calendar__shopping-list-section">
+        <button
+          className="weekly-calendar__shopping-list-button"
+          onClick={handleGenerateShoppingList}
+          disabled={!hasRecipesInPlan || shoppingListModal.isLoading}
+          data-testid="generate-shopping-list-button"
+        >
+          {shoppingListModal.isLoading ? (
+            <>
+              <span className="shopping-list-button__spinner">⏳</span>
+              Genererer indkøbsliste...
+            </>
+          ) : (
+            <>
+              <span className="shopping-list-button__icon">📋</span>
+              Generer indkøbsliste
+            </>
+          )}
+        </button>
+      </div>
 
       <div className="weekly-calendar__grid">
         {weekDays.map((day) => (
@@ -407,6 +485,13 @@ function WeeklyCalendar() {
           </div>
         </div>
       )}
+
+      {/* Shopping List Modal (Epic 5 Slice 5) */}
+      <ShoppingListModal
+        isOpen={shoppingListModal.isOpen}
+        onClose={handleCloseShoppingList}
+        shoppingList={shoppingListModal.shoppingList}
+      />
     </main>
   );
 }
