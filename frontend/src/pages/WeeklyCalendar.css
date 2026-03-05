@@ -1,4 +1,4 @@
-/* WeeklyCalendar.css - Epic 5 Slice 1: Weekly Calendar View */
+/* WeeklyCalendar.css - Epic 5 Weekly Calendar View */
 
 .weekly-calendar {
   max-width: 1200px;
@@ -30,6 +30,90 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* Remove Confirmation Dialog (Epic 5 Slice 3) */
+.remove-dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 20px;
+}
+
+.remove-dialog {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.remove-dialog__title {
+  margin: 0 0 12px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #d32f2f;
+}
+
+.remove-dialog__message {
+  margin: 0 0 24px 0;
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+.remove-dialog__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.remove-dialog__button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.remove-dialog__button--cancel {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.remove-dialog__button--cancel:hover {
+  background-color: #e0e0e0;
+}
+
+.remove-dialog__button--confirm {
+  background-color: #d32f2f;
+  color: white;
+}
+
+.remove-dialog__button--confirm:hover {
+  background-color: #c62828;
 }
 
 /* Tablet and desktop: grid layout */
@@ -92,5 +176,17 @@
 
   .weekly-calendar__grid {
     gap: 12px;
+  }
+
+  .remove-dialog {
+    padding: 20px;
+  }
+
+  .remove-dialog__title {
+    font-size: 1.1rem;
+  }
+
+  .remove-dialog__message {
+    font-size: 0.95rem;
   }
 }

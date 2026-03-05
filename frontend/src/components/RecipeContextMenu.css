@@ -1,0 +1,83 @@
+/* RecipeContextMenu.css - Epic 5 Slice 3: Context Menu */
+
+.recipe-context-menu {
+  position: fixed;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  padding: 8px 0;
+  z-index: 2000;
+  min-width: 220px;
+  animation: contextMenuFadeIn 0.15s ease-out;
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.recipe-context-menu__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.recipe-context-menu__item:hover {
+  background-color: #f5f5f5;
+}
+
+.recipe-context-menu__item:active {
+  background-color: #e0e0e0;
+}
+
+.recipe-context-menu__item--danger {
+  color: #d32f2f;
+}
+
+.recipe-context-menu__item--danger:hover {
+  background-color: #ffebee;
+}
+
+.recipe-context-menu__icon {
+  font-size: 1.2rem;
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recipe-context-menu__text {
+  flex: 1;
+  font-weight: 500;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .recipe-context-menu {
+    min-width: 200px;
+  }
+
+  .recipe-context-menu__item {
+    padding: 14px 16px;
+    font-size: 1rem;
+  }
+
+  .recipe-context-menu__icon {
+    font-size: 1.3rem;
+  }
+}

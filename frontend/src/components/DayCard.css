@@ -11,11 +11,21 @@
   gap: 12px;
   position: relative;
   min-height: 150px;
+  user-select: none; /* Prevent text selection during long-press */
+  -webkit-user-select: none;
+  -webkit-touch-callout: none; /* Disable iOS callout on long-press */
 }
 
 .day-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Long-press visual feedback (Epic 5 Slice 3) */
+.day-card--pressing {
+  transform: scale(0.98);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  background-color: #f9f9f9;
 }
 
 /* Today indicator */
@@ -81,6 +91,7 @@
 /* Recipe display */
 .day-card--has-recipe {
   border-color: #4CAF50;
+  cursor: context-menu; /* Indicate interactive state */
 }
 
 .day-card__recipe {

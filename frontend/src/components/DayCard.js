@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import './DayCard.css';
 
 /**
  * DayCard - Reusable component for displaying a single day in the weekly calendar
+ * Epic 5 Slice 3: Added context menu support for recipe management
  * 
  * @param {Object} props
  * @param {string} props.dayName - Name of the day (e.g., "Mandag")
@@ -11,12 +12,70 @@ import './DayCard.css';
  * @param {boolean} props.isToday - Whether this is the current day
  * @param {string} props.dataTestId - Test ID for the card
  * @param {Object|null} props.recipe - Assigned recipe { id, title, imageUrl, servings }
+ * @param {Function} props.onContextMenu - Callback for context menu (position, recipe, dayDate)
+ * @param {string} props.dayDate - ISO date string (YYYY-MM-DD) for the day
  */
-function DayCard({ dayName, dayNameShort, date, isToday, dataTestId, recipe }) {
+function DayCard({ dayName, dayNameShort, date, isToday, dataTestId, recipe, onContextMenu, dayDate }) {
+  const cardRef = useRef(null);
+  const longPressTimer = useRef(null);
+  const [isLongPressing, setIsLongPressing] = useState(false);
+
+  /**
+   * Handle right-click (desktop)
+   */
+  const handleContextMenu = (e) => {
+    if (!recipe) return;
+    
+    e.preventDefault();
+    
+    const position = {
+      x: e.clientX,
+      y: e.clientY
+    };
+    
+    onContextMenu && onContextMenu(position, recipe, dayDate);
+  };
+
+  /**
+   * Handle touch start (mobile long-press)
+   */
+  const handleTouchStart = (e) => {
+    if (!recipe) return;
+    
+    setIsLongPressing(true);
+    
+    longPressTimer.current = setTimeout(() => {
+      const touch = e.touches[0];
+      const position = {
+        x: touch.clientX,
+        y: touch.clientY
+      };
+      
+      onContextMenu && onContextMenu(position, recipe, dayDate);
+      setIsLongPressing(false);
+    }, 500); // 500ms long-press
+  };
+
+  /**
+   * Handle touch end/cancel
+   */
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    setIsLongPressing(false);
+  };
+
   return (
     <div 
-      className={`day-card ${isToday ? 'day-card--today' : ''} ${recipe ? 'day-card--has-recipe' : ''}`}
+      ref={cardRef}
+      className={`day-card ${isToday ? 'day-card--today' : ''} ${recipe ? 'day-card--has-recipe' : ''} ${isLongPressing ? 'day-card--pressing' : ''}`}
       data-testid={dataTestId}
+      onContextMenu={handleContextMenu}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
     >
       {isToday && (
         <div 

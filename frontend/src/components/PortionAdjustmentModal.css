@@ -1,0 +1,273 @@
+/* PortionAdjustmentModal.css - Epic 5 Slice 3: Portion Adjustment */
+
+/* Backdrop */
+.portion-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+/* Modal container */
+.portion-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.portion-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.portion-modal__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.portion-modal__close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #666;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.portion-modal__close:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+/* Content */
+.portion-modal__content {
+  padding: 24px;
+}
+
+.portion-modal__recipe-name {
+  margin: 0 0 24px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #666;
+  text-align: center;
+}
+
+/* Slider container */
+.portion-modal__slider-container {
+  margin-bottom: 24px;
+}
+
+.portion-modal__label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.portion-modal__value-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.portion-modal__value {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #4CAF50;
+}
+
+.portion-modal__value-label {
+  font-size: 1.1rem;
+  color: #666;
+}
+
+/* Slider styling */
+.portion-modal__slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: #e0e0e0;
+  outline: none;
+  margin-bottom: 12px;
+}
+
+.portion-modal__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.15s;
+}
+
+.portion-modal__slider::-webkit-slider-thumb:hover {
+  background: #45a049;
+  transform: scale(1.1);
+}
+
+.portion-modal__slider::-webkit-slider-thumb:active {
+  transform: scale(1.2);
+}
+
+.portion-modal__slider::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.15s;
+}
+
+.portion-modal__slider::-moz-range-thumb:hover {
+  background: #45a049;
+  transform: scale(1.1);
+}
+
+.portion-modal__slider::-moz-range-thumb:active {
+  transform: scale(1.2);
+}
+
+/* Range labels */
+.portion-modal__range-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+  font-size: 0.875rem;
+  color: #999;
+}
+
+/* Multiplier info */
+.portion-modal__multiplier {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: #f1f8f4;
+  border-radius: 8px;
+  border: 1px solid #c8e6c9;
+}
+
+.portion-modal__multiplier-icon {
+  font-size: 1.2rem;
+}
+
+.portion-modal__multiplier-text {
+  font-size: 0.95rem;
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+/* Actions */
+.portion-modal__actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.portion-modal__button {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.portion-modal__button--cancel {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.portion-modal__button--cancel:hover {
+  background-color: #e0e0e0;
+}
+
+.portion-modal__button--save {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.portion-modal__button--save:hover {
+  background-color: #45a049;
+}
+
+.portion-modal__button--save:active {
+  transform: scale(0.98);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .portion-modal {
+    max-width: 100%;
+    border-radius: 12px 12px 0 0;
+    margin-top: auto;
+  }
+
+  .portion-modal__header {
+    padding: 20px 16px 12px;
+  }
+
+  .portion-modal__title {
+    font-size: 1.25rem;
+  }
+
+  .portion-modal__content {
+    padding: 20px 16px;
+  }
+
+  .portion-modal__value {
+    font-size: 2.5rem;
+  }
+
+  .portion-modal__actions {
+    padding: 12px 16px 20px;
+  }
+}

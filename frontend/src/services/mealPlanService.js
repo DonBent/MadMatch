@@ -215,3 +215,39 @@ export const hasRecipeOnDay = (dayDate) => {
     return false;
   }
 };
+
+/**
+ * Update recipe properties for a specific day (Epic 5 Slice 3)
+ * @param {string} dayDate - Date in YYYY-MM-DD format
+ * @param {Object} updates - Properties to update (e.g., { servings: 6 })
+ * @returns {Object} Updated weekly plan
+ */
+export const updateRecipe = (dayDate, updates) => {
+  try {
+    const plan = getWeeklyPlan();
+    
+    // Find the day in the plan
+    const dayIndex = plan.days.findIndex(d => d.date === dayDate);
+    
+    if (dayIndex === -1) {
+      throw new Error(`Day ${dayDate} not found in current week plan`);
+    }
+    
+    // Check if day has a recipe
+    if (!plan.days[dayIndex].recipe) {
+      throw new Error(`No recipe found on ${dayDate} to update`);
+    }
+    
+    // Merge updates into existing recipe
+    plan.days[dayIndex].recipe = {
+      ...plan.days[dayIndex].recipe,
+      ...updates
+    };
+    
+    saveWeeklyPlan(plan);
+    return plan;
+  } catch (error) {
+    console.error('Failed to update recipe in meal plan:', error);
+    throw error;
+  }
+};
