@@ -5,7 +5,7 @@ import PortionAdjustmentModal from '../components/PortionAdjustmentModal';
 import RecipeMoveModal from '../components/RecipeMoveModal';
 import WeeklySavingsSummary from '../components/WeeklySavingsSummary';
 import { getWeeklyPlan, updateRecipe, removeRecipe, addRecipe } from '../services/mealPlanService';
-import { calculateRecipeSavings, calculateWeeklySavings } from '../services/savingsService';
+import { calculateRecipeSavings } from '../services/savingsService';
 import { getRecipe } from '../services/recipeService';
 import './WeeklyCalendar.css';
 
@@ -19,7 +19,6 @@ import './WeeklyCalendar.css';
 function WeeklyCalendar() {
   const [weekDays, setWeekDays] = useState([]);
   const [weeklySavings, setWeeklySavings] = useState(0);
-  const [isCalculatingSavings, setIsCalculatingSavings] = useState(false);
   
   // Context menu state
   const [contextMenu, setContextMenu] = useState({
@@ -126,15 +125,12 @@ function WeeklyCalendar() {
    * @param {Array} days - Formatted days array
    */
   const calculateAndSetSavings = async (plan, days) => {
-    setIsCalculatingSavings(true);
-    
     try {
       // Fetch full recipe data for all days with recipes
       const daysWithRecipes = days.filter(day => day.recipe !== null);
       
       if (daysWithRecipes.length === 0) {
         setWeeklySavings(0);
-        setIsCalculatingSavings(false);
         return;
       }
       
@@ -192,8 +188,6 @@ function WeeklyCalendar() {
     } catch (error) {
       console.error('Failed to calculate weekly savings:', error);
       setWeeklySavings(0);
-    } finally {
-      setIsCalculatingSavings(false);
     }
   };
 
