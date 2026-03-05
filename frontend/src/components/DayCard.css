@@ -78,6 +78,46 @@
   text-align: center;
 }
 
+/* Recipe display */
+.day-card--has-recipe {
+  border-color: #4CAF50;
+}
+
+.day-card__recipe {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.day-card__recipe-image {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.day-card__recipe-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.day-card__recipe-servings {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+}
+
 /* Mobile: show short day names */
 @media (max-width: 768px) {
   .day-card {

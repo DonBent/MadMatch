@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRecipeFavorites } from '../contexts/RecipeFavoriteContext';
 import { getRecipe } from '../services/recipeService';
+import { addRecipe } from '../services/mealPlanService';
 import { extractKeyIngredients, formatIngredientsForQuery } from '../utils/ingredientExtractor';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import ErrorBoundary from '../components/ErrorBoundary';
+import RecipeAssignmentModal from '../components/RecipeAssignmentModal';
 import './RecipeDetail.css';
 
 const RecipeDetail = () => {
@@ -14,6 +16,7 @@ const RecipeDetail = () => {
   const [recipe, setRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAssignmentModal, setShowAssignmentModal] = useState(false);
 
   const isRecipeFavorite = recipe ? isFavorite(recipe.id) : false;
 
@@ -66,6 +69,31 @@ const RecipeDetail = () => {
     
     // Navigate with search params
     navigate(`/tilbud?search=${encodeURIComponent(searchQuery)}`);
+  };
+
+  const handleAddToPlan = () => {
+    setShowAssignmentModal(true);
+  };
+
+  const handleAssignmentModalClose = () => {
+    setShowAssignmentModal(false);
+  };
+
+  const handleDaySelect = (dayDate, replacingExisting) => {
+    try {
+      // Add recipe to selected day
+      addRecipe(dayDate, {
+        id: recipe.id,
+        title: recipe.title,
+        imageUrl: recipe.imageUrl
+      });
+      
+      // Close modal and show success (could add toast notification in future)
+      setShowAssignmentModal(false);
+    } catch (error) {
+      console.error('Failed to assign recipe to day:', error);
+      // Could show error notification in future
+    }
   };
 
   const difficultyLabels = {
@@ -226,9 +254,9 @@ const RecipeDetail = () => {
 
               <button
                 className="btn-add-to-plan"
-                disabled
-                title="Kommer i næste version"
-                aria-label="Tilføj til ugeplan (kommer snart)"
+                onClick={handleAddToPlan}
+                aria-label="Tilføj til ugeplan"
+                data-testid="recipe-add-to-plan-button"
               >
                 <span className="btn-icon">📅</span>
                 Tilføj til ugeplan
@@ -281,6 +309,14 @@ const RecipeDetail = () => {
             )}
           </div>
         </div>
+
+        {/* Recipe Assignment Modal */}
+        <RecipeAssignmentModal
+          isOpen={showAssignmentModal}
+          onClose={handleAssignmentModalClose}
+          onDaySelect={handleDaySelect}
+          recipe={recipe}
+        />
       </div>
     </ErrorBoundary>
   );

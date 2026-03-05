@@ -1,71 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import DayCard from '../components/DayCard';
+import { getWeeklyPlan } from '../services/mealPlanService';
 import './WeeklyCalendar.css';
 
 /**
- * WeeklyCalendar - Epic 5 Slice 1: Basic Weekly Calendar View
+ * WeeklyCalendar - Epic 5 Slice 2: Weekly Calendar with Recipe Assignment
  * 
- * Displays a static weekly calendar (Monday-Sunday) for the current week.
- * No recipe assignment or persistence in this slice - foundation only.
+ * Displays a weekly calendar (Monday-Sunday) for the current week.
+ * Loads and displays assigned recipes from localStorage.
  */
 function WeeklyCalendar() {
   const [weekDays, setWeekDays] = useState([]);
 
   useEffect(() => {
-    /**
-     * Generate current week dates (Monday to Sunday)
-     * @returns {Array} Array of day objects with name, date, and isToday flag
-     */
-    const generateCurrentWeek = () => {
-      const dayNames = [
-        { full: 'Mandag', short: 'Man' },
-        { full: 'Tirsdag', short: 'Tir' },
-        { full: 'Onsdag', short: 'Ons' },
-        { full: 'Torsdag', short: 'Tor' },
-        { full: 'Fredag', short: 'Fre' },
-        { full: 'Lørdag', short: 'Lør' },
-        { full: 'Søndag', short: 'Søn' }
-      ];
-
-      const today = new Date();
-      const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-      
-      // Calculate Monday of current week
-      // If today is Sunday (0), we need to go back 6 days; otherwise (currentDay - 1)
-      const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1;
-      const monday = new Date(today);
-      monday.setDate(today.getDate() - daysFromMonday);
-      monday.setHours(0, 0, 0, 0);
-
-      // Build array of 7 days starting from Monday
-      const week = [];
-
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(monday);
-        date.setDate(monday.getDate() + i);
-        
-        // Check if this date is today
-        const isToday = 
-          date.getDate() === today.getDate() &&
-          date.getMonth() === today.getMonth() &&
-          date.getFullYear() === today.getFullYear();
-
-        week.push({
-          dayName: dayNames[i].full,
-          dayNameShort: dayNames[i].short,
-          date: formatDate(date),
-          isToday,
-          key: `day-${i}`,
-          testId: `day-card-${dayNames[i].short.toLowerCase()}`
-        });
-      }
-
-      return week;
-    };
-
-    const days = generateCurrentWeek();
-    setWeekDays(days);
+    loadWeeklyPlan();
   }, []);
+
+  /**
+   * Load weekly plan from localStorage and format for display
+   */
+  const loadWeeklyPlan = () => {
+    const plan = getWeeklyPlan();
+    
+    const dayNames = [
+      { full: 'Mandag', short: 'Man' },
+      { full: 'Tirsdag', short: 'Tir' },
+      { full: 'Onsdag', short: 'Ons' },
+      { full: 'Torsdag', short: 'Tor' },
+      { full: 'Fredag', short: 'Fre' },
+      { full: 'Lørdag', short: 'Lør' },
+      { full: 'Søndag', short: 'Søn' }
+    ];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Map plan days to display format
+    const days = plan.days.map((day, index) => {
+      const date = new Date(day.date);
+      
+      const isToday = 
+        date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear();
+
+      return {
+        dayName: dayNames[index].full,
+        dayNameShort: dayNames[index].short,
+        date: formatDate(date),
+        isToday,
+        recipe: day.recipe, // Can be null or { id, title, imageUrl, servings }
+        key: `day-${index}`,
+        testId: `day-card-${dayNames[index].short.toLowerCase()}`
+      };
+    });
+
+    setWeekDays(days);
+  };
 
   /**
    * Format date as "5. mar" (Danish format)
@@ -101,6 +92,7 @@ function WeeklyCalendar() {
             dayNameShort={day.dayNameShort}
             date={day.date}
             isToday={day.isToday}
+            recipe={day.recipe}
             dataTestId={day.testId}
           />
         ))}

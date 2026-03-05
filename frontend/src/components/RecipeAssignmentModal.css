@@ -1,0 +1,323 @@
+/* RecipeAssignmentModal.css - Epic 5 Slice 2: Recipe Assignment Modal */
+
+/* Backdrop */
+.assignment-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+/* Modal container */
+.assignment-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.assignment-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.assignment-modal__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.assignment-modal__close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #666;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.assignment-modal__close:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+/* Recipe preview */
+.assignment-modal__recipe-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.assignment-modal__recipe-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.assignment-modal__recipe-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+}
+
+/* Days grid */
+.assignment-modal__days-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 24px;
+}
+
+/* Day card button */
+.assignment-day-card {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  position: relative;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.assignment-day-card:hover {
+  border-color: #4CAF50;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.assignment-day-card:active {
+  transform: translateY(0);
+}
+
+/* Today indicator */
+.assignment-day-card--today {
+  border-color: #4CAF50;
+  background-color: #f1f8f4;
+}
+
+.assignment-day-card__badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #4CAF50;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Occupied day */
+.assignment-day-card--occupied {
+  border-color: #ff9800;
+  background-color: #fff8f0;
+}
+
+.assignment-day-card--occupied:hover {
+  border-color: #f57c00;
+}
+
+.assignment-day-card__name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.assignment-day-card__date {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.assignment-day-card__status {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.875rem;
+  color: #f57c00;
+}
+
+.assignment-day-card__status-icon {
+  font-size: 1rem;
+}
+
+/* Confirmation dialog */
+.confirm-dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 20px;
+}
+
+.confirm-dialog {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.2s ease-out;
+}
+
+.confirm-dialog__title {
+  margin: 0 0 12px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.confirm-dialog__message {
+  margin: 0 0 24px 0;
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.confirm-dialog__button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.confirm-dialog__button--cancel {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.confirm-dialog__button--cancel:hover {
+  background-color: #e0e0e0;
+}
+
+.confirm-dialog__button--confirm {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.confirm-dialog__button--confirm:hover {
+  background-color: #45a049;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .assignment-modal {
+    max-height: 95vh;
+    border-radius: 12px 12px 0 0;
+    margin-top: auto;
+  }
+
+  .assignment-modal__header {
+    padding: 20px 16px 12px;
+  }
+
+  .assignment-modal__title {
+    font-size: 1.25rem;
+  }
+
+  .assignment-modal__recipe-preview {
+    padding: 12px 16px;
+  }
+
+  .assignment-modal__days-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .assignment-day-card {
+    min-height: 90px;
+    padding: 12px;
+  }
+
+  .assignment-day-card__name {
+    font-size: 0.9rem;
+  }
+
+  .assignment-day-card__date {
+    font-size: 0.8rem;
+  }
+
+  .confirm-dialog {
+    padding: 20px;
+  }
+
+  .confirm-dialog__title {
+    font-size: 1.1rem;
+  }
+
+  .confirm-dialog__message {
+    font-size: 0.95rem;
+  }
+}
+
+/* Smaller phones */
+@media (max-width: 480px) {
+  .assignment-modal__days-grid {
+    grid-template-columns: 1fr;
+  }
+}
