@@ -101,6 +101,11 @@
   gap: 8px;
 }
 
+.day-card__recipe-image-container {
+  position: relative;
+  width: 100%;
+}
+
 .day-card__recipe-image {
   width: 100%;
   height: 120px;

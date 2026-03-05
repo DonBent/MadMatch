@@ -1,9 +1,11 @@
 import React, { useRef, useState } from 'react';
+import SavingsBadge from './SavingsBadge';
 import './DayCard.css';
 
 /**
  * DayCard - Reusable component for displaying a single day in the weekly calendar
  * Epic 5 Slice 3: Added context menu support for recipe management
+ * Epic 5 Slice 4: Added savings badge for recipes with tilbud matches
  * 
  * @param {Object} props
  * @param {string} props.dayName - Name of the day (e.g., "Mandag")
@@ -11,7 +13,7 @@ import './DayCard.css';
  * @param {string} props.date - Formatted date string (e.g., "5. mar")
  * @param {boolean} props.isToday - Whether this is the current day
  * @param {string} props.dataTestId - Test ID for the card
- * @param {Object|null} props.recipe - Assigned recipe { id, title, imageUrl, servings }
+ * @param {Object|null} props.recipe - Assigned recipe { id, title, imageUrl, servings, savings, matchedCount }
  * @param {Function} props.onContextMenu - Callback for context menu (position, recipe, dayDate)
  * @param {string} props.dayDate - ISO date string (YYYY-MM-DD) for the day
  */
@@ -98,11 +100,18 @@ function DayCard({ dayName, dayNameShort, date, isToday, dataTestId, recipe, onC
         {recipe ? (
           <div className="day-card__recipe">
             {recipe.imageUrl && (
-              <img 
-                src={recipe.imageUrl} 
-                alt={recipe.title}
-                className="day-card__recipe-image"
-              />
+              <div className="day-card__recipe-image-container">
+                <img 
+                  src={recipe.imageUrl} 
+                  alt={recipe.title}
+                  className="day-card__recipe-image"
+                />
+                {/* Savings Badge - Epic 5 Slice 4 */}
+                <SavingsBadge 
+                  savings={recipe.savings} 
+                  matchCount={recipe.matchedCount}
+                />
+              </div>
             )}
             <h4 
               className="day-card__recipe-title"

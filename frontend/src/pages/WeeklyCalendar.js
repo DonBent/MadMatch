@@ -3,7 +3,10 @@ import DayCard from '../components/DayCard';
 import RecipeContextMenu from '../components/RecipeContextMenu';
 import PortionAdjustmentModal from '../components/PortionAdjustmentModal';
 import RecipeMoveModal from '../components/RecipeMoveModal';
+import WeeklySavingsSummary from '../components/WeeklySavingsSummary';
 import { getWeeklyPlan, updateRecipe, removeRecipe, addRecipe } from '../services/mealPlanService';
+import { calculateRecipeSavings, calculateWeeklySavings } from '../services/savingsService';
+import { getRecipe } from '../services/recipeService';
 import './WeeklyCalendar.css';
 
 /**
@@ -11,9 +14,12 @@ import './WeeklyCalendar.css';
  * 
  * Slice 2: Displays weekly calendar, loads assigned recipes
  * Slice 3: Context menu (right-click/long-press), adjust portions, move recipes, remove recipes
+ * Slice 4: Tilbud savings calculator - shows savings badges and weekly total
  */
 function WeeklyCalendar() {
   const [weekDays, setWeekDays] = useState([]);
+  const [weeklySavings, setWeeklySavings] = useState(0);
+  const [isCalculatingSavings, setIsCalculatingSavings] = useState(false);
   
   // Context menu state
   const [contextMenu, setContextMenu] = useState({
@@ -51,8 +57,9 @@ function WeeklyCalendar() {
 
   /**
    * Load weekly plan from localStorage and format for display
+   * Epic 5 Slice 4: Also fetches full recipe data to calculate savings
    */
-  const loadWeeklyPlan = () => {
+  const loadWeeklyPlan = async () => {
     const plan = getWeeklyPlan();
     
     const dayNames = [
@@ -68,7 +75,7 @@ function WeeklyCalendar() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Map plan days to display format
+    // Map plan days to display format (synchronous part)
     const days = plan.days.map((day, index) => {
       const date = new Date(day.date);
       
@@ -90,6 +97,9 @@ function WeeklyCalendar() {
     });
 
     setWeekDays(days);
+    
+    // Epic 5 Slice 4: Calculate savings asynchronously
+    calculateAndSetSavings(plan, days);
   };
 
   /**
@@ -107,6 +117,84 @@ function WeeklyCalendar() {
     const month = monthNames[date.getMonth()];
     
     return `${day}. ${month}`;
+  };
+
+  /**
+   * Calculate savings for all recipes in the weekly plan
+   * Epic 5 Slice 4: Fetches full recipe data and calculates tilbud matches
+   * @param {Object} plan - Weekly plan object
+   * @param {Array} days - Formatted days array
+   */
+  const calculateAndSetSavings = async (plan, days) => {
+    setIsCalculatingSavings(true);
+    
+    try {
+      // Fetch full recipe data for all days with recipes
+      const daysWithRecipes = days.filter(day => day.recipe !== null);
+      
+      if (daysWithRecipes.length === 0) {
+        setWeeklySavings(0);
+        setIsCalculatingSavings(false);
+        return;
+      }
+      
+      // Fetch recipe details in parallel
+      const recipePromises = daysWithRecipes.map(async (day) => {
+        try {
+          const fullRecipe = await getRecipe(day.recipe.id);
+          const savings = await calculateRecipeSavings(fullRecipe);
+          
+          // Scale by servings
+          const servings = day.recipe.servings || 4;
+          const scaledSavings = savings.totalSavings * (servings / 4);
+          
+          return {
+            dayDate: day.dayDate,
+            savings: scaledSavings,
+            matchedCount: savings.matchedProducts.length
+          };
+        } catch (error) {
+          console.error(`Failed to calculate savings for recipe ${day.recipe.id}:`, error);
+          return {
+            dayDate: day.dayDate,
+            savings: 0,
+            matchedCount: 0
+          };
+        }
+      });
+      
+      const allSavings = await Promise.all(recipePromises);
+      
+      // Update days with savings data
+      const updatedDays = days.map(day => {
+        const daySavings = allSavings.find(s => s.dayDate === day.dayDate);
+        
+        if (daySavings && day.recipe) {
+          return {
+            ...day,
+            recipe: {
+              ...day.recipe,
+              savings: daySavings.savings,
+              matchedCount: daySavings.matchedCount
+            }
+          };
+        }
+        
+        return day;
+      });
+      
+      setWeekDays(updatedDays);
+      
+      // Calculate total weekly savings
+      const totalSavings = allSavings.reduce((sum, s) => sum + s.savings, 0);
+      setWeeklySavings(totalSavings);
+      
+    } catch (error) {
+      console.error('Failed to calculate weekly savings:', error);
+      setWeeklySavings(0);
+    } finally {
+      setIsCalculatingSavings(false);
+    }
   };
 
   /**
@@ -240,6 +328,9 @@ function WeeklyCalendar() {
           Plan dine måltider for ugen
         </p>
       </div>
+
+      {/* Epic 5 Slice 4: Weekly Savings Summary */}
+      <WeeklySavingsSummary totalSavings={weeklySavings} />
 
       <div className="weekly-calendar__grid">
         {weekDays.map((day) => (

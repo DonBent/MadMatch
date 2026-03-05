@@ -1,0 +1,125 @@
+.weekly-savings-summary {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #86efac;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+}
+
+.weekly-savings-summary__content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.weekly-savings-summary__icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.weekly-savings-summary__text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #065f46;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.weekly-savings-summary__amount {
+  color: #059669;
+  font-size: 1.75rem;
+}
+
+.weekly-savings-summary__description {
+  margin: 0;
+  margin-left: 56px;
+  font-size: 0.9375rem;
+  color: #047857;
+  font-weight: 500;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .weekly-savings-summary {
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+  
+  .weekly-savings-summary__content {
+    gap: 10px;
+  }
+  
+  .weekly-savings-summary__icon {
+    font-size: 1.5rem;
+  }
+  
+  .weekly-savings-summary__text {
+    font-size: 1.25rem;
+  }
+  
+  .weekly-savings-summary__amount {
+    font-size: 1.5rem;
+  }
+  
+  .weekly-savings-summary__description {
+    margin-left: 0;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .weekly-savings-summary {
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  
+  .weekly-savings-summary__content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .weekly-savings-summary__text {
+    font-size: 1.125rem;
+  }
+  
+  .weekly-savings-summary__amount {
+    font-size: 1.375rem;
+  }
+  
+  .weekly-savings-summary__description {
+    font-size: 0.8125rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .weekly-savings-summary {
+    border-width: 3px;
+  }
+}
+
+/* Animation for new savings */
+@keyframes savingsAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.weekly-savings-summary {
+  animation: savingsAppear 0.3s ease-out;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .weekly-savings-summary {
+    animation: none;
+  }
+}

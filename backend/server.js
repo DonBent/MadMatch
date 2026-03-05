@@ -85,6 +85,69 @@ app.get('/api/tilbud', async (req, res) => {
   }
 });
 
+// GET /api/tilbud/match - Match ingredient to tilbud products (Epic 5 Slice 4)
+// NOTE: Must be BEFORE /api/tilbud/:id route to avoid matching "match" as an id
+app.get('/api/tilbud/match', async (req, res) => {
+  try {
+    const { ingredient } = req.query;
+    
+    if (!ingredient) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required parameter: ingredient'
+      });
+    }
+    
+    const allTilbud = await tilbudService.getTilbud();
+    
+    // Simple matching logic: exact match first, then case-insensitive ILIKE
+    const ingredientLower = ingredient.toLowerCase().trim();
+    
+    const matches = allTilbud.filter(product => {
+      const productName = product.navn.toLowerCase();
+      
+      // Exact match
+      if (productName === ingredientLower) return true;
+      
+      // Contains match (ILIKE '%ingredient%')
+      if (productName.includes(ingredientLower)) return true;
+      
+      // Reverse: ingredient contains product name (e.g., "kyllingebryst" matches "kylling")
+      if (ingredientLower.includes(productName)) return true;
+      
+      return false;
+    });
+    
+    // Sort by discount (highest first) to prefer best deals
+    matches.sort((a, b) => b.rabat - a.rabat);
+    
+    // Transform to API format
+    const products = matches.map(product => ({
+      id: product.id,
+      name: product.navn,
+      normalPrice: product.normalpris,
+      tilbudPrice: product.tilbudspris,
+      discount: product.rabat,
+      store: product.butik
+    }));
+    
+    console.log(`[INFO] Matched ${products.length} products for ingredient: ${ingredient}`);
+    
+    res.json({
+      success: true,
+      ingredient,
+      count: products.length,
+      products
+    });
+  } catch (error) {
+    console.error('[ERROR] Failed to match ingredient:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
 // GET /api/tilbud/:id - Hent enkelt tilbud
 app.get('/api/tilbud/:id', async (req, res) => {
   try {
