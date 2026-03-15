@@ -69,7 +69,8 @@ const parseIngredient = (ingredient) => {
     const match = trimmed.match(/^(\d+(?:[.,]\d+)?)\s*([a-zæøåA-ZÆØÅ.]+)?\s*(.+)$/);
     
     if (match) {
-      const quantity = parseFloat(match[1].replace(',', '.'));
+      const quantityNum = parseFloat(match[1].replace(',', '.'));
+      const quantity = isNaN(quantityNum) ? null : quantityNum;
       const unit = match[2] ? match[2].trim() : '';
       const name = match[3].trim();
       

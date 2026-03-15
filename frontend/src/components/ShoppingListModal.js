@@ -104,7 +104,7 @@ function ShoppingListModal({ isOpen, onClose, shoppingList }) {
    * Format quantity for display
    */
   const formatQuantity = (quantity, unit) => {
-    if (quantity === null) return '';
+    if (quantity === null || isNaN(quantity)) return '';
     
     // Round to 1 decimal place for cleaner display
     const rounded = Math.round(quantity * 10) / 10;
